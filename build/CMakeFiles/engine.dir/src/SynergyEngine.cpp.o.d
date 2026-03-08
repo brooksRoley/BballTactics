@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/SynergyEngine.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/SynergyEngine.h \
+  /Users/brooksroley/Desktop/BballTactics/src/SynergyEngine.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/SynergyEngine.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/vector \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config_site \
@@ -624,8 +624,8 @@ CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wstring_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cstdarg \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/map \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__functional/is_transparent.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__fwd/map.h \

@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/PlayerEntity.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/src/PlayerEntity.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/string \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/max.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/comp.h \
@@ -552,7 +552,7 @@ CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/optional \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/iostream \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/ios \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale \

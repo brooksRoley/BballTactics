@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/Court.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/Court.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Court.h \
+  /Users/brooksroley/Desktop/BballTactics/src/Court.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/Court.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/vector \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config_site \
@@ -700,7 +700,7 @@ CMakeFiles/engine.dir/src/Court.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/student_t_distribution.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/uniform_random_bit_generator.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/weibull_distribution.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Basketball.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/ShotProbability.h
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Basketball.h \
+  /Users/brooksroley/Desktop/BballTactics/include/ShotProbability.h

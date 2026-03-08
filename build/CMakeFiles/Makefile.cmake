@@ -7,25 +7,36 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
-  "/Users/brooksroley/Desktop/python/BballTactics/CMakeLists.txt"
+  "/Users/brooksroley/Desktop/BballTactics/CMakeLists.txt"
   "CMakeFiles/4.2.3/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.2.3/CMakeSystem.cmake"
   "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform/Emscripten.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeCXXCompiler.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeCXXInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeDetermineCompiler.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeDetermineSystem.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeFindBinUtils.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeInitializeConfigs.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeLanguageInformation.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeSystem.cmake.in"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeTestCXXCompiler.cmake"
+  "/opt/homebrew/share/cmake/Modules/CMakeUnixFindMake.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/Clang-CXX.cmake"
+  "/opt/homebrew/share/cmake/Modules/Compiler/Clang-FindBinUtils.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/Clang.cmake"
   "/opt/homebrew/share/cmake/Modules/Compiler/GNU.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake"
+  "/opt/homebrew/share/cmake/Modules/Internal/CMakeInspectCXXLinker.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Emscripten-Clang-CXX.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Emscripten-Clang.cmake"
+  "/opt/homebrew/share/cmake/Modules/Platform/Emscripten-Determine-CXX.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Emscripten-Initialize.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake"
   "/opt/homebrew/share/cmake/Modules/Platform/Linker/Emscripten-CXX.cmake"
@@ -41,6 +52,9 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
+  "CMakeFiles/4.2.3/CMakeSystem.cmake"
+  "CMakeFiles/4.2.3/CMakeCXXCompiler.cmake"
+  "CMakeFiles/4.2.3/CMakeCXXCompiler.cmake"
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 

@@ -20,7 +20,6 @@ events:
     names:
       - "uname"
     candidate_directories:
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -36,8 +35,8 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
     searched_directories:
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/uname"
       - "/Users/brooksroley/.local/bin/uname"
       - "/opt/homebrew/bin/uname"
       - "/opt/homebrew/sbin/uname"
@@ -46,7 +45,6 @@ events:
     found: "/usr/bin/uname"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -61,6 +59,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
   -
     kind: "message-v1"
@@ -91,7 +92,6 @@ events:
       - "make"
       - "smake"
     candidate_directories:
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -107,10 +107,10 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/gmake"
       - "/Users/brooksroley/.local/bin/gmake"
       - "/opt/homebrew/bin/gmake"
       - "/opt/homebrew/sbin/gmake"
@@ -126,9 +126,9 @@ events:
       - "/opt/pmk/env/global/bin/gmake"
       - "/Library/Apple/usr/bin/gmake"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/gmake"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/gmake"
       - "/bin/gmake"
       - "/sbin/gmake"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/make"
       - "/Users/brooksroley/.local/bin/make"
       - "/opt/homebrew/bin/make"
       - "/opt/homebrew/sbin/make"
@@ -137,7 +137,6 @@ events:
     found: "/usr/bin/make"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -152,6 +151,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -179,7 +181,6 @@ events:
       - "strip"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -195,11 +196,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-strip"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-strip"
       - "/Users/brooksroley/.local/bin/llvm-strip"
       - "/opt/homebrew/bin/llvm-strip"
       - "/opt/homebrew/sbin/llvm-strip"
@@ -215,10 +216,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-strip"
       - "/Library/Apple/usr/bin/llvm-strip"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-strip"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-strip"
       - "/bin/llvm-strip"
       - "/sbin/llvm-strip"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/strip"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/strip"
       - "/Users/brooksroley/.local/bin/strip"
       - "/opt/homebrew/bin/strip"
       - "/opt/homebrew/sbin/strip"
@@ -227,7 +228,6 @@ events:
     found: "/usr/bin/strip"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -242,6 +242,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -269,7 +272,6 @@ events:
       - "ld"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -285,11 +287,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/ld.lld"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/ld.lld"
       - "/Users/brooksroley/.local/bin/ld.lld"
       - "/opt/homebrew/bin/ld.lld"
       - "/opt/homebrew/sbin/ld.lld"
@@ -305,10 +307,10 @@ events:
       - "/opt/pmk/env/global/bin/ld.lld"
       - "/Library/Apple/usr/bin/ld.lld"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/ld.lld"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/ld.lld"
       - "/bin/ld.lld"
       - "/sbin/ld.lld"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/ld"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/ld"
       - "/Users/brooksroley/.local/bin/ld"
       - "/opt/homebrew/bin/ld"
       - "/opt/homebrew/sbin/ld"
@@ -317,7 +319,6 @@ events:
     found: "/usr/bin/ld"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -332,6 +333,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -359,7 +363,6 @@ events:
       - "objdump"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -375,11 +378,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-objdump"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-objdump"
       - "/Users/brooksroley/.local/bin/llvm-objdump"
       - "/opt/homebrew/bin/llvm-objdump"
       - "/opt/homebrew/sbin/llvm-objdump"
@@ -395,10 +398,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-objdump"
       - "/Library/Apple/usr/bin/llvm-objdump"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-objdump"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-objdump"
       - "/bin/llvm-objdump"
       - "/sbin/llvm-objdump"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/objdump"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/objdump"
       - "/Users/brooksroley/.local/bin/objdump"
       - "/opt/homebrew/bin/objdump"
       - "/opt/homebrew/sbin/objdump"
@@ -407,7 +410,6 @@ events:
     found: "/usr/bin/objdump"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -422,6 +424,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -449,7 +454,6 @@ events:
       - "objcopy"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -465,11 +469,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-objcopy"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-objcopy"
       - "/Users/brooksroley/.local/bin/llvm-objcopy"
       - "/opt/homebrew/bin/llvm-objcopy"
       - "/opt/homebrew/sbin/llvm-objcopy"
@@ -485,10 +489,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-objcopy"
       - "/Library/Apple/usr/bin/llvm-objcopy"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-objcopy"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-objcopy"
       - "/bin/llvm-objcopy"
       - "/sbin/llvm-objcopy"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/objcopy"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/objcopy"
       - "/Users/brooksroley/.local/bin/objcopy"
       - "/opt/homebrew/bin/objcopy"
       - "/opt/homebrew/sbin/objcopy"
@@ -504,12 +508,12 @@ events:
       - "/opt/pmk/env/global/bin/objcopy"
       - "/Library/Apple/usr/bin/objcopy"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/objcopy"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/objcopy"
       - "/bin/objcopy"
       - "/sbin/objcopy"
     found: false
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -524,6 +528,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -551,7 +558,6 @@ events:
       - "readelf"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -567,11 +573,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-readelf"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-readelf"
       - "/Users/brooksroley/.local/bin/llvm-readelf"
       - "/opt/homebrew/bin/llvm-readelf"
       - "/opt/homebrew/sbin/llvm-readelf"
@@ -587,10 +593,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-readelf"
       - "/Library/Apple/usr/bin/llvm-readelf"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-readelf"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-readelf"
       - "/bin/llvm-readelf"
       - "/sbin/llvm-readelf"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/readelf"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/readelf"
       - "/Users/brooksroley/.local/bin/readelf"
       - "/opt/homebrew/bin/readelf"
       - "/opt/homebrew/sbin/readelf"
@@ -606,12 +612,12 @@ events:
       - "/opt/pmk/env/global/bin/readelf"
       - "/Library/Apple/usr/bin/readelf"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/readelf"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/readelf"
       - "/bin/readelf"
       - "/sbin/readelf"
     found: false
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -626,6 +632,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -653,7 +662,6 @@ events:
       - "dlltool"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -669,11 +677,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-dlltool"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-dlltool"
       - "/Users/brooksroley/.local/bin/llvm-dlltool"
       - "/opt/homebrew/bin/llvm-dlltool"
       - "/opt/homebrew/sbin/llvm-dlltool"
@@ -689,10 +697,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-dlltool"
       - "/Library/Apple/usr/bin/llvm-dlltool"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-dlltool"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-dlltool"
       - "/bin/llvm-dlltool"
       - "/sbin/llvm-dlltool"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/dlltool"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/dlltool"
       - "/Users/brooksroley/.local/bin/dlltool"
       - "/opt/homebrew/bin/dlltool"
       - "/opt/homebrew/sbin/dlltool"
@@ -708,12 +716,12 @@ events:
       - "/opt/pmk/env/global/bin/dlltool"
       - "/Library/Apple/usr/bin/dlltool"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/dlltool"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/dlltool"
       - "/bin/dlltool"
       - "/sbin/dlltool"
     found: false
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -728,6 +736,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -755,7 +766,6 @@ events:
       - "addr2line"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -771,11 +781,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/llvm-addr2line"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/llvm-addr2line"
       - "/Users/brooksroley/.local/bin/llvm-addr2line"
       - "/opt/homebrew/bin/llvm-addr2line"
       - "/opt/homebrew/sbin/llvm-addr2line"
@@ -791,10 +801,10 @@ events:
       - "/opt/pmk/env/global/bin/llvm-addr2line"
       - "/Library/Apple/usr/bin/llvm-addr2line"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/llvm-addr2line"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/llvm-addr2line"
       - "/bin/llvm-addr2line"
       - "/sbin/llvm-addr2line"
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/addr2line"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/addr2line"
       - "/Users/brooksroley/.local/bin/addr2line"
       - "/opt/homebrew/bin/addr2line"
       - "/opt/homebrew/sbin/addr2line"
@@ -810,12 +820,12 @@ events:
       - "/opt/pmk/env/global/bin/addr2line"
       - "/Library/Apple/usr/bin/addr2line"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/addr2line"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/addr2line"
       - "/bin/addr2line"
       - "/sbin/addr2line"
     found: false
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -830,6 +840,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -856,7 +869,6 @@ events:
       - "tapi"
     candidate_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/"
       - "/Users/brooksroley/.local/bin/"
       - "/opt/homebrew/bin/"
       - "/opt/homebrew/sbin/"
@@ -872,11 +884,11 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/"
       - "/bin/"
       - "/sbin/"
     searched_directories:
       - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/tapi"
-      - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin/tapi"
       - "/Users/brooksroley/.local/bin/tapi"
       - "/opt/homebrew/bin/tapi"
       - "/opt/homebrew/sbin/tapi"
@@ -892,12 +904,12 @@ events:
       - "/opt/pmk/env/global/bin/tapi"
       - "/Library/Apple/usr/bin/tapi"
       - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/tapi"
+      - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts/tapi"
       - "/bin/tapi"
       - "/sbin/tapi"
     found: false
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -912,6 +924,9 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
@@ -943,7 +958,6 @@ events:
     found: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform/Emscripten.cmake"
     search_context:
       ENV{PATH}:
-        - "/opt/homebrew/opt/python@3.14/Frameworks/Python.framework/Versions/3.14/bin"
         - "/Users/brooksroley/.local/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
@@ -958,166 +972,13 @@ events:
         - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
+        - "/Users/brooksroley/.local/bin"
+        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
         - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/"
         - "/"
       CMAKE_FIND_ROOT_PATH: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot;/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-...
-
----
-events:
-  -
-    kind: "find-v1"
-    backtrace:
-      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
-      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
-      - "CMakeLists.txt:2 (project)"
-    mode: "file"
-    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
-    description: "Path to a file."
-    settings:
-      SearchFramework: "FIRST"
-      SearchAppBundle: "FIRST"
-      CMAKE_FIND_USE_CMAKE_PATH: true
-      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
-      CMAKE_FIND_USE_INSTALL_PREFIX: true
-    names:
-      - "Platform/Emscripten.cmake"
-    candidate_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/"
-    searched_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
-    found: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform/Emscripten.cmake"
-    search_context:
-      ENV{PATH}:
-        - "/Users/brooksroley/.local/bin"
-        - "/opt/homebrew/bin"
-        - "/opt/homebrew/sbin"
-        - "/usr/local/bin"
-        - "/System/Cryptexes/App/usr/bin"
-        - "/usr/bin"
-        - "/bin"
-        - "/usr/sbin"
-        - "/sbin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
-        - "/opt/pmk/env/global/bin"
-        - "/Library/Apple/usr/bin"
-        - "/Users/brooksroley/.local/bin"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-      CMAKE_INSTALL_PREFIX: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-      CMAKE_SYSTEM_PREFIX_PATH:
-        - "/"
-      CMAKE_FIND_ROOT_PATH: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-...
-
----
-events:
-  -
-    kind: "find-v1"
-    backtrace:
-      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
-      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
-      - "CMakeLists.txt:2 (project)"
-    mode: "file"
-    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
-    description: "Path to a file."
-    settings:
-      SearchFramework: "FIRST"
-      SearchAppBundle: "FIRST"
-      CMAKE_FIND_USE_CMAKE_PATH: true
-      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
-      CMAKE_FIND_USE_INSTALL_PREFIX: true
-    names:
-      - "Platform/Emscripten.cmake"
-    candidate_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/"
-    searched_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
-    found: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform/Emscripten.cmake"
-    search_context:
-      ENV{PATH}:
-        - "/Users/brooksroley/.local/bin"
-        - "/opt/homebrew/bin"
-        - "/opt/homebrew/sbin"
-        - "/usr/local/bin"
-        - "/System/Cryptexes/App/usr/bin"
-        - "/usr/bin"
-        - "/bin"
-        - "/usr/sbin"
-        - "/sbin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
-        - "/opt/pmk/env/global/bin"
-        - "/Library/Apple/usr/bin"
-        - "/Users/brooksroley/.local/bin"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-      CMAKE_INSTALL_PREFIX: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-      CMAKE_SYSTEM_PREFIX_PATH:
-        - "/"
-      CMAKE_FIND_ROOT_PATH: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-...
-
----
-events:
-  -
-    kind: "find-v1"
-    backtrace:
-      - "/opt/homebrew/share/cmake/Modules/Platform/Emscripten.cmake:6 (find_file)"
-      - "/opt/homebrew/share/cmake/Modules/CMakeSystemSpecificInformation.cmake:32 (include)"
-      - "CMakeLists.txt:2 (project)"
-    mode: "file"
-    variable: "_EMSCRIPTEN_PLATFORM_MODULE"
-    description: "Path to a file."
-    settings:
-      SearchFramework: "FIRST"
-      SearchAppBundle: "FIRST"
-      CMAKE_FIND_USE_CMAKE_PATH: true
-      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
-      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
-      CMAKE_FIND_USE_INSTALL_PREFIX: true
-    names:
-      - "Platform/Emscripten.cmake"
-    candidate_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/"
-    searched_directories:
-      - "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform.framework/Headers/Emscripten.cmake"
-    found: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cmake/Modules/Platform/Emscripten.cmake"
-    search_context:
-      ENV{PATH}:
-        - "/Users/brooksroley/.local/bin"
-        - "/opt/homebrew/bin"
-        - "/opt/homebrew/sbin"
-        - "/usr/local/bin"
-        - "/System/Cryptexes/App/usr/bin"
-        - "/usr/bin"
-        - "/bin"
-        - "/usr/sbin"
-        - "/sbin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
-        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
-        - "/opt/pmk/env/global/bin"
-        - "/Library/Apple/usr/bin"
-        - "/Users/brooksroley/.local/bin"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-        - "/Users/brooksroley/.vscode/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts"
-        - "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-      CMAKE_INSTALL_PREFIX: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
-      CMAKE_SYSTEM_PREFIX_PATH:
-        - "/"
-      CMAKE_FIND_ROOT_PATH: "/opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot"
 ...

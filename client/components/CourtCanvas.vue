@@ -16,6 +16,7 @@
       <div v-for="player in livePlayers"
            :key="'h-' + player.id"
            class="player-dot home-dot"
+           :class="{ 'has-ball': ball.possessorId === player.id }"
            :style="dotStyle(player)">
         <span class="dot-label">{{ player.name ? player.name.split(' ').pop().slice(0,3) : player.id }}</span>
       </div>
@@ -24,11 +25,14 @@
       <div v-for="bot in botPlayers"
            :key="'b-' + bot.id"
            class="player-dot away-dot"
+           :class="{ 'has-ball': ball.possessorId === bot.id }"
            :style="dotStyle(bot)">
       </div>
 
-      <!-- Ball -->
-      <div v-if="ball.x !== null" class="ball-dot" :style="dotStyle(ball)"></div>
+      <!-- Ball shadow (when airborne) -->
+      <div v-if="ball.x !== null && (ball.z || 0) > 1" class="ball-shadow" :style="dotStyle(ball)"></div>
+      <!-- Ball (with height offset for arcs) -->
+      <div v-if="ball.x !== null" class="ball-dot" :style="ballStyle(ball)"></div>
     </div>
     </div>
 
@@ -48,7 +52,7 @@ export default {
   setup(props, { emit }) {
     const livePlayers = ref([]);
     const botPlayers = ref([]);
-    const ball = ref({ x: 400, y: 200 });
+    const ball = ref({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
     const homeScore = ref(0);
     const awayScore = ref(0);
     const timeLeft = ref(10.0);
@@ -108,6 +112,16 @@ export default {
       transform: `translate(${clamp(p.x, 0, COURT_W - 20)}px, ${clamp(p.y, 0, COURT_H - 20)}px)`
     });
 
+    // Ball with height offset: z lifts the ball visually and scales it slightly
+    const ballStyle = (b) => {
+      const z = b.z || 0;
+      const lift = z * 3;
+      const scale = 1 + z * 0.04;
+      return {
+        transform: `translate(${clamp(b.x, 0, COURT_W - 12)}px, ${clamp(b.y - lift, 0, COURT_H - 12)}px) scale(${scale})`
+      };
+    };
+
     const syncLoop = (timestamp) => {
       if (simDone) return;
 
@@ -145,7 +159,11 @@ export default {
           }
         } catch (e) { /* engine may not have state yet */ }
       } else {
-        // --- Fallback: JS movement + simple proximity scoring ---
+        // --- Fallback: simplified JS sim with possession tracking ---
+        const BASKET_X = 770;
+        const BASKET_Y = 200;
+
+        // Move home players toward their targets
         livePlayers.value = livePlayers.value.map(p => {
           const dx = p.tx - p.x;
           const dy = p.ty - p.y;
@@ -154,25 +172,53 @@ export default {
             const step = (p.speed || 8) * dt;
             return { ...p, x: p.x + (dx / dist) * step, y: p.y + (dy / dist) * step };
           }
-          return { ...p, tx: 350 + Math.random() * 200, ty: 60 + Math.random() * 280 };
+          // Arrived at target — pick a new one near the basket
+          return { ...p, tx: 450 + Math.random() * 200, ty: 80 + Math.random() * 240 };
         });
 
-        // Move ball toward whoever has it (first home player past half-court)
-        const carrier = livePlayers.value.find(p => p.x > 300);
-        if (carrier) ball.value = { x: carrier.x, y: carrier.y };
-
-        // Scoring based on proximity to basket
-        const nearBasket = livePlayers.value.filter(p => p.x > 450).length;
-        if (Math.random() < 0.001 + nearBasket * 0.002) {
-          const pts = Math.random() < 0.35 ? 3 : 2;
-          homeScore.value += pts;
-          statusText.value = pts === 3 ? 'Three!' : 'Score!';
-          setTimeout(() => { statusText.value = ''; }, 800);
-        }
-        if (Math.random() < 0.003) {
-          awayScore.value += Math.random() < 0.3 ? 3 : 2;
-          statusText.value = 'Opponent scores...';
-          setTimeout(() => { statusText.value = ''; }, 800);
+        // Possession-based ball movement
+        const carrierId = ball.value.possessorId;
+        const carrier = livePlayers.value.find(p => p.id === carrierId);
+        if (carrier) {
+          ball.value = { ...ball.value, x: carrier.x, y: carrier.y, z: 0 };
+          // Carrier drives to basket
+          carrier.tx = BASKET_X;
+          carrier.ty = BASKET_Y;
+          // Shot attempt when near basket
+          const distToBasket = Math.sqrt((carrier.x - BASKET_X) ** 2 + (carrier.y - BASKET_Y) ** 2);
+          if (distToBasket < 100) {
+            const shotProb = (carrier.shooting || 50) / 100 * 0.4;
+            if (Math.random() < shotProb * dt * 2) {
+              const pts = distToBasket > 200 ? 3 : 2;
+              homeScore.value += pts;
+              statusText.value = pts === 3 ? 'Three!' : 'Score!';
+              setTimeout(() => { statusText.value = ''; }, 800);
+              // Give ball to a bot
+              if (botPlayers.value.length > 0) {
+                ball.value = { ...ball.value, possessorId: botPlayers.value[0].id };
+              }
+            }
+          }
+        } else {
+          // Bot has ball or nobody — check bots
+          const botCarrier = botPlayers.value.find(b => b.id === carrierId);
+          if (botCarrier) {
+            ball.value = { ...ball.value, x: botCarrier.x, y: botCarrier.y, z: 0 };
+            botCarrier.tx = 30;
+            botCarrier.ty = 200;
+            const distToBasket = Math.sqrt((botCarrier.x - 30) ** 2 + (botCarrier.y - 200) ** 2);
+            if (distToBasket < 100 && Math.random() < 0.3 * dt * 2) {
+              awayScore.value += Math.random() < 0.3 ? 3 : 2;
+              statusText.value = 'Opponent scores...';
+              setTimeout(() => { statusText.value = ''; }, 800);
+              if (livePlayers.value.length > 0) {
+                ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
+              }
+            }
+          } else if (livePlayers.value.length > 0) {
+            // No carrier — give ball to first home player
+            ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
+          }
         }
 
         // Move JS bots
@@ -208,6 +254,11 @@ export default {
       spawnBots();
       if (!getEngine()) {
         initFallbackPlayers();
+        // Give ball to the best shooter on the home team
+        if (livePlayers.value.length > 0) {
+          const best = livePlayers.value.reduce((a, b) => (b.shooting || 0) > (a.shooting || 0) ? b : a);
+          ball.value = { x: best.x, y: best.y, z: 0, possessorId: best.id, isPossessed: true };
+        }
       }
       lastTime = performance.now();
       timeLeft.value = SIM_DURATION;
@@ -229,7 +280,7 @@ export default {
       if (resizeObserver) resizeObserver.disconnect();
     });
 
-    return { livePlayers, botPlayers, ball, homeScore, awayScore, timeLeft, statusText, dotStyle, courtScaler, courtScale, COURT_H };
+    return { livePlayers, botPlayers, ball, homeScore, awayScore, timeLeft, statusText, dotStyle, ballStyle, courtScaler, courtScale, COURT_H };
   }
 };
 </script>
@@ -307,7 +358,16 @@ export default {
   justify-content: center;
 }
 .home-dot { background: #d9534f; border: 2px solid #fff; }
+.home-dot.has-ball {
+  box-shadow: 0 0 10px 3px rgba(244, 163, 0, 0.8);
+  border-color: #f4a300;
+}
 .away-dot { background: #5bc0de; border: 2px solid #fff; opacity: 0.8; }
+.away-dot.has-ball {
+  box-shadow: 0 0 10px 3px rgba(244, 163, 0, 0.8);
+  border-color: #f4a300;
+  opacity: 1;
+}
 .dot-label {
   font-size: 0.5rem;
   color: #fff;
@@ -326,6 +386,17 @@ export default {
   box-shadow: 0 0 6px #f4a300;
   will-change: transform;
   z-index: 10;
+}
+
+.ball-shadow {
+  position: absolute;
+  width: 14px;
+  height: 6px;
+  border-radius: 50%;
+  top: 0; left: 0;
+  background: rgba(0, 0, 0, 0.3);
+  will-change: transform;
+  z-index: 9;
 }
 
 .sim-status {

@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/Users/brooksroley/Desktop/python/BballTactics/public/engine.js"
-  "/Users/brooksroley/Desktop/python/BballTactics/public/engine.pdb"
+  "/Users/brooksroley/Desktop/BballTactics/public/engine.js"
+  "/Users/brooksroley/Desktop/BballTactics/public/engine.pdb"
   "CMakeFiles/engine.dir/src/Basketball.cpp.o"
   "CMakeFiles/engine.dir/src/Basketball.cpp.o.d"
   "CMakeFiles/engine.dir/src/Bindings.cpp.o"

@@ -131,16 +131,6 @@ python3 test_scraper.py
 python3 -c "from scraper import NBADatasetProcessor; p = NBADatasetProcessor(); p.build_engine_payload(); p.export_json()"
 ```
 
-## Next Steps
-
-### Phase 7: Sim Gameplay Loop (High Priority)
-- [ ] **Ball entity in sim**: Spawn a `Basketball` in `StartRound()`, render it in CourtCanvas. Pass/shoot/steal actions should move the ball between players.
-- [ ] **Possession system**: Track which team/player has the ball. After a score, reset possession. Implement inbound/tip-off.
-- [ ] **Shot attempts**: When a player reaches the basket area, trigger `ShotProbability` to determine make/miss. Animate the arc using `Basketball::Update()`.
-- [ ] **Defensive actions**: Closest defender contests shots (affects `ShotProbability`). Steal attempts based on defense stat vs. ball handler's speed.
-- [ ] **Rebound logic**: On a miss, nearby players compete for the rebound (height-weighted magnet pull).
-- [ ] **Round outcome**: Replace random scoring with actual sim-driven scores. Emit `sim-complete` with final score.
-
 ### Phase 8: Economy & Progression (Medium Priority)
 - [ ] **Shop randomization**: Serve a random pool of 5 players per round from the full roster, weighted by cost tier and current round number.
 - [ ] **Gold/salary system**: Wire `GameEconomy` salary cap into the frontend. Show budget remaining. Selling players refunds partial cost.

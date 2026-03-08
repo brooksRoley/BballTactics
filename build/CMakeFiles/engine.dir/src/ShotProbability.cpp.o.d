@@ -1,7 +1,7 @@
 CMakeFiles/engine.dir/src/ShotProbability.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/ShotProbability.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/ShotProbability.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/src/ShotProbability.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/ShotProbability.h \
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/string \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/max.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/comp.h \
@@ -553,4 +553,4 @@ CMakeFiles/engine.dir/src/ShotProbability.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__memory/raw_storage_iterator.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__memory/temporary_buffer.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/optional \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h

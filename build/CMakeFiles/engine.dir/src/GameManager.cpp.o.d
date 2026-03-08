@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/GameManager.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/GameManager.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/GameManager.h \
+  /Users/brooksroley/Desktop/BballTactics/src/GameManager.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/GameManager.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/map \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/equal.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__algorithm/comp.h \
@@ -652,10 +652,10 @@ CMakeFiles/engine.dir/src/GameManager.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wstring_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cstdarg \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/SynergyEngine.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Court.h \
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/include/SynergyEngine.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Court.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/random \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/bernoulli_distribution.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/uniform_real_distribution.h \
@@ -708,8 +708,8 @@ CMakeFiles/engine.dir/src/GameManager.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/student_t_distribution.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/uniform_random_bit_generator.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/weibull_distribution.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Basketball.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/json.hpp \
+  /Users/brooksroley/Desktop/BballTactics/include/Basketball.h \
+  /Users/brooksroley/Desktop/BballTactics/include/json.hpp \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/forward_list \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/valarray \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cassert \

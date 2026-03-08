@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/GameSeason.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/GameSeason.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/GameSeason.h \
+  /Users/brooksroley/Desktop/BballTactics/src/GameSeason.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/GameSeason.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/iostream \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config_site \

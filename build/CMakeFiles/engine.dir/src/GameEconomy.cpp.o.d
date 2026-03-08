@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/src/GameEconomy.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/GameEconomy.cpp \
-  /Users/brooksroley/Desktop/python/BballTactics/include/GameEconomy.h \
+  /Users/brooksroley/Desktop/BballTactics/src/GameEconomy.cpp \
+  /Users/brooksroley/Desktop/BballTactics/include/GameEconomy.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cmath \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config_site \

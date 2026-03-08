@@ -69,9 +69,12 @@ std::string GameManager::GetGameStateJSON() {
     }
     json += "], ";
 
-    // Ball
+    // Ball (includes z for arc rendering, possession info)
     json += "\"ball\": {\"x\": " + std::to_string(court.ball.position.x) +
-            ", \"y\": " + std::to_string(court.ball.position.y) + "}, ";
+            ", \"y\": " + std::to_string(court.ball.position.y) +
+            ", \"z\": " + std::to_string(court.ball.position.z) +
+            ", \"isPossessed\": " + (court.ball.isPossessed ? "true" : "false") +
+            ", \"possessorId\": " + std::to_string(court.ball.possessorId) + "}, ";
 
     // Scores
     json += "\"homeScore\": " + std::to_string(court.homeScore) +

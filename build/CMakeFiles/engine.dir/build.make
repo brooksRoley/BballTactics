@@ -53,10 +53,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/brooksroley/Desktop/python/BballTactics
+CMAKE_SOURCE_DIR = /Users/brooksroley/Desktop/BballTactics
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/brooksroley/Desktop/python/BballTactics/build
+CMAKE_BINARY_DIR = /Users/brooksroley/Desktop/BballTactics/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/engine.dir/depend.make
@@ -74,138 +74,138 @@ CMakeFiles/engine.dir/codegen:
 
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/PlayerEntity.cpp
+CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/PlayerEntity.cpp
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/engine.dir/src/PlayerEntity.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/PlayerEntity.cpp.o -MF CMakeFiles/engine.dir/src/PlayerEntity.cpp.o.d -o CMakeFiles/engine.dir/src/PlayerEntity.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/PlayerEntity.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/engine.dir/src/PlayerEntity.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/PlayerEntity.cpp.o -MF CMakeFiles/engine.dir/src/PlayerEntity.cpp.o.d -o CMakeFiles/engine.dir/src/PlayerEntity.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/PlayerEntity.cpp
 
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/PlayerEntity.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/PlayerEntity.cpp > CMakeFiles/engine.dir/src/PlayerEntity.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/PlayerEntity.cpp > CMakeFiles/engine.dir/src/PlayerEntity.cpp.i
 
 CMakeFiles/engine.dir/src/PlayerEntity.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/PlayerEntity.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/PlayerEntity.cpp -o CMakeFiles/engine.dir/src/PlayerEntity.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/PlayerEntity.cpp -o CMakeFiles/engine.dir/src/PlayerEntity.cpp.s
 
 CMakeFiles/engine.dir/src/Court.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/Court.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/Court.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/Court.cpp
+CMakeFiles/engine.dir/src/Court.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/Court.cpp
 CMakeFiles/engine.dir/src/Court.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/engine.dir/src/Court.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Court.cpp.o -MF CMakeFiles/engine.dir/src/Court.cpp.o.d -o CMakeFiles/engine.dir/src/Court.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/Court.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/engine.dir/src/Court.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Court.cpp.o -MF CMakeFiles/engine.dir/src/Court.cpp.o.d -o CMakeFiles/engine.dir/src/Court.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/Court.cpp
 
 CMakeFiles/engine.dir/src/Court.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/Court.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/Court.cpp > CMakeFiles/engine.dir/src/Court.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/Court.cpp > CMakeFiles/engine.dir/src/Court.cpp.i
 
 CMakeFiles/engine.dir/src/Court.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/Court.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/Court.cpp -o CMakeFiles/engine.dir/src/Court.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/Court.cpp -o CMakeFiles/engine.dir/src/Court.cpp.s
 
 CMakeFiles/engine.dir/src/Basketball.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/Basketball.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/Basketball.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/Basketball.cpp
+CMakeFiles/engine.dir/src/Basketball.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/Basketball.cpp
 CMakeFiles/engine.dir/src/Basketball.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/engine.dir/src/Basketball.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Basketball.cpp.o -MF CMakeFiles/engine.dir/src/Basketball.cpp.o.d -o CMakeFiles/engine.dir/src/Basketball.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/Basketball.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/engine.dir/src/Basketball.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Basketball.cpp.o -MF CMakeFiles/engine.dir/src/Basketball.cpp.o.d -o CMakeFiles/engine.dir/src/Basketball.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/Basketball.cpp
 
 CMakeFiles/engine.dir/src/Basketball.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/Basketball.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/Basketball.cpp > CMakeFiles/engine.dir/src/Basketball.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/Basketball.cpp > CMakeFiles/engine.dir/src/Basketball.cpp.i
 
 CMakeFiles/engine.dir/src/Basketball.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/Basketball.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/Basketball.cpp -o CMakeFiles/engine.dir/src/Basketball.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/Basketball.cpp -o CMakeFiles/engine.dir/src/Basketball.cpp.s
 
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/SynergyEngine.cpp
+CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/SynergyEngine.cpp
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/engine.dir/src/SynergyEngine.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/SynergyEngine.cpp.o -MF CMakeFiles/engine.dir/src/SynergyEngine.cpp.o.d -o CMakeFiles/engine.dir/src/SynergyEngine.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/SynergyEngine.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/engine.dir/src/SynergyEngine.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/SynergyEngine.cpp.o -MF CMakeFiles/engine.dir/src/SynergyEngine.cpp.o.d -o CMakeFiles/engine.dir/src/SynergyEngine.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/SynergyEngine.cpp
 
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/SynergyEngine.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/SynergyEngine.cpp > CMakeFiles/engine.dir/src/SynergyEngine.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/SynergyEngine.cpp > CMakeFiles/engine.dir/src/SynergyEngine.cpp.i
 
 CMakeFiles/engine.dir/src/SynergyEngine.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/SynergyEngine.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/SynergyEngine.cpp -o CMakeFiles/engine.dir/src/SynergyEngine.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/SynergyEngine.cpp -o CMakeFiles/engine.dir/src/SynergyEngine.cpp.s
 
 CMakeFiles/engine.dir/src/GameEconomy.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/GameEconomy.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/GameEconomy.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/GameEconomy.cpp
+CMakeFiles/engine.dir/src/GameEconomy.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/GameEconomy.cpp
 CMakeFiles/engine.dir/src/GameEconomy.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/engine.dir/src/GameEconomy.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameEconomy.cpp.o -MF CMakeFiles/engine.dir/src/GameEconomy.cpp.o.d -o CMakeFiles/engine.dir/src/GameEconomy.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/GameEconomy.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/engine.dir/src/GameEconomy.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameEconomy.cpp.o -MF CMakeFiles/engine.dir/src/GameEconomy.cpp.o.d -o CMakeFiles/engine.dir/src/GameEconomy.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/GameEconomy.cpp
 
 CMakeFiles/engine.dir/src/GameEconomy.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/GameEconomy.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/GameEconomy.cpp > CMakeFiles/engine.dir/src/GameEconomy.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/GameEconomy.cpp > CMakeFiles/engine.dir/src/GameEconomy.cpp.i
 
 CMakeFiles/engine.dir/src/GameEconomy.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/GameEconomy.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/GameEconomy.cpp -o CMakeFiles/engine.dir/src/GameEconomy.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/GameEconomy.cpp -o CMakeFiles/engine.dir/src/GameEconomy.cpp.s
 
 CMakeFiles/engine.dir/src/GameSeason.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/GameSeason.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/GameSeason.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/GameSeason.cpp
+CMakeFiles/engine.dir/src/GameSeason.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/GameSeason.cpp
 CMakeFiles/engine.dir/src/GameSeason.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/engine.dir/src/GameSeason.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameSeason.cpp.o -MF CMakeFiles/engine.dir/src/GameSeason.cpp.o.d -o CMakeFiles/engine.dir/src/GameSeason.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/GameSeason.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/engine.dir/src/GameSeason.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameSeason.cpp.o -MF CMakeFiles/engine.dir/src/GameSeason.cpp.o.d -o CMakeFiles/engine.dir/src/GameSeason.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/GameSeason.cpp
 
 CMakeFiles/engine.dir/src/GameSeason.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/GameSeason.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/GameSeason.cpp > CMakeFiles/engine.dir/src/GameSeason.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/GameSeason.cpp > CMakeFiles/engine.dir/src/GameSeason.cpp.i
 
 CMakeFiles/engine.dir/src/GameSeason.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/GameSeason.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/GameSeason.cpp -o CMakeFiles/engine.dir/src/GameSeason.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/GameSeason.cpp -o CMakeFiles/engine.dir/src/GameSeason.cpp.s
 
 CMakeFiles/engine.dir/src/ShotProbability.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/ShotProbability.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/ShotProbability.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/ShotProbability.cpp
+CMakeFiles/engine.dir/src/ShotProbability.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/ShotProbability.cpp
 CMakeFiles/engine.dir/src/ShotProbability.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/engine.dir/src/ShotProbability.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/ShotProbability.cpp.o -MF CMakeFiles/engine.dir/src/ShotProbability.cpp.o.d -o CMakeFiles/engine.dir/src/ShotProbability.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/ShotProbability.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/engine.dir/src/ShotProbability.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/ShotProbability.cpp.o -MF CMakeFiles/engine.dir/src/ShotProbability.cpp.o.d -o CMakeFiles/engine.dir/src/ShotProbability.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/ShotProbability.cpp
 
 CMakeFiles/engine.dir/src/ShotProbability.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/ShotProbability.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/ShotProbability.cpp > CMakeFiles/engine.dir/src/ShotProbability.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/ShotProbability.cpp > CMakeFiles/engine.dir/src/ShotProbability.cpp.i
 
 CMakeFiles/engine.dir/src/ShotProbability.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/ShotProbability.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/ShotProbability.cpp -o CMakeFiles/engine.dir/src/ShotProbability.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/ShotProbability.cpp -o CMakeFiles/engine.dir/src/ShotProbability.cpp.s
 
 CMakeFiles/engine.dir/src/GameManager.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/GameManager.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/GameManager.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/GameManager.cpp
+CMakeFiles/engine.dir/src/GameManager.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/GameManager.cpp
 CMakeFiles/engine.dir/src/GameManager.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/engine.dir/src/GameManager.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameManager.cpp.o -MF CMakeFiles/engine.dir/src/GameManager.cpp.o.d -o CMakeFiles/engine.dir/src/GameManager.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/GameManager.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/engine.dir/src/GameManager.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/GameManager.cpp.o -MF CMakeFiles/engine.dir/src/GameManager.cpp.o.d -o CMakeFiles/engine.dir/src/GameManager.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/GameManager.cpp
 
 CMakeFiles/engine.dir/src/GameManager.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/GameManager.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/GameManager.cpp > CMakeFiles/engine.dir/src/GameManager.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/GameManager.cpp > CMakeFiles/engine.dir/src/GameManager.cpp.i
 
 CMakeFiles/engine.dir/src/GameManager.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/GameManager.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/GameManager.cpp -o CMakeFiles/engine.dir/src/GameManager.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/GameManager.cpp -o CMakeFiles/engine.dir/src/GameManager.cpp.s
 
 CMakeFiles/engine.dir/src/Bindings.cpp.o: CMakeFiles/engine.dir/flags.make
 CMakeFiles/engine.dir/src/Bindings.cpp.o: CMakeFiles/engine.dir/includes_CXX.rsp
-CMakeFiles/engine.dir/src/Bindings.cpp.o: /Users/brooksroley/Desktop/python/BballTactics/src/Bindings.cpp
+CMakeFiles/engine.dir/src/Bindings.cpp.o: /Users/brooksroley/Desktop/BballTactics/src/Bindings.cpp
 CMakeFiles/engine.dir/src/Bindings.cpp.o: CMakeFiles/engine.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/engine.dir/src/Bindings.cpp.o"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Bindings.cpp.o -MF CMakeFiles/engine.dir/src/Bindings.cpp.o.d -o CMakeFiles/engine.dir/src/Bindings.cpp.o -c /Users/brooksroley/Desktop/python/BballTactics/src/Bindings.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/engine.dir/src/Bindings.cpp.o"
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/engine.dir/src/Bindings.cpp.o -MF CMakeFiles/engine.dir/src/Bindings.cpp.o.d -o CMakeFiles/engine.dir/src/Bindings.cpp.o -c /Users/brooksroley/Desktop/BballTactics/src/Bindings.cpp
 
 CMakeFiles/engine.dir/src/Bindings.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/engine.dir/src/Bindings.cpp.i"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/python/BballTactics/src/Bindings.cpp > CMakeFiles/engine.dir/src/Bindings.cpp.i
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/brooksroley/Desktop/BballTactics/src/Bindings.cpp > CMakeFiles/engine.dir/src/Bindings.cpp.i
 
 CMakeFiles/engine.dir/src/Bindings.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/engine.dir/src/Bindings.cpp.s"
-	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/python/BballTactics/src/Bindings.cpp -o CMakeFiles/engine.dir/src/Bindings.cpp.s
+	/opt/homebrew/Cellar/emscripten/5.0.2/libexec/em++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/brooksroley/Desktop/BballTactics/src/Bindings.cpp -o CMakeFiles/engine.dir/src/Bindings.cpp.s
 
 # Object files for target engine
 engine_OBJECTS = \
@@ -222,23 +222,23 @@ engine_OBJECTS = \
 # External object files for target engine
 engine_EXTERNAL_OBJECTS =
 
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/PlayerEntity.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Court.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Basketball.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/SynergyEngine.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameEconomy.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameSeason.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/ShotProbability.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameManager.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Bindings.cpp.o
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/build.make
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/objects1.rsp
-/Users/brooksroley/Desktop/python/BballTactics/public/engine.js: CMakeFiles/engine.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable /Users/brooksroley/Desktop/python/BballTactics/public/engine.js"
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/PlayerEntity.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Court.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Basketball.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/SynergyEngine.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameEconomy.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameSeason.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/ShotProbability.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/GameManager.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/src/Bindings.cpp.o
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/build.make
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/objects1.rsp
+/Users/brooksroley/Desktop/BballTactics/public/engine.js: CMakeFiles/engine.dir/link.txt
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/brooksroley/Desktop/BballTactics/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable /Users/brooksroley/Desktop/BballTactics/public/engine.js"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/engine.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
-CMakeFiles/engine.dir/build: /Users/brooksroley/Desktop/python/BballTactics/public/engine.js
+CMakeFiles/engine.dir/build: /Users/brooksroley/Desktop/BballTactics/public/engine.js
 .PHONY : CMakeFiles/engine.dir/build
 
 CMakeFiles/engine.dir/clean:
@@ -246,6 +246,6 @@ CMakeFiles/engine.dir/clean:
 .PHONY : CMakeFiles/engine.dir/clean
 
 CMakeFiles/engine.dir/depend:
-	cd /Users/brooksroley/Desktop/python/BballTactics/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/brooksroley/Desktop/python/BballTactics /Users/brooksroley/Desktop/python/BballTactics /Users/brooksroley/Desktop/python/BballTactics/build /Users/brooksroley/Desktop/python/BballTactics/build /Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles/engine.dir/DependInfo.cmake "--color=$(COLOR)" engine
+	cd /Users/brooksroley/Desktop/BballTactics/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/brooksroley/Desktop/BballTactics /Users/brooksroley/Desktop/BballTactics /Users/brooksroley/Desktop/BballTactics/build /Users/brooksroley/Desktop/BballTactics/build /Users/brooksroley/Desktop/BballTactics/build/CMakeFiles/engine.dir/DependInfo.cmake "--color=$(COLOR)" engine
 .PHONY : CMakeFiles/engine.dir/depend
 

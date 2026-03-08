@@ -104,11 +104,19 @@ void Court::AttemptShot(std::shared_ptr<PlayerEntity>& shooter, bool isHomeTeam)
             ball.isPossessed = false;
         }
     } else {
-        // Miss: drop ball near the hoop for a rebound contest
+        // Miss: launch ball on arc toward the hoop area for a rebound
         std::uniform_real_distribution<float> spread(-50.0f, 50.0f);
         ball.isPossessed = false;
-        ball.position    = {targetHoop.x + spread(rng), targetHoop.y + spread(rng), 0.0f};
-        ball.velocity    = {0.0f, 0.0f, 0.0f};
+        ball.possessorId = -1;
+        float landX = targetHoop.x + spread(rng);
+        float landY = targetHoop.y + spread(rng);
+        float flightTime = 0.7f;
+        ball.position = {shooter->pos.x, shooter->pos.y, 5.0f};
+        ball.velocity = {
+            (landX - shooter->pos.x) / flightTime,
+            (landY - shooter->pos.y) / flightTime,
+            8.0f  // upward arc
+        };
     }
 }
 
@@ -143,56 +151,94 @@ void Court::AssignRebound(float dt) {
 // ── Main sim step ─────────────────────────────────────────────────────────────
 
 void Court::UpdateSimulationStep(float dt) {
+    // Loose ball: apply physics and try to assign rebound once ball lands
     if (!ball.isPossessed) {
-        AssignRebound(dt);
+        ball.UpdatePhysics(dt);
+        if (ball.position.z <= 0.5f) {
+            AssignRebound(dt);
+        }
         return;
     }
 
-    // Home team: carrier drives to away basket, others spread to open spots
-    for (size_t i = 0; i < homeTeam.size(); i++) {
-        auto& p = homeTeam[i];
-        if (p->id == ball.possessorId) {
-            MovePlayerToward(*p, AWAY_HOOP, dt);
-            ball.position = {p->pos.x, p->pos.y, 0.0f};
-            if (p->pos.DistanceTo(AWAY_HOOP) < SHOT_RANGE) {
-                AttemptShot(p, true);
+    // Identify the ball carrier and their team
+    bool isHomeCarrier = false;
+    std::shared_ptr<PlayerEntity> carrier;
+    for (auto& p : homeTeam) {
+        if (p->id == ball.possessorId) { carrier = p; isHomeCarrier = true; break; }
+    }
+    if (!carrier) {
+        for (auto& p : awayTeam) {
+            if (p->id == ball.possessorId) { carrier = p; isHomeCarrier = false; break; }
+        }
+    }
+    if (!carrier) return;
+
+    auto& team      = isHomeCarrier ? homeTeam : awayTeam;
+    auto& opponents = isHomeCarrier ? awayTeam : homeTeam;
+    Vector2D targetHoop = isHomeCarrier ? AWAY_HOOP : HOME_HOOP;
+
+    std::uniform_real_distribution<float> roll(0.0f, 1.0f);
+
+    // ── Steal check ──────────────────────────────────────────────────────────
+    for (auto& def : opponents) {
+        float dist = carrier->pos.DistanceTo(def->pos);
+        if (dist < 40.0f) {
+            float stealChance = (def->stats.defense / 100.0f) * 0.15f * dt;
+            float proximityBonus = ((40.0f - dist) / 40.0f) * 0.1f * dt;
+            if (roll(rng) < stealChance + proximityBonus) {
+                ball.possessorId = def->id;
                 return;
             }
-        } else {
-            // Spread to staggered spots in the offensive zone
-            Vector2D spot{480.0f + float(i % 3) * 80.0f, 80.0f + float(i) * 100.0f};
-            MovePlayerToward(*p, spot, dt);
         }
     }
 
-    // Away team: carrier drives to home basket, others defend nearest attacker
-    for (size_t i = 0; i < awayTeam.size(); i++) {
-        auto& p = awayTeam[i];
-        if (p->id == ball.possessorId) {
-            MovePlayerToward(*p, HOME_HOOP, dt);
-            ball.position = {p->pos.x, p->pos.y, 0.0f};
-            if (p->pos.DistanceTo(HOME_HOOP) < SHOT_RANGE) {
-                AttemptShot(p, false);
+    // ── Pass check (under defensive pressure) ────────────────────────────────
+    auto nearestDef = FindNearestDefender(carrier, isHomeCarrier);
+    if (nearestDef && carrier->pos.DistanceTo(nearestDef->pos) < 60.0f) {
+        for (auto& tm : team) {
+            if (tm->id == carrier->id) continue;
+            auto tmDef = FindNearestDefender(tm, isHomeCarrier);
+            float openness = tmDef ? tm->pos.DistanceTo(tmDef->pos) : 200.0f;
+            if (openness > 80.0f && roll(rng) < 0.3f * dt) {
+                ball.possessorId = tm->id;
+                ball.position = {tm->pos.x, tm->pos.y, 0.0f};
                 return;
             }
-        } else {
-            // Guard: position between the closest home attacker and the home hoop
-            if (!homeTeam.empty()) {
-                std::shared_ptr<PlayerEntity> mark;
-                float minD = std::numeric_limits<float>::max();
-                for (auto& h : homeTeam) {
-                    float d = p->pos.DistanceTo(h->pos);
-                    if (d < minD) { minD = d; mark = h; }
-                }
-                if (mark) {
-                    Vector2D toHoop = HOME_HOOP - mark->pos;
-                    float    mag    = toHoop.Magnitude();
-                    Vector2D guardSpot = mag > 0
-                        ? mark->pos + toHoop.Normalize() * std::min(30.0f, mag)
-                        : mark->pos;
-                    MovePlayerToward(*p, guardSpot, dt);
-                }
-            }
+        }
+    }
+
+    // ── Ball carrier drives to basket ────────────────────────────────────────
+    MovePlayerToward(*carrier, targetHoop, dt);
+    ball.position = {carrier->pos.x, carrier->pos.y, 0.0f};
+
+    if (carrier->pos.DistanceTo(targetHoop) < SHOT_RANGE) {
+        AttemptShot(carrier, isHomeCarrier);
+        return;
+    }
+
+    // ── Teammates spread to offensive spots ──────────────────────────────────
+    float offBaseX = isHomeCarrier ? 480.0f : 120.0f;
+    for (size_t i = 0; i < team.size(); i++) {
+        if (team[i]->id == carrier->id) continue;
+        Vector2D spot{offBaseX + float(i % 3) * 80.0f, 80.0f + float(i) * 100.0f};
+        MovePlayerToward(*team[i], spot, dt);
+    }
+
+    // ── Opponents defend: position between attacker and attacked basket ──────
+    for (auto& def : opponents) {
+        std::shared_ptr<PlayerEntity> mark;
+        float minD = std::numeric_limits<float>::max();
+        for (auto& att : team) {
+            float d = def->pos.DistanceTo(att->pos);
+            if (d < minD) { minD = d; mark = att; }
+        }
+        if (mark) {
+            Vector2D toHoop = targetHoop - mark->pos;
+            float    mag    = toHoop.Magnitude();
+            Vector2D guardSpot = mag > 0
+                ? mark->pos + toHoop.Normalize() * std::min(30.0f, mag)
+                : mark->pos;
+            MovePlayerToward(*def, guardSpot, dt);
         }
     }
 }

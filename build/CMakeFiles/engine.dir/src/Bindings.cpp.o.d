@@ -1,5 +1,5 @@
 CMakeFiles/engine.dir/src/Bindings.cpp.o: \
-  /Users/brooksroley/Desktop/python/BballTactics/src/Bindings.cpp \
+  /Users/brooksroley/Desktop/BballTactics/src/Bindings.cpp \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/emscripten/bind.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cassert \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
@@ -657,11 +657,11 @@ CMakeFiles/engine.dir/src/Bindings.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/emscripten/em_asm.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/emscripten/val.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/emscripten/wire.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/GameManager.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/PlayerEntity.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Vector.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/SynergyEngine.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Court.h \
+  /Users/brooksroley/Desktop/BballTactics/include/GameManager.h \
+  /Users/brooksroley/Desktop/BballTactics/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/include/SynergyEngine.h \
+  /Users/brooksroley/Desktop/BballTactics/include/Court.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/random \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/bernoulli_distribution.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/uniform_real_distribution.h \
@@ -714,4 +714,4 @@ CMakeFiles/engine.dir/src/Bindings.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/student_t_distribution.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/uniform_random_bit_generator.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__random/weibull_distribution.h \
-  /Users/brooksroley/Desktop/python/BballTactics/include/Basketball.h
+  /Users/brooksroley/Desktop/BballTactics/include/Basketball.h
