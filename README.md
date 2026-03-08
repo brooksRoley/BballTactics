@@ -39,7 +39,7 @@ BballTactics/
 ├── public/                  # Static assets served by Vite
 │   ├── engine.js            # Emscripten JS glue (88KB)
 │   ├── engine.wasm          # Compiled C++ engine (195KB)
-│   └── engine_roster.json   # Player data (5 players, z-score normalized stats)
+│   └── engine_roster.json   # Player data (20 players, z-score normalized stats)
 ├── CMakeLists.txt           # Emscripten build config → outputs to public/
 ├── test_engine.cpp          # C++ test suite (10 tests)
 ├── index.html               # Vite entry point
@@ -64,8 +64,10 @@ BballTactics/
 - **10 passing tests**: movement, synergy detection, stat clamping, limitless range no-stack, transition both-axes, shot probability bounds, default init, Vector3D operators, LoadRosterJSON, LoadRosterJSON bad input.
 
 ### Vue Frontend (Vite + Vue 3)
-- **App.vue**: Phase state machine (tutorial → planning → sim). Loads roster from `engine_roster.json`. Passes `courtLineup` from PlanningPhase to CourtCanvas.
-- **PlanningPhase.vue**: Drag-and-drop grid. Players dragged to court call `SpawnPlayer` + `SetPlayerCoordinates`; dragging back calls `RemovePlayer`. Emits lineup data on lock-in.
+- **App.vue**: Phase state machine (tutorial → planning → sim → result → next round). Loads roster from backend `/api/roster` with static file fallback. Passes `courtLineup` from PlanningPhase to CourtCanvas.
+- **Economy system**: Weighted shop randomization by cost tier and round number (early rounds favor cheap units, late rounds unlock expensive ones). Gold income scales with round. Reroll shop for 1G. Sell players from bench for partial refund (floor of cost/2).
+- **Win/loss tracking**: Explicit W/L record displayed in status bar and result screen. HP system (100 HP, -20 per loss). Season ends at round 10 or 0 HP.
+- **PlanningPhase.vue**: Drag-and-drop grid with tap-to-place mobile support. Players dragged to court call `SpawnPlayer` + `SetPlayerCoordinates`; dragging back calls `RemovePlayer`. Sell button on bench players. Emits lineup data on lock-in.
 - **CourtCanvas.vue**: rAF-driven sim loop. Reads engine state via `GetGameStateJSON()` when available. JS fallback mode: target-based movement using player speed stats when engine isn't loaded. Player dots show abbreviated names. Scoring probability scales with players near the basket. Bot opponents move with target-seeking behavior.
 - **TutorialPhase1.vue**: Coach Miller guided onboarding.
 - **Vite build tooling**: `npm run dev` with HMR, `npm run build` for production. Engine loaded via `<script src="/engine.js">` with graceful fallback.
@@ -75,7 +77,7 @@ BballTactics/
 - `test_scraper.py`: 3 passing tests (Z-score clamping, economy tiers, payload structure).
 
 ### Backend
-- `server.py` (FastAPI): Three endpoints (`/api/run/start`, `/api/match/submit-and-fetch`, `/api/match/resolve`). Ghost lobby matchmaking with bot fallback. Async DB session factory with configurable `DATABASE_URL`.
+- `server.py` (FastAPI): Four endpoints (`/api/run/start`, `/api/match/submit-and-fetch`, `/api/match/resolve`, `/api/roster`). Ghost lobby matchmaking with bot fallback. Roster endpoint serves `engine_roster.json` from the backend. Async DB session factory with configurable `DATABASE_URL`.
 - `useMatchmaking.js`: Vue composable for the matchmaking HTTP flow.
 - `createTables.txt`: PostgreSQL schema for players, runs, and board_states.
 
@@ -131,13 +133,15 @@ python3 test_scraper.py
 python3 -c "from scraper import NBADatasetProcessor; p = NBADatasetProcessor(); p.build_engine_payload(); p.export_json()"
 ```
 
-### Phase 8: Economy & Progression (Medium Priority)
-- [ ] **Shop randomization**: Serve a random pool of 5 players per round from the full roster, weighted by cost tier and current round number.
-- [ ] **Gold/salary system**: Wire `GameEconomy` salary cap into the frontend. Show budget remaining. Selling players refunds partial cost.
-- [ ] **Multi-round flow**: After sim ends, return to planning phase. Track wins/losses across rounds. Implement season progression from `GameSeason`.
-- [ ] **Roster endpoint**: Add `/api/roster` to serve `engine_roster.json` from the backend instead of static file.
+### Phase 8: Economy & Progression (Complete)
+
+- [x] **Shop randomization**: Weighted random pool of 5 players per round. Early rounds (1-3) favor cost 1-2 units; mid rounds (4-6) open cost 3-4; late rounds (7-10) unlock cost 5 at meaningful rates.
+- [x] **Gold/salary system**: Gold display in status bar. Buy players from shop, sell from bench for floor(cost/2) refund. Reroll shop for 1G. Income scales with round (base 5 + interest up to 5).
+- [x] **Multi-round flow**: Full game loop — planning → sim → result → next round. W/L record tracked and displayed. HP-based elimination (100 HP, -20 per loss). Season ends at round 10 or 0 HP.
+- [x] **Roster endpoint**: `GET /api/roster` serves `engine_roster.json` from the backend. Frontend tries API first, falls back to static file for gh-pages.
 
 ### Phase 9: Content & Polish (Lower Priority)
+
 - [ ] **Playground PvE rounds**: When `currentRound % 5 == 0`, load historical trio JSON, switch to 3v3 half-court, loot-drop rewards.
 - [ ] **Lockdown synergy**: `lockdownCount` is tracked in SynergyEngine but no buff is created. Design the defensive synergy tier.
 - [ ] **Canvas rendering**: Replace DOM-based player dots with HTML5 Canvas or WebGL for smoother rendering with 10+ entities.

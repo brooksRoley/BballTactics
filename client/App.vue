@@ -4,6 +4,7 @@
       <h1>B-Ball Tactics</h1>
       <div class="status-bar">
         <span class="round-badge">Round {{ round }}/10</span>
+        <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
         <span class="hp-bar">
           HP
           <span class="hp-fill" :style="{ width: health + '%' }"></span>
@@ -28,11 +29,17 @@
           :engine="engine"
           :bench="bench"
           @update:bench="bench = $event"
+          @sell-player="sellPlayer"
           @locked-in="onLockedIn"
         />
 
         <div class="shop-section">
-          <h3>Free Agents</h3>
+          <div class="shop-header">
+            <h3>Free Agents</h3>
+            <button class="reroll-btn" :disabled="gold < 1" @click="rerollShop">
+              Reroll (1G)
+            </button>
+          </div>
           <div class="shop-panel">
             <div
               class="player-card"
@@ -65,6 +72,7 @@
           <h2>{{ lastResult === 'win' ? 'Victory' : 'Defeat' }}</h2>
           <p v-if="lastResult === 'loss'">-20 HP</p>
           <p v-else>No damage taken</p>
+          <p class="record-summary">Record: {{ wins }}W - {{ losses }}L</p>
           <button v-if="health > 0 && round <= 10" @click="nextRound">Next Round</button>
           <div v-else class="game-over">
             <h3>{{ health <= 0 ? 'Eliminated' : 'Season Complete — You Win!' }}</h3>
@@ -87,6 +95,8 @@ const phase = ref('tutorial');
 const round = ref(1);
 const health = ref(100);
 const gold = ref(10);
+const wins = ref(0);
+const losses = ref(0);
 const shop = ref([]);
 const bench = ref([]);
 const lastResult = ref('');
@@ -107,22 +117,63 @@ const initWasm = async () => {
 };
 
 const fetchRoster = async () => {
+  // Try backend API first
+  try {
+    const apiResponse = await fetch('/api/roster');
+    if (apiResponse.ok) {
+      allPlayers = await apiResponse.json();
+      refreshShop();
+      return;
+    }
+  } catch (e) {
+    console.warn('Backend /api/roster unavailable, falling back to static file.');
+  }
+  // Fallback to static file (works for gh-pages deploy or no backend)
   try {
     const response = await fetch(import.meta.env.BASE_URL + 'engine_roster.json');
     allPlayers = await response.json();
     refreshShop();
   } catch (error) {
-    console.error('Failed to load roster data', error);
+    console.error('Failed to load roster data from both sources.', error);
   }
 };
 
+const getShopWeights = (roundNum) => {
+  if (roundNum <= 3) return { 1: 40, 2: 35, 3: 20, 4: 5, 5: 0 };
+  if (roundNum <= 6) return { 1: 25, 2: 30, 3: 25, 4: 15, 5: 5 };
+  return { 1: 15, 2: 20, 3: 25, 4: 25, 5: 15 };
+};
+
+const weightedSample = (candidates, count, weights) => {
+  const pool = candidates.map(p => ({ player: p, weight: weights[p.cost] || 0 }))
+                         .filter(e => e.weight > 0);
+  const result = [];
+  for (let i = 0; i < count && pool.length > 0; i++) {
+    const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
+    let r = Math.random() * totalWeight;
+    let idx = 0;
+    for (; idx < pool.length - 1; idx++) {
+      r -= pool[idx].weight;
+      if (r <= 0) break;
+    }
+    result.push(pool[idx].player);
+    pool.splice(idx, 1);
+  }
+  return result;
+};
+
 const refreshShop = () => {
-  // Show a random selection of players each round (up to 5)
   const available = allPlayers.filter(p =>
     !bench.value.find(b => b.id === p.id)
   );
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
-  shop.value = shuffled.slice(0, 5);
+  const weights = getShopWeights(round.value);
+  shop.value = weightedSample(available, 5, weights);
+};
+
+const rerollShop = () => {
+  if (gold.value < 1) return;
+  gold.value -= 1;
+  refreshShop();
 };
 
 const buyPlayer = (player) => {
@@ -130,6 +181,12 @@ const buyPlayer = (player) => {
   gold.value -= player.cost;
   bench.value = [...bench.value, player];
   shop.value = shop.value.filter(p => p.id !== player.id);
+};
+
+const sellPlayer = (player) => {
+  const refund = Math.floor(player.cost / 2);
+  gold.value += refund;
+  bench.value = bench.value.filter(p => p.id !== player.id);
 };
 
 const onLockedIn = (lineup) => {
@@ -144,6 +201,9 @@ const onSimComplete = (result) => {
   lastResult.value = result;
   if (result === 'loss') {
     health.value = Math.max(0, health.value - 20);
+    losses.value++;
+  } else {
+    wins.value++;
   }
   phase.value = 'result';
 };
@@ -159,6 +219,8 @@ const resetGame = () => {
   round.value = 1;
   health.value = 100;
   gold.value = 10;
+  wins.value = 0;
+  losses.value = 0;
   bench.value = [];
   lastResult.value = '';
   refreshShop();
@@ -260,7 +322,32 @@ body {
 
 /* Shop */
 .shop-section { margin-top: 15px; }
-.shop-section h3 { margin: 0 0 8px 0; font-size: 1rem; color: #888; }
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.shop-header h3 { margin: 0; font-size: 1rem; color: #888; }
+.reroll-btn {
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  background: #333;
+  color: #ffd700;
+  border: 1px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.reroll-btn:hover:not(:disabled) { background: #444; }
+.reroll-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.record-badge {
+  background: #333;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 0.9rem;
+}
+.record-summary { color: #888; font-size: 0.9rem; margin-top: 8px; }
 .shop-panel { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .player-card {

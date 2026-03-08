@@ -116,3 +116,13 @@ async def resolve_match(req: ResolveMatchRequest, db: AsyncSession = Depends(get
     await db.commit()
     
     return {"health": new_health, "current_round": new_round, "status": status}
+
+@app.get("/api/roster")
+async def get_roster():
+    """Serves the engine roster JSON from the public directory."""
+    roster_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "engine_roster.json")
+    if not os.path.exists(roster_path):
+        raise HTTPException(status_code=404, detail="Roster file not found.")
+    with open(roster_path, "r") as f:
+        roster = json.load(f)
+    return roster

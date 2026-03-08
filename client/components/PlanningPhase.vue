@@ -60,6 +60,11 @@
           <span class="bp-stats">
             SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }}
           </span>
+          <button class="sell-btn"
+                  @click.stop="$emit('sell-player', player)"
+                  :title="'Sell for ' + Math.floor(player.cost / 2) + 'G'">
+            Sell ({{ Math.floor(player.cost / 2) }}G)
+          </button>
         </div>
         <div v-if="benchPlayers.length === 0" class="bench-empty">
           Draft players from the shop below
@@ -90,7 +95,7 @@ export default {
     engine: { type: Object, default: null },
     bench: { type: Array, default: () => [] }
   },
-  emits: ['locked-in', 'update:bench'],
+  emits: ['locked-in', 'update:bench', 'sell-player'],
   setup(props, { emit }) {
     const onCourt = ref([]);
     const dragState = ref({ player: null, from: null });
@@ -431,6 +436,17 @@ export default {
 .bp-name { font-size: 0.85rem; font-weight: bold; }
 .bp-stats { font-size: 0.65rem; color: #777; }
 .bench-empty { color: #555; font-style: italic; font-size: 0.85rem; padding: 8px; }
+.sell-btn {
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  background: #5a2b2b;
+  color: #ffa07a;
+  border: 1px solid #8b4513;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.sell-btn:hover { background: #7a3b3b; }
 
 /* Lock-in bar */
 .lock-in-bar {
