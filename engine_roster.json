@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "name": "Steph Curry",
+        "cost": 5,
+        "stats": {
+            "shooting": 74,
+            "speed": 63,
+            "defense": 51
+        }
+    },
+    {
+        "id": 2,
+        "name": "De'Aaron Fox",
+        "cost": 5,
+        "stats": {
+            "shooting": 66,
+            "speed": 72,
+            "defense": 42
+        }
+    },
+    {
+        "id": 3,
+        "name": "Rudy Gobert",
+        "cost": 5,
+        "stats": {
+            "shooting": 47,
+            "speed": 35,
+            "defense": 72
+        }
+    },
+    {
+        "id": 4,
+        "name": "Alex Caruso",
+        "cost": 3,
+        "stats": {
+            "shooting": 38,
+            "speed": 56,
+            "defense": 63
+        }
+    },
+    {
+        "id": 5,
+        "name": "Udonis Haslem",
+        "cost": 1,
+        "stats": {
+            "shooting": 25,
+            "speed": 24,
+            "defense": 21
+        }
+    }
+]
