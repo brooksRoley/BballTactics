@@ -6,7 +6,8 @@
       <div class="team-score away">OPP: {{ awayScore }}</div>
     </div>
 
-    <div class="court-floor">
+    <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
+    <div class="court-floor" :style="{ transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
       <!-- Court markings -->
       <div class="marking half-line"></div>
       <div class="marking center-circle"></div>
@@ -28,6 +29,7 @@
 
       <!-- Ball -->
       <div v-if="ball.x !== null" class="ball-dot" :style="dotStyle(ball)"></div>
+    </div>
     </div>
 
     <div class="sim-status">{{ statusText }}</div>
@@ -58,6 +60,10 @@ export default {
     const COURT_W = 800;
     const COURT_H = 400;
     const SIM_DURATION = 10.0; // seconds
+
+    const courtScaler = ref(null);
+    const courtScale = ref(1);
+    let resizeObserver = null;
 
     const getEngine = () => props.engine || inject('engine', null);
 
@@ -186,8 +192,12 @@ export default {
 
     const finishSim = () => {
       simDone = true;
-      const result = homeScore.value >= awayScore.value ? 'win' : 'loss';
-      statusText.value = result === 'win' ? 'Final — You win!' : 'Final — You lose.';
+      const result = homeScore.value > awayScore.value ? 'win' : 'loss';
+      statusText.value = result === 'win'
+        ? 'Final — You win!'
+        : homeScore.value === awayScore.value
+          ? 'Final — Draw counts as a loss!'
+          : 'Final — You lose.';
 
       setTimeout(() => {
         emit('sim-complete', result);
@@ -202,14 +212,24 @@ export default {
       lastTime = performance.now();
       timeLeft.value = SIM_DURATION;
       animationFrameId = requestAnimationFrame(syncLoop);
+
+      const updateScale = () => {
+        if (courtScaler.value) {
+          courtScale.value = Math.min(1, courtScaler.value.clientWidth / COURT_W);
+        }
+      };
+      updateScale();
+      resizeObserver = new ResizeObserver(updateScale);
+      if (courtScaler.value) resizeObserver.observe(courtScaler.value);
     });
 
     onUnmounted(() => {
       simDone = true;
       cancelAnimationFrame(animationFrameId);
+      if (resizeObserver) resizeObserver.disconnect();
     });
 
-    return { livePlayers, botPlayers, ball, homeScore, awayScore, timeLeft, statusText, dotStyle };
+    return { livePlayers, botPlayers, ball, homeScore, awayScore, timeLeft, statusText, dotStyle, courtScaler, courtScale, COURT_H };
   }
 };
 </script>
@@ -222,11 +242,18 @@ export default {
   gap: 10px;
 }
 
+.court-scaler {
+  width: 100%;
+  max-width: 800px;
+  overflow: hidden;
+}
+
 .sim-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 800px;
+  width: 100%;
+  max-width: 800px;
   padding: 8px 20px;
   background: #1a1a1a;
   border: 1px solid #333;

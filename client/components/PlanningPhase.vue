@@ -3,7 +3,9 @@
 
     <!-- Half-court grid -->
     <div class="court-wrapper">
+      <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
       <div class="court"
+           :style="{ transform: `scale(${courtScale})`, transformOrigin: 'top left' }"
            @dragover.prevent
            @drop="onDropCourt($event)">
 
@@ -17,23 +19,28 @@
         <div v-for="cell in gridCells"
              :key="cell.id"
              class="court-cell"
+             :class="{ 'cell-highlight': selectedPlayer }"
              :data-x="cell.x"
              :data-y="cell.y"
-             :style="cellStyle(cell)">
+             :style="cellStyle(cell)"
+             @click="onTapCell(cell)">
         </div>
 
         <!-- Placed players -->
         <div v-for="player in onCourt"
              :key="'court-' + player.id"
              class="court-player"
+             :class="{ selected: selectedPlayer && selectedPlayer.id === player.id }"
              :style="playerStyle(player)"
              draggable="true"
-             @dragstart="onDragStart($event, player, 'court')">
+             @dragstart="onDragStart($event, player, 'court')"
+             @click.stop="onTapCourtPlayer(player)">
           <span class="player-name">{{ shortName(player.name) }}</span>
         </div>
       </div>
+      </div>
 
-      <div class="court-label">Drag players from the bench onto the court</div>
+      <div class="court-label">{{ selectedPlayer ? 'Tap a court cell to place, or tap bench to return' : 'Tap or drag players onto the court' }}</div>
     </div>
 
     <!-- Bench -->
@@ -45,9 +52,10 @@
         <div v-for="player in benchPlayers"
              :key="'bench-' + player.id"
              class="bench-player"
-             :class="[`cost-${player.cost}`]"
+             :class="[`cost-${player.cost}`, { selected: selectedPlayer && selectedPlayer.id === player.id }]"
              draggable="true"
-             @dragstart="onDragStart($event, player, 'bench')">
+             @dragstart="onDragStart($event, player, 'bench')"
+             @click="onTapBench(player)">
           <span class="bp-name">{{ player.name }}</span>
           <span class="bp-stats">
             SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }}
@@ -75,7 +83,7 @@
 </template>
 
 <script>
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
 
 export default {
   props: {
@@ -86,6 +94,10 @@ export default {
   setup(props, { emit }) {
     const onCourt = ref([]);
     const dragState = ref({ player: null, from: null });
+    const selectedPlayer = ref(null);
+    const courtScaler = ref(null);
+    const courtScale = ref(1);
+    let resizeObserver = null;
     const getEngine = () => props.engine || inject('engine', null);
 
     const COURT_W = 500;
@@ -134,11 +146,12 @@ export default {
       const { player, from } = dragState.value;
       if (!player) return;
 
-      // Find which cell was dropped on
+      // Find which cell was dropped on (adjust for CSS scale)
       const courtEl = event.currentTarget;
       const rect = courtEl.getBoundingClientRect();
-      const dropX = Math.floor((event.clientX - rect.left) / CELL_W);
-      const dropY = Math.floor((event.clientY - rect.top) / CELL_H);
+      const scale = courtScale.value || 1;
+      const dropX = Math.floor((event.clientX - rect.left) / scale / CELL_W);
+      const dropY = Math.floor((event.clientY - rect.top) / scale / CELL_H);
       const cx = Math.max(0, Math.min(COLS - 1, dropX));
       const cy = Math.max(0, Math.min(ROWS - 1, dropY));
 
@@ -198,10 +211,92 @@ export default {
       dragState.value = { player: null, from: null };
     };
 
+    // --- Tap-to-place (mobile support) ---
+    const onTapBench = (player) => {
+      if (selectedPlayer.value && selectedPlayer.value._from === 'court') {
+        // A court player is selected — tapping bench returns them
+        const sp = selectedPlayer.value;
+        onCourt.value = onCourt.value.filter(p => p.id !== sp.id);
+        const { courtX, courtY, _from, ...benchPlayer } = sp;
+        emit('update:bench', [...props.bench, benchPlayer]);
+        const eng = getEngine();
+        if (eng) eng.RemovePlayer(sp.id);
+        selectedPlayer.value = null;
+        return;
+      }
+      // Toggle selection of a bench player
+      if (selectedPlayer.value && selectedPlayer.value.id === player.id) {
+        selectedPlayer.value = null;
+      } else {
+        selectedPlayer.value = { ...player, _from: 'bench' };
+      }
+    };
+
+    const onTapCell = (cell) => {
+      if (!selectedPlayer.value) return;
+      const cx = cell.x;
+      const cy = cell.y;
+
+      // Check if cell is occupied
+      if (onCourt.value.find(p => p.courtX === cx && p.courtY === cy && p.id !== selectedPlayer.value.id)) {
+        return;
+      }
+
+      const player = selectedPlayer.value;
+
+      if (player._from === 'bench') {
+        if (onCourt.value.length >= 5) return;
+        const { _from, ...cleanPlayer } = player;
+        const placed = { ...cleanPlayer, courtX: cx, courtY: cy };
+        onCourt.value = [...onCourt.value, placed];
+        emit('update:bench', props.bench.filter(p => p.id !== player.id));
+        const eng = getEngine();
+        if (eng) {
+          eng.SpawnPlayer(player.id, player.name, player.stats.speed, player.stats.shooting);
+          eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
+        }
+      } else {
+        // Reposition court player
+        onCourt.value = onCourt.value.map(p =>
+          p.id === player.id ? { ...p, courtX: cx, courtY: cy } : p
+        );
+        const eng = getEngine();
+        if (eng) eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
+      }
+
+      selectedPlayer.value = null;
+    };
+
+    const onTapCourtPlayer = (player) => {
+      if (selectedPlayer.value && selectedPlayer.value.id === player.id) {
+        selectedPlayer.value = null;
+      } else {
+        selectedPlayer.value = { ...player, _from: 'court' };
+      }
+    };
+
+    // --- Responsive scaling ---
+    onMounted(() => {
+      const updateScale = () => {
+        if (courtScaler.value) {
+          courtScale.value = Math.min(1, courtScaler.value.clientWidth / COURT_W);
+        }
+      };
+      updateScale();
+      resizeObserver = new ResizeObserver(updateScale);
+      if (courtScaler.value) resizeObserver.observe(courtScaler.value);
+    });
+
+    onUnmounted(() => {
+      if (resizeObserver) resizeObserver.disconnect();
+    });
+
     return {
       onCourt, benchPlayers, gridCells,
       cellStyle, playerStyle, shortName,
-      onDragStart, onDropCourt, onDropBench
+      onDragStart, onDropCourt, onDropBench,
+      onTapBench, onTapCell, onTapCourtPlayer,
+      selectedPlayer, courtScaler, courtScale, COURT_H
     };
   }
 };
@@ -216,6 +311,11 @@ export default {
 
 /* Court */
 .court-wrapper { display: flex; flex-direction: column; align-items: center; }
+.court-scaler {
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+}
 .court-label { color: #666; font-size: 0.8rem; margin-top: 6px; }
 
 .court {
@@ -357,4 +457,26 @@ export default {
   opacity: 0.5;
 }
 .lock-in-btn:not(:disabled):hover { background: #c9302c; }
+
+/* Selection states for tap-to-place */
+.court-player.selected {
+  box-shadow: 0 0 12px 4px rgba(91, 192, 222, 0.8);
+  border-color: #5bc0de;
+}
+.bench-player.selected {
+  box-shadow: 0 0 10px 3px rgba(91, 192, 222, 0.8);
+  border-color: #5bc0de;
+}
+.court-cell.cell-highlight:hover {
+  border-color: rgba(91, 192, 222, 0.5);
+  background: rgba(91, 192, 222, 0.1);
+}
+
+@media (max-width: 520px) {
+  .bench-player { padding: 8px 12px; }
+  .bp-name { font-size: 0.9rem; }
+  .bp-stats { font-size: 0.7rem; }
+  .lock-in-bar { flex-direction: column; gap: 8px; }
+  .lock-in-btn { width: 100%; padding: 12px; font-size: 1.1rem; }
+}
 </style>

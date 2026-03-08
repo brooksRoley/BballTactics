@@ -163,7 +163,7 @@ export default {
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: 600px;
+  width: min(600px, 90vw);
   background: #1e1e1e;
   border: 2px solid #8b5a2b; /* Hardwood accent */
   border-left: 8px solid #d9534f;
@@ -244,12 +244,13 @@ export default {
   display: flex;
   gap: 15px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* Player Cards - The Visual Economy */
 .player-card {
-  width: 180px;
-  height: 250px;
+  width: min(180px, 42vw);
+  min-height: 200px;
   background: #1a1a1a;
   border: 2px solid #444; /* Default gray for 1-cost */
   display: flex;
@@ -278,8 +279,9 @@ export default {
 /* Bench (Simplified for Phase 1) */
 .bench-area {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  height: 80px;
+  min-height: 80px;
   background: #111;
   border-top: 2px solid #8b5a2b; /* Hardwood */
   padding: 10px;

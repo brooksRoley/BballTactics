@@ -108,7 +108,7 @@ const initWasm = async () => {
 
 const fetchRoster = async () => {
   try {
-    const response = await fetch('/engine_roster.json');
+    const response = await fetch(import.meta.env.BASE_URL + 'engine_roster.json');
     allPlayers = await response.json();
     refreshShop();
   } catch (error) {
@@ -165,7 +165,17 @@ const resetGame = () => {
   phase.value = 'planning';
 };
 
-const onTutorialComplete = () => {
+const onTutorialComplete = (tutorialPlayer) => {
+  if (tutorialPlayer) {
+    // Find the real roster version by name so stats/id are correct for the engine
+    const rosterMatch = allPlayers.find(p =>
+      p.name.toLowerCase() === tutorialPlayer.name.toLowerCase()
+    );
+    if (rosterMatch && !bench.value.find(b => b.id === rosterMatch.id)) {
+      bench.value = [...bench.value, rosterMatch];
+      gold.value -= tutorialPlayer.cost; // deduct what the tutorial charged
+    }
+  }
   phase.value = 'planning';
 };
 
@@ -306,4 +316,21 @@ body {
 }
 .result-card button:hover { background: #c9302c; }
 .game-over h3 { margin-top: 15px; }
+
+@media (max-width: 600px) {
+  .app { padding: 8px 10px; }
+  .top-bar {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .top-bar h1 { font-size: 1.1rem; }
+  .status-bar { width: 100%; justify-content: space-between; }
+  .hp-bar { width: 90px; }
+  .shop-panel { flex-direction: column; }
+  .player-card { min-width: unset; width: 100%; flex-direction: row; align-items: center; gap: 8px; }
+  .card-cost { font-size: 0.85rem; }
+  .card-stats { font-size: 0.75rem; }
+  .result-card { padding: 30px 20px; }
+}
 </style>
