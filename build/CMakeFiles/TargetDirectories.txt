@@ -1,0 +1,3 @@
+/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles/engine.dir
+/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles/edit_cache.dir
+/Users/brooksroley/Desktop/python/BballTactics/build/CMakeFiles/rebuild_cache.dir

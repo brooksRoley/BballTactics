@@ -1,0 +1,28 @@
+-- The Core Users
+CREATE TABLE players (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tracks the active macro-state of a Season/Run
+CREATE TABLE runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    current_round INT NOT NULL DEFAULT 1,
+    health INT NOT NULL DEFAULT 100,
+    status VARCHAR(20) NOT NULL DEFAULT 'active', -- 'active', 'won', 'lost'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- The Ghost Data: Snapshots of boards for matchmaking
+CREATE TABLE board_states (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    run_id UUID REFERENCES runs(id) ON DELETE CASCADE,
+    round_number INT NOT NULL,
+    board_data JSONB NOT NULL, -- X/Y coords, synergy tags, stats
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CRITICAL INDEX: We will be querying heavily by round_number to find opponents
+CREATE INDEX idx_board_states_round ON board_states(round_number);
