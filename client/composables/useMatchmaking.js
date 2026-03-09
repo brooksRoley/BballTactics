@@ -1,5 +1,7 @@
 import { ref } from 'vue';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 export function useMatchmaking() {
   const isSearching = ref(false);
   const searchError = ref(null);
@@ -16,7 +18,7 @@ export function useMatchmaking() {
     searchError.value = null;
 
     try {
-      const response = await fetch('/api/match/submit-and-fetch', {
+      const response = await fetch(`${API_BASE}/api/match/submit-and-fetch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +56,7 @@ export function useMatchmaking() {
    */
   const resolveMatch = async (runId, matchResult) => {
     try {
-      const response = await fetch('/api/match/resolve', {
+      const response = await fetch(`${API_BASE}/api/match/resolve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -86,6 +86,8 @@
 
 <script setup>
 import { ref, onMounted, provide } from 'vue';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
 import TutorialPhase1 from './components/TutorialPhase1.vue';
@@ -119,7 +121,7 @@ const initWasm = async () => {
 const fetchRoster = async () => {
   // Try backend API first
   try {
-    const apiResponse = await fetch('/api/roster');
+    const apiResponse = await fetch(`${API_BASE}/api/roster`);
     if (apiResponse.ok) {
       allPlayers = await apiResponse.json();
       refreshShop();

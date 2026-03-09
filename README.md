@@ -48,7 +48,15 @@ BballTactics/
 ├── server.py                # FastAPI backend (runs, matchmaking, board states)
 ├── scraper.py               # NBA data pipeline (Z-score normalization)
 ├── test_scraper.py          # Python unit tests for stat pipeline
-└── createTables.txt         # PostgreSQL schema (players, runs, board_states)
+├── createTables.txt         # PostgreSQL schema (players, runs, board_states)
+├── requirements.txt         # Python deps for the API
+├── Dockerfile               # Multi-stage build: Node (Vite) → Python (uvicorn)
+├── docker-compose.yml       # Local dev: api + postgres services
+├── fly.toml                 # Fly.io deployment config (app: bballtactics)
+├── .env.production          # VITE_API_BASE_URL for GitHub Pages → Fly.io
+├── docker/
+│   └── init.sql             # DB initialization script (run once on fresh Postgres)
+└── bots/                    # Testing + analysis bots (planned — see Phase 10)
 ```
 
 ## What's Working
@@ -77,9 +85,15 @@ BballTactics/
 - `test_scraper.py`: 3 passing tests (Z-score clamping, economy tiers, payload structure).
 
 ### Backend
-- `server.py` (FastAPI): Four endpoints (`/api/run/start`, `/api/match/submit-and-fetch`, `/api/match/resolve`, `/api/roster`). Ghost lobby matchmaking with bot fallback. Roster endpoint serves `engine_roster.json` from the backend. Async DB session factory with configurable `DATABASE_URL`.
-- `useMatchmaking.js`: Vue composable for the matchmaking HTTP flow.
+- `server.py` (FastAPI): Four endpoints (`/api/run/start`, `/api/match/submit-and-fetch`, `/api/match/resolve`, `/api/roster`). Ghost lobby matchmaking with bot fallback. Roster endpoint serves `engine_roster.json` from the backend. Async DB session factory with configurable `DATABASE_URL`. CORS configured for GitHub Pages origin. Mounts `dist/` as static files when present (production only).
+- `useMatchmaking.js`: Vue composable for the matchmaking HTTP flow. Uses `VITE_API_BASE_URL` env var so GitHub Pages calls the Fly.io API directly.
 - `createTables.txt`: PostgreSQL schema for players, runs, and board_states.
+
+### Deployment
+- **API**: Deployed to Fly.io at `https://bballtactics.fly.dev` (`fly.toml`, `Dockerfile`).
+- **Database**: Fly.io Postgres (`bballtactics-db`). Tables initialized via `docker/init.sql`. Attached to the app — `DATABASE_URL` injected automatically as a secret.
+- **Frontend**: Deployed to GitHub Pages at `https://brooksroley.github.io/BballTactics/` via `npm run deploy`. Production builds use `VITE_API_BASE_URL=https://bballtactics.fly.dev` so all API calls route to Fly.io.
+- **Local dev**: `docker compose up` runs API + Postgres locally. Vite proxy handles `/api` → `localhost:8000`.
 
 ### Wasm Build
 - Emscripten 5.0.2 via Homebrew.
@@ -123,6 +137,27 @@ npm run dev
 uvicorn server:app --reload --port 8000
 ```
 
+### Run with Docker (local Postgres)
+```bash
+docker compose up --build
+# App at http://localhost:8000
+```
+
+### Deploy to Fly.io
+```bash
+flyctl deploy -a bballtactics
+```
+
+### Deploy Frontend to GitHub Pages
+```bash
+npm run deploy
+```
+
+### Initialize a fresh Fly.io Postgres database
+```bash
+flyctl postgres connect -a bballtactics-db < docker/init.sql
+```
+
 ### Run Python Tests
 ```bash
 python3 test_scraper.py
@@ -140,11 +175,54 @@ python3 -c "from scraper import NBADatasetProcessor; p = NBADatasetProcessor(); 
 - [x] **Multi-round flow**: Full game loop — planning → sim → result → next round. W/L record tracked and displayed. HP-based elimination (100 HP, -20 per loss). Season ends at round 10 or 0 HP.
 - [x] **Roster endpoint**: `GET /api/roster` serves `engine_roster.json` from the backend. Frontend tries API first, falls back to static file for gh-pages.
 
-### Phase 9: Content & Polish (Lower Priority)
+### Phase 9: Deploy & Infrastructure (Complete)
 
-- [ ] **Playground PvE rounds**: When `currentRound % 5 == 0`, load historical trio JSON, switch to 3v3 half-court, loot-drop rewards.
+- [x] **Containerize**: Multi-stage `Dockerfile` (Node builds Vite frontend → Python serves API + static files). `docker-compose.yml` for local dev with Postgres.
+- [x] **Fly.io deploy**: `fly.toml` configured. API live at `https://bballtactics.fly.dev`.
+- [x] **Postgres on Fly.io**: `bballtactics-db` provisioned and attached. Schema initialized from `docker/init.sql`.
+- [x] **GitHub Pages → Fly.io wiring**: `VITE_API_BASE_URL` in `.env.production` points all API calls from GitHub Pages to the live Fly.io backend. CORS middleware allows the GitHub Pages origin.
+- [x] **Matchmaking integration**: `useMatchmaking.js` wired into the game flow with environment-aware API base URL.
+
+### Phase 10: Testing & Balance (Next)
+
+#### Bot 1: E2E API Test Suite (`bots/e2e/`)
+
+- [x] `conftest.py` — pytest fixtures: `httpx.Client`, `run_id`, `roster`. Session-scoped health ping for Fly.io cold starts.
+- [x] `board_fixtures.py` — realistic `board_data` payloads matching the Vue `onCourt` array schema (`{id, name, cost, stats, courtX, courtY}`).
+- [x] `test_run_lifecycle.py` — full 10-round win run, 5-loss elimination, HP math assertions, 400 on dead run.
+- [x] `test_ghost_matchmaking.py` — bot fallback when DB is empty, two runs pairing as ghosts, `board_data` string-vs-dict handling (SQLite vs Postgres).
+- [x] `test_hp_and_status.py` — health decrements, `'won'`/`'lost'` terminal states, resolving a closed run returns 400.
+
+**Key notes:**
+- Use `httpx` (sync) — no `pytest-asyncio` needed. CORS is browser-only, Python clients are unaffected.
+- Tests against Fly.io: add `timeout=30.0` on session fixture for cold starts.
+- `opponent_board` from SQLite is a raw JSON string; from Postgres it is a parsed dict. Tests must handle both.
+
+#### Bot 2: Balance Analysis (`bots/balance/`)
+
+- [x] `engine_runner/game_runner.cpp` — thin `main()` that reads a JSON matchup from stdin, ticks `GameManager` for N frames, writes `{homeScore, awayScore, winner}` to stdout.
+  - Must **exclude** `src/Bindings.cpp` from the g++ build (it imports `<emscripten/bind.h>`).
+  - Must override the fixed RNG seed `{42}` in `Court.h` — all 200 runs of the same matchup are otherwise identical.
+  - Accept both teams from stdin rather than calling `SpawnBotOpponents()` to enable true team-vs-team analysis.
+- [x] `engine_runner/Makefile` — g++ build command mirroring the existing `test_runner` compile pattern.
+- [x] `simulate.py` — subprocess loop calling `game_runner` for each matchup combination. Returns a pandas DataFrame (one row per game).
+- [x] `analyze.py` — win rates by cost tier, individual player win rates (flag outliers), synergy effectiveness, formation heatmap (5×5 grid), HP damage curve across 10 rounds.
+- [x] `run_analysis.py` — entrypoint: simulate → analyze → save charts to `bots/balance/charts/`.
+
+**Key architectural note:** The ghost board from `board_states` affects the visual display only — `StartRound()` always calls `SpawnBotOpponents()` with hardcoded stats. The C++ sim does not load the opponent's board data. This is a known limitation to address if true ghost-vs-ghost simulation is desired.
+
+**Dependencies** (`bots/requirements-bots.txt`):
+```
+httpx>=0.27.0
+pytest>=8.0.0
+pandas>=2.2.0
+numpy>=1.26.0
+matplotlib>=3.9.0
+scipy>=1.13.0
+tqdm>=4.66.0
+```
+
+### Phase 11: Content & Polish (Lower Priority)
 - [ ] **Lockdown synergy**: `lockdownCount` is tracked in SynergyEngine but no buff is created. Design the defensive synergy tier.
-- [ ] **Canvas rendering**: Replace DOM-based player dots with HTML5 Canvas or WebGL for smoother rendering with 10+ entities.
 - [ ] **Live data source**: Replace mock data in `scraper.py` with a real NBA stats API (nba_api package or balldontlie v2).
-- [ ] **Matchmaking integration**: Wire `useMatchmaking.js` into the game flow — submit board state after planning, fetch opponent from backend.
-- [ ] **Deploy pipeline**: Containerize (Docker), set up CI for Wasm builds + frontend bundle, deploy to a hosting platform.
+- [ ] **True ghost simulation**: Load the opponent's `board_data` from the DB into the C++ engine as the actual away team instead of spawning bot opponents.

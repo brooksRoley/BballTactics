@@ -13,6 +13,7 @@ public:
 
     void AddPlayer(std::shared_ptr<PlayerEntity> p, bool isHome);
     void Clear();
+    void Reseed(uint32_t seed) { rng.seed(seed); }
     void InitPossession(); // Give ball to home player with highest shooting
     void UpdateSimulationStep(float dt);
 

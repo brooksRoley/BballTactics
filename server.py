@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -19,6 +21,13 @@ async def get_db():
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://brooksroley.github.io"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 # Pydantic Schemas for Request Validation
 class StartRunRequest(BaseModel):
@@ -126,3 +135,8 @@ async def get_roster():
     with open(roster_path, "r") as f:
         roster = json.load(f)
     return roster
+
+# Serve the built frontend (must be mounted after all API routes)
+_dist = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
+if os.path.exists(_dist):
+    app.mount("/", StaticFiles(directory=_dist, html=True), name="static")

@@ -7,33 +7,12 @@
     </div>
 
     <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
-    <div class="court-floor" :style="{ transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
-      <!-- Court markings -->
-      <div class="marking half-line"></div>
-      <div class="marking center-circle"></div>
-
-      <!-- Home players (red) -->
-      <div v-for="player in livePlayers"
-           :key="'h-' + player.id"
-           class="player-dot home-dot"
-           :class="{ 'has-ball': ball.possessorId === player.id }"
-           :style="dotStyle(player)">
-        <span class="dot-label">{{ player.name ? player.name.split(' ').pop().slice(0,3) : player.id }}</span>
-      </div>
-
-      <!-- Bot players (blue) -->
-      <div v-for="bot in botPlayers"
-           :key="'b-' + bot.id"
-           class="player-dot away-dot"
-           :class="{ 'has-ball': ball.possessorId === bot.id }"
-           :style="dotStyle(bot)">
-      </div>
-
-      <!-- Ball shadow (when airborne) -->
-      <div v-if="ball.x !== null && (ball.z || 0) > 1" class="ball-shadow" :style="dotStyle(ball)"></div>
-      <!-- Ball (with height offset for arcs) -->
-      <div v-if="ball.x !== null" class="ball-dot" :style="ballStyle(ball)"></div>
-    </div>
+      <canvas ref="courtCanvas"
+              :width="COURT_W * dpr"
+              :height="COURT_H * dpr"
+              class="court-canvas"
+              :style="{ width: COURT_W + 'px', height: COURT_H + 'px', transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
+      </canvas>
     </div>
 
     <div class="sim-status">{{ statusText }}</div>
@@ -63,24 +42,24 @@ export default {
 
     const COURT_W = 800;
     const COURT_H = 400;
-    const SIM_DURATION = 10.0; // seconds
+    const SIM_DURATION = 10.0;
+    const dpr = Math.ceil(window.devicePixelRatio || 1);
 
     const courtScaler = ref(null);
+    const courtCanvas = ref(null);
     const courtScale = ref(1);
     let resizeObserver = null;
+    let ctx = null;
 
     const getEngine = () => props.engine || inject('engine', null);
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-    // Map planning-grid position (0-4) to sim-court pixel position (800x400).
-    // Home team occupies the left half; grid col → x, grid row → y.
     const gridToSim = (gx, gy) => ({
       x: gx * 70 + 40,
       y: gy * 70 + 40
     });
 
-    // Place some bot opponents for the sim to play against
     const spawnBots = () => {
       botPlayers.value = [
         { id: 901, x: 600, y: 80,  tx: 580, ty: 100 },
@@ -89,12 +68,10 @@ export default {
       ];
     };
 
-    // Seed livePlayers from the court lineup when there is no engine
     const initFallbackPlayers = () => {
       if (props.courtLineup.length === 0) return;
       livePlayers.value = props.courtLineup.map(p => {
         const sim = gridToSim(p.courtX, p.courtY);
-        // Each player gets a target near the right basket area
         return {
           id: p.id,
           name: p.name,
@@ -108,36 +85,168 @@ export default {
       });
     };
 
-    const dotStyle = (p) => ({
-      transform: `translate(${clamp(p.x, 0, COURT_W - 20)}px, ${clamp(p.y, 0, COURT_H - 20)}px)`
-    });
+    // ── Canvas rendering ──────────────────────────────────────────
+    const renderFrame = () => {
+      if (!ctx) return;
+      const c = ctx;
+      c.save();
+      c.scale(dpr, dpr);
 
-    // Ball with height offset: z lifts the ball visually and scales it slightly
-    const ballStyle = (b) => {
-      const z = b.z || 0;
-      const lift = z * 3;
-      const scale = 1 + z * 0.04;
-      return {
-        transform: `translate(${clamp(b.x, 0, COURT_W - 12)}px, ${clamp(b.y - lift, 0, COURT_H - 12)}px) scale(${scale})`
-      };
+      // Court floor
+      c.fillStyle = '#c59b6d';
+      c.fillRect(0, 0, COURT_W, COURT_H);
+
+      // Court border
+      c.strokeStyle = '#8b5a2b';
+      c.lineWidth = 4;
+      c.strokeRect(2, 2, COURT_W - 4, COURT_H - 4);
+
+      // Half-court line
+      c.strokeStyle = 'rgba(255,255,255,0.3)';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(COURT_W / 2, 0);
+      c.lineTo(COURT_W / 2, COURT_H);
+      c.stroke();
+
+      // Center circle
+      c.beginPath();
+      c.arc(COURT_W / 2, COURT_H / 2, 40, 0, Math.PI * 2);
+      c.stroke();
+
+      // Three-point arcs (left and right)
+      c.beginPath();
+      c.arc(0, COURT_H / 2, 160, -Math.PI * 0.4, Math.PI * 0.4);
+      c.stroke();
+      c.beginPath();
+      c.arc(COURT_W, COURT_H / 2, 160, Math.PI * 0.6, Math.PI * 1.4);
+      c.stroke();
+
+      // Paint / key areas
+      c.strokeStyle = 'rgba(255,255,255,0.25)';
+      c.strokeRect(0, COURT_H / 2 - 60, 120, 120);
+      c.strokeRect(COURT_W - 120, COURT_H / 2 - 60, 120, 120);
+
+      // Backboards
+      c.strokeStyle = 'rgba(255,255,255,0.4)';
+      c.lineWidth = 3;
+      c.beginPath();
+      c.moveTo(10, COURT_H / 2 - 20);
+      c.lineTo(10, COURT_H / 2 + 20);
+      c.stroke();
+      c.beginPath();
+      c.moveTo(COURT_W - 10, COURT_H / 2 - 20);
+      c.lineTo(COURT_W - 10, COURT_H / 2 + 20);
+      c.stroke();
+
+      const b = ball.value;
+      const possId = b.possessorId;
+
+      // Ball shadow (when airborne)
+      if (b.x !== null && (b.z || 0) > 1) {
+        c.fillStyle = 'rgba(0,0,0,0.3)';
+        c.beginPath();
+        c.ellipse(clamp(b.x + 6, 6, COURT_W - 6), clamp(b.y + 10, 6, COURT_H - 6), 7, 3, 0, 0, Math.PI * 2);
+        c.fill();
+      }
+
+      // Away players (blue)
+      for (const bot of botPlayers.value) {
+        const bx = clamp(bot.x + 10, 10, COURT_W - 10);
+        const by = clamp(bot.y + 10, 10, COURT_H - 10);
+        const hasBall = possId === bot.id;
+
+        if (hasBall) {
+          c.shadowColor = 'rgba(244, 163, 0, 0.8)';
+          c.shadowBlur = 10;
+        }
+
+        c.globalAlpha = hasBall ? 1.0 : 0.8;
+        c.fillStyle = '#5bc0de';
+        c.strokeStyle = hasBall ? '#f4a300' : '#fff';
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(bx, by, 10, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        c.shadowColor = 'transparent';
+        c.shadowBlur = 0;
+        c.globalAlpha = 1.0;
+      }
+
+      // Home players (red)
+      for (const player of livePlayers.value) {
+        const px = clamp(player.x + 10, 10, COURT_W - 10);
+        const py = clamp(player.y + 10, 10, COURT_H - 10);
+        const hasBall = possId === player.id;
+
+        if (hasBall) {
+          c.shadowColor = 'rgba(244, 163, 0, 0.8)';
+          c.shadowBlur = 10;
+        }
+
+        c.fillStyle = '#d9534f';
+        c.strokeStyle = hasBall ? '#f4a300' : '#fff';
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(px, py, 10, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+
+        c.shadowColor = 'transparent';
+        c.shadowBlur = 0;
+
+        // Player name label
+        const label = player.name ? player.name.split(' ').pop().slice(0, 3) : String(player.id);
+        c.fillStyle = '#fff';
+        c.font = 'bold 7px sans-serif';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(label, px, py);
+      }
+
+      // Ball
+      if (b.x !== null) {
+        const z = b.z || 0;
+        const lift = z * 3;
+        const radius = 6 * (1 + z * 0.04);
+        const bx = clamp(b.x + 6, 6, COURT_W - 6);
+        const by = clamp(b.y - lift + 6, 6, COURT_H - 6);
+
+        c.shadowColor = '#f4a300';
+        c.shadowBlur = 6;
+        c.fillStyle = '#f4a300';
+        c.strokeStyle = '#fff';
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(bx, by, radius, 0, Math.PI * 2);
+        c.fill();
+        c.stroke();
+        c.shadowColor = 'transparent';
+        c.shadowBlur = 0;
+      }
+
+      c.restore();
     };
 
+    // ── Game loop ─────────────────────────────────────────────────
     const syncLoop = (timestamp) => {
       if (simDone) return;
 
-      const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap dt
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
       lastTime = timestamp;
       timeLeft.value -= dt;
 
       if (timeLeft.value <= 0) {
         timeLeft.value = 0;
+        renderFrame();
         finishSim();
         return;
       }
 
       const engine = getEngine();
       if (engine) {
-        // --- Engine-driven path ---
         engine.TickSimulation(dt);
         try {
           const state = JSON.parse(engine.GetGameStateJSON());
@@ -145,7 +254,6 @@ export default {
           botPlayers.value  = state.bots    || [];
           if (state.ball) ball.value = state.ball;
 
-          // Engine owns scoring — detect changes for status flash
           const prevHome = homeScore.value;
           const prevAway = awayScore.value;
           homeScore.value = state.homeScore ?? homeScore.value;
@@ -163,7 +271,6 @@ export default {
         const BASKET_X = 770;
         const BASKET_Y = 200;
 
-        // Move home players toward their targets
         livePlayers.value = livePlayers.value.map(p => {
           const dx = p.tx - p.x;
           const dy = p.ty - p.y;
@@ -172,19 +279,15 @@ export default {
             const step = (p.speed || 8) * dt;
             return { ...p, x: p.x + (dx / dist) * step, y: p.y + (dy / dist) * step };
           }
-          // Arrived at target — pick a new one near the basket
           return { ...p, tx: 450 + Math.random() * 200, ty: 80 + Math.random() * 240 };
         });
 
-        // Possession-based ball movement
         const carrierId = ball.value.possessorId;
         const carrier = livePlayers.value.find(p => p.id === carrierId);
         if (carrier) {
           ball.value = { ...ball.value, x: carrier.x, y: carrier.y, z: 0 };
-          // Carrier drives to basket
           carrier.tx = BASKET_X;
           carrier.ty = BASKET_Y;
-          // Shot attempt when near basket
           const distToBasket = Math.sqrt((carrier.x - BASKET_X) ** 2 + (carrier.y - BASKET_Y) ** 2);
           if (distToBasket < 100) {
             const shotProb = (carrier.shooting || 50) / 100 * 0.4;
@@ -193,14 +296,12 @@ export default {
               homeScore.value += pts;
               statusText.value = pts === 3 ? 'Three!' : 'Score!';
               setTimeout(() => { statusText.value = ''; }, 800);
-              // Give ball to a bot
               if (botPlayers.value.length > 0) {
                 ball.value = { ...ball.value, possessorId: botPlayers.value[0].id };
               }
             }
           }
         } else {
-          // Bot has ball or nobody — check bots
           const botCarrier = botPlayers.value.find(b => b.id === carrierId);
           if (botCarrier) {
             ball.value = { ...ball.value, x: botCarrier.x, y: botCarrier.y, z: 0 };
@@ -216,12 +317,10 @@ export default {
               }
             }
           } else if (livePlayers.value.length > 0) {
-            // No carrier — give ball to first home player
             ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
           }
         }
 
-        // Move JS bots
         botPlayers.value = botPlayers.value.map(b => {
           const dx = b.tx - b.x;
           const dy = b.ty - b.y;
@@ -233,6 +332,7 @@ export default {
         });
       }
 
+      renderFrame();
       animationFrameId = requestAnimationFrame(syncLoop);
     };
 
@@ -251,10 +351,15 @@ export default {
     };
 
     onMounted(() => {
+      // Initialize canvas 2D context
+      const canvas = courtCanvas.value;
+      if (canvas) {
+        ctx = canvas.getContext('2d');
+      }
+
       spawnBots();
       if (!getEngine()) {
         initFallbackPlayers();
-        // Give ball to the best shooter on the home team
         if (livePlayers.value.length > 0) {
           const best = livePlayers.value.reduce((a, b) => (b.shooting || 0) > (a.shooting || 0) ? b : a);
           ball.value = { x: best.x, y: best.y, z: 0, possessorId: best.id, isPossessed: true };
@@ -262,6 +367,7 @@ export default {
       }
       lastTime = performance.now();
       timeLeft.value = SIM_DURATION;
+      renderFrame();
       animationFrameId = requestAnimationFrame(syncLoop);
 
       const updateScale = () => {
@@ -280,7 +386,7 @@ export default {
       if (resizeObserver) resizeObserver.disconnect();
     });
 
-    return { livePlayers, botPlayers, ball, homeScore, awayScore, timeLeft, statusText, dotStyle, ballStyle, courtScaler, courtScale, COURT_H };
+    return { homeScore, awayScore, timeLeft, statusText, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
   }
 };
 </script>
@@ -315,88 +421,9 @@ export default {
 .team-score.away { color: #5bc0de; }
 .sim-timer { font-size: 1.5rem; font-variant-numeric: tabular-nums; color: #ffd700; }
 
-.court-floor {
-  position: relative;
-  width: 800px;
-  height: 400px;
-  background: #c59b6d;
-  border: 4px solid #8b5a2b;
+.court-canvas {
+  display: block;
   border-radius: 4px;
-  overflow: hidden;
-}
-
-/* Court markings */
-.marking.half-line {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 0;
-  height: 100%;
-  border-left: 2px solid rgba(255,255,255,0.3);
-}
-.marking.center-circle {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 80px;
-  height: 80px;
-  transform: translate(-50%, -50%);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 50%;
-}
-
-/* Player dots */
-.player-dot {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  top: 0; left: 0;
-  will-change: transform;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.home-dot { background: #d9534f; border: 2px solid #fff; }
-.home-dot.has-ball {
-  box-shadow: 0 0 10px 3px rgba(244, 163, 0, 0.8);
-  border-color: #f4a300;
-}
-.away-dot { background: #5bc0de; border: 2px solid #fff; opacity: 0.8; }
-.away-dot.has-ball {
-  box-shadow: 0 0 10px 3px rgba(244, 163, 0, 0.8);
-  border-color: #f4a300;
-  opacity: 1;
-}
-.dot-label {
-  font-size: 0.5rem;
-  color: #fff;
-  font-weight: bold;
-  pointer-events: none;
-}
-
-.ball-dot {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  top: 0; left: 0;
-  background: #f4a300;
-  border: 2px solid #fff;
-  box-shadow: 0 0 6px #f4a300;
-  will-change: transform;
-  z-index: 10;
-}
-
-.ball-shadow {
-  position: absolute;
-  width: 14px;
-  height: 6px;
-  border-radius: 50%;
-  top: 0; left: 0;
-  background: rgba(0, 0, 0, 0.3);
-  will-change: transform;
-  z-index: 9;
 }
 
 .sim-status {
