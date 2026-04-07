@@ -13,6 +13,15 @@
               class="court-canvas"
               :style="{ width: COURT_W + 'px', height: COURT_H + 'px', transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
       </canvas>
+
+      <!-- Floating event popups -->
+      <div v-for="popup in activePopups"
+           :key="popup.id"
+           class="event-popup"
+           :class="popup.type"
+           :style="{ left: (popup.x * courtScale) + 'px', top: (popup.y * courtScale) + 'px' }">
+        {{ popup.text }}
+      </div>
     </div>
 
     <div class="sim-status">{{ statusText }}</div>
@@ -25,7 +34,8 @@ import { ref, onMounted, onUnmounted, inject } from 'vue';
 export default {
   props: {
     engine: { type: Object, default: null },
-    courtLineup: { type: Array, default: () => [] }
+    courtLineup: { type: Array, default: () => [] },
+    roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
   },
   emits: ['sim-complete'],
   setup(props, { emit }) {
@@ -36,9 +46,43 @@ export default {
     const awayScore = ref(0);
     const timeLeft = ref(10.0);
     const statusText = ref('Tip-off!');
+    const activePopups = ref([]);
+    let popupCounter = 0;
     let animationFrameId = null;
     let lastTime = 0;
     let simDone = false;
+
+    // Scoring attribution tracking
+    const playerPoints = {};
+    const eventLog = [];
+
+    const spawnPopup = (x, y, text, type = 'score-home') => {
+      const id = ++popupCounter;
+      activePopups.value = [...activePopups.value, { id, x, y, text, type }];
+      setTimeout(() => {
+        activePopups.value = activePopups.value.filter(p => p.id !== id);
+      }, 1200);
+    };
+
+    const attributeScore = (pts, isHome) => {
+      const possId = ball.value.possessorId;
+      if (isHome) {
+        const scorer = livePlayers.value.find(p => p.id === possId);
+        const name = scorer?.name || `Player ${possId}`;
+        playerPoints[possId] = (playerPoints[possId] || { id: possId, name, points: 0 });
+        playerPoints[possId].points += pts;
+        const label = pts === 3 ? 'Three!' : 'Score!';
+        const shortName = name.split(' ').pop();
+        eventLog.push(`${shortName} hits a ${pts === 3 ? 'three-pointer' : 'bucket'} (+${pts})`);
+        spawnPopup(ball.value.x, ball.value.y - 20, `+${pts}`, 'score-home');
+        statusText.value = `${shortName} — ${label}`;
+      } else {
+        eventLog.push(`Opponent scores (+${pts})`);
+        spawnPopup(ball.value.x, ball.value.y - 20, `+${pts}`, 'score-away');
+        statusText.value = 'Opponent scores...';
+      }
+      setTimeout(() => { if (!simDone) statusText.value = ''; }, 1000);
+    };
 
     const COURT_W = 800;
     const COURT_H = 400;
@@ -258,12 +302,13 @@ export default {
           const prevAway = awayScore.value;
           homeScore.value = state.homeScore ?? homeScore.value;
           awayScore.value = state.awayScore ?? awayScore.value;
+
           if (homeScore.value > prevHome) {
-            statusText.value = 'Score!';
-            setTimeout(() => { statusText.value = ''; }, 800);
+            const pts = homeScore.value - prevHome;
+            attributeScore(pts, true);
           } else if (awayScore.value > prevAway) {
-            statusText.value = 'Opponent scores...';
-            setTimeout(() => { statusText.value = ''; }, 800);
+            const pts = awayScore.value - prevAway;
+            attributeScore(pts, false);
           }
         } catch (e) { /* engine may not have state yet */ }
       } else {
@@ -294,8 +339,7 @@ export default {
             if (Math.random() < shotProb * dt * 2) {
               const pts = distToBasket > 200 ? 3 : 2;
               homeScore.value += pts;
-              statusText.value = pts === 3 ? 'Three!' : 'Score!';
-              setTimeout(() => { statusText.value = ''; }, 800);
+              attributeScore(pts, true);
               if (botPlayers.value.length > 0) {
                 ball.value = { ...ball.value, possessorId: botPlayers.value[0].id };
               }
@@ -309,9 +353,9 @@ export default {
             botCarrier.ty = 200;
             const distToBasket = Math.sqrt((botCarrier.x - 30) ** 2 + (botCarrier.y - 200) ** 2);
             if (distToBasket < 100 && Math.random() < 0.3 * dt * 2) {
-              awayScore.value += Math.random() < 0.3 ? 3 : 2;
-              statusText.value = 'Opponent scores...';
-              setTimeout(() => { statusText.value = ''; }, 800);
+              const pts = Math.random() < 0.3 ? 3 : 2;
+              awayScore.value += pts;
+              attributeScore(pts, false);
               if (livePlayers.value.length > 0) {
                 ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
               }
@@ -338,15 +382,25 @@ export default {
 
     const finishSim = () => {
       simDone = true;
-      const result = homeScore.value > awayScore.value ? 'win' : 'loss';
-      statusText.value = result === 'win'
+      const outcome = homeScore.value > awayScore.value ? 'win' : 'loss';
+      statusText.value = outcome === 'win'
         ? 'Final — You win!'
         : homeScore.value === awayScore.value
           ? 'Final — Draw counts as a loss!'
           : 'Final — You lose.';
 
+      // Build per-player scoring sorted by points
+      const playerScoring = Object.values(playerPoints)
+        .sort((a, b) => b.points - a.points);
+
       setTimeout(() => {
-        emit('sim-complete', result);
+        emit('sim-complete', {
+          outcome,
+          homeScore: homeScore.value,
+          awayScore: awayScore.value,
+          playerScoring,
+          events: eventLog,
+        });
       }, 1500);
     };
 
@@ -386,7 +440,7 @@ export default {
       if (resizeObserver) resizeObserver.disconnect();
     });
 
-    return { homeScore, awayScore, timeLeft, statusText, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
+    return { homeScore, awayScore, timeLeft, statusText, activePopups, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
   }
 };
 </script>
@@ -431,5 +485,32 @@ export default {
   font-size: 1rem;
   color: #ffd700;
   font-weight: bold;
+}
+
+/* ── Floating event popups ──────────────────────────────────────── */
+.event-popup {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 1.3rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  animation: popup-float 1.2s ease-out forwards;
+  z-index: 20;
+}
+.event-popup.score-home { color: #d9534f; }
+.event-popup.score-away { color: #5bc0de; }
+
+@keyframes popup-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  20% {
+    transform: translateY(-8px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
 }
 </style>

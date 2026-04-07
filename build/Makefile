@@ -57,10 +57,10 @@ RM = /opt/homebrew/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/brooksroley/Desktop/BballTactics
+CMAKE_SOURCE_DIR = /Users/brooksroley/Documents/BballTactics
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/brooksroley/Desktop/BballTactics/build
+CMAKE_BINARY_DIR = /Users/brooksroley/Documents/BballTactics/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/brooksroley/Desktop/BballTactics/build/CMakeFiles /Users/brooksroley/Desktop/BballTactics/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/brooksroley/Documents/BballTactics/build/CMakeFiles /Users/brooksroley/Documents/BballTactics/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/brooksroley/Desktop/BballTactics/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/brooksroley/Documents/BballTactics/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -129,29 +129,197 @@ engine/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/build
 .PHONY : engine/fast
 
-src/Basketball.o: src/Basketball.cpp.o
-.PHONY : src/Basketball.o
+shared-core/src/Basketball.o: shared-core/src/Basketball.cpp.o
+.PHONY : shared-core/src/Basketball.o
 
 # target to build an object file
-src/Basketball.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Basketball.cpp.o
-.PHONY : src/Basketball.cpp.o
+shared-core/src/Basketball.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Basketball.cpp.o
+.PHONY : shared-core/src/Basketball.cpp.o
 
-src/Basketball.i: src/Basketball.cpp.i
-.PHONY : src/Basketball.i
+shared-core/src/Basketball.i: shared-core/src/Basketball.cpp.i
+.PHONY : shared-core/src/Basketball.i
 
 # target to preprocess a source file
-src/Basketball.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Basketball.cpp.i
-.PHONY : src/Basketball.cpp.i
+shared-core/src/Basketball.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Basketball.cpp.i
+.PHONY : shared-core/src/Basketball.cpp.i
 
-src/Basketball.s: src/Basketball.cpp.s
-.PHONY : src/Basketball.s
+shared-core/src/Basketball.s: shared-core/src/Basketball.cpp.s
+.PHONY : shared-core/src/Basketball.s
 
 # target to generate assembly for a file
-src/Basketball.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Basketball.cpp.s
-.PHONY : src/Basketball.cpp.s
+shared-core/src/Basketball.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Basketball.cpp.s
+.PHONY : shared-core/src/Basketball.cpp.s
+
+shared-core/src/Court.o: shared-core/src/Court.cpp.o
+.PHONY : shared-core/src/Court.o
+
+# target to build an object file
+shared-core/src/Court.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Court.cpp.o
+.PHONY : shared-core/src/Court.cpp.o
+
+shared-core/src/Court.i: shared-core/src/Court.cpp.i
+.PHONY : shared-core/src/Court.i
+
+# target to preprocess a source file
+shared-core/src/Court.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Court.cpp.i
+.PHONY : shared-core/src/Court.cpp.i
+
+shared-core/src/Court.s: shared-core/src/Court.cpp.s
+.PHONY : shared-core/src/Court.s
+
+# target to generate assembly for a file
+shared-core/src/Court.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/Court.cpp.s
+.PHONY : shared-core/src/Court.cpp.s
+
+shared-core/src/GameEconomy.o: shared-core/src/GameEconomy.cpp.o
+.PHONY : shared-core/src/GameEconomy.o
+
+# target to build an object file
+shared-core/src/GameEconomy.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameEconomy.cpp.o
+.PHONY : shared-core/src/GameEconomy.cpp.o
+
+shared-core/src/GameEconomy.i: shared-core/src/GameEconomy.cpp.i
+.PHONY : shared-core/src/GameEconomy.i
+
+# target to preprocess a source file
+shared-core/src/GameEconomy.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameEconomy.cpp.i
+.PHONY : shared-core/src/GameEconomy.cpp.i
+
+shared-core/src/GameEconomy.s: shared-core/src/GameEconomy.cpp.s
+.PHONY : shared-core/src/GameEconomy.s
+
+# target to generate assembly for a file
+shared-core/src/GameEconomy.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameEconomy.cpp.s
+.PHONY : shared-core/src/GameEconomy.cpp.s
+
+shared-core/src/GameManager.o: shared-core/src/GameManager.cpp.o
+.PHONY : shared-core/src/GameManager.o
+
+# target to build an object file
+shared-core/src/GameManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameManager.cpp.o
+.PHONY : shared-core/src/GameManager.cpp.o
+
+shared-core/src/GameManager.i: shared-core/src/GameManager.cpp.i
+.PHONY : shared-core/src/GameManager.i
+
+# target to preprocess a source file
+shared-core/src/GameManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameManager.cpp.i
+.PHONY : shared-core/src/GameManager.cpp.i
+
+shared-core/src/GameManager.s: shared-core/src/GameManager.cpp.s
+.PHONY : shared-core/src/GameManager.s
+
+# target to generate assembly for a file
+shared-core/src/GameManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameManager.cpp.s
+.PHONY : shared-core/src/GameManager.cpp.s
+
+shared-core/src/GameSeason.o: shared-core/src/GameSeason.cpp.o
+.PHONY : shared-core/src/GameSeason.o
+
+# target to build an object file
+shared-core/src/GameSeason.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameSeason.cpp.o
+.PHONY : shared-core/src/GameSeason.cpp.o
+
+shared-core/src/GameSeason.i: shared-core/src/GameSeason.cpp.i
+.PHONY : shared-core/src/GameSeason.i
+
+# target to preprocess a source file
+shared-core/src/GameSeason.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameSeason.cpp.i
+.PHONY : shared-core/src/GameSeason.cpp.i
+
+shared-core/src/GameSeason.s: shared-core/src/GameSeason.cpp.s
+.PHONY : shared-core/src/GameSeason.s
+
+# target to generate assembly for a file
+shared-core/src/GameSeason.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/GameSeason.cpp.s
+.PHONY : shared-core/src/GameSeason.cpp.s
+
+shared-core/src/PlayerEntity.o: shared-core/src/PlayerEntity.cpp.o
+.PHONY : shared-core/src/PlayerEntity.o
+
+# target to build an object file
+shared-core/src/PlayerEntity.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/PlayerEntity.cpp.o
+.PHONY : shared-core/src/PlayerEntity.cpp.o
+
+shared-core/src/PlayerEntity.i: shared-core/src/PlayerEntity.cpp.i
+.PHONY : shared-core/src/PlayerEntity.i
+
+# target to preprocess a source file
+shared-core/src/PlayerEntity.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/PlayerEntity.cpp.i
+.PHONY : shared-core/src/PlayerEntity.cpp.i
+
+shared-core/src/PlayerEntity.s: shared-core/src/PlayerEntity.cpp.s
+.PHONY : shared-core/src/PlayerEntity.s
+
+# target to generate assembly for a file
+shared-core/src/PlayerEntity.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/PlayerEntity.cpp.s
+.PHONY : shared-core/src/PlayerEntity.cpp.s
+
+shared-core/src/ShotProbability.o: shared-core/src/ShotProbability.cpp.o
+.PHONY : shared-core/src/ShotProbability.o
+
+# target to build an object file
+shared-core/src/ShotProbability.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/ShotProbability.cpp.o
+.PHONY : shared-core/src/ShotProbability.cpp.o
+
+shared-core/src/ShotProbability.i: shared-core/src/ShotProbability.cpp.i
+.PHONY : shared-core/src/ShotProbability.i
+
+# target to preprocess a source file
+shared-core/src/ShotProbability.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/ShotProbability.cpp.i
+.PHONY : shared-core/src/ShotProbability.cpp.i
+
+shared-core/src/ShotProbability.s: shared-core/src/ShotProbability.cpp.s
+.PHONY : shared-core/src/ShotProbability.s
+
+# target to generate assembly for a file
+shared-core/src/ShotProbability.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/ShotProbability.cpp.s
+.PHONY : shared-core/src/ShotProbability.cpp.s
+
+shared-core/src/SynergyEngine.o: shared-core/src/SynergyEngine.cpp.o
+.PHONY : shared-core/src/SynergyEngine.o
+
+# target to build an object file
+shared-core/src/SynergyEngine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/SynergyEngine.cpp.o
+.PHONY : shared-core/src/SynergyEngine.cpp.o
+
+shared-core/src/SynergyEngine.i: shared-core/src/SynergyEngine.cpp.i
+.PHONY : shared-core/src/SynergyEngine.i
+
+# target to preprocess a source file
+shared-core/src/SynergyEngine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/SynergyEngine.cpp.i
+.PHONY : shared-core/src/SynergyEngine.cpp.i
+
+shared-core/src/SynergyEngine.s: shared-core/src/SynergyEngine.cpp.s
+.PHONY : shared-core/src/SynergyEngine.s
+
+# target to generate assembly for a file
+shared-core/src/SynergyEngine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/shared-core/src/SynergyEngine.cpp.s
+.PHONY : shared-core/src/SynergyEngine.cpp.s
 
 src/Bindings.o: src/Bindings.cpp.o
 .PHONY : src/Bindings.o
@@ -177,174 +345,6 @@ src/Bindings.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Bindings.cpp.s
 .PHONY : src/Bindings.cpp.s
 
-src/Court.o: src/Court.cpp.o
-.PHONY : src/Court.o
-
-# target to build an object file
-src/Court.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Court.cpp.o
-.PHONY : src/Court.cpp.o
-
-src/Court.i: src/Court.cpp.i
-.PHONY : src/Court.i
-
-# target to preprocess a source file
-src/Court.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Court.cpp.i
-.PHONY : src/Court.cpp.i
-
-src/Court.s: src/Court.cpp.s
-.PHONY : src/Court.s
-
-# target to generate assembly for a file
-src/Court.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/Court.cpp.s
-.PHONY : src/Court.cpp.s
-
-src/GameEconomy.o: src/GameEconomy.cpp.o
-.PHONY : src/GameEconomy.o
-
-# target to build an object file
-src/GameEconomy.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameEconomy.cpp.o
-.PHONY : src/GameEconomy.cpp.o
-
-src/GameEconomy.i: src/GameEconomy.cpp.i
-.PHONY : src/GameEconomy.i
-
-# target to preprocess a source file
-src/GameEconomy.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameEconomy.cpp.i
-.PHONY : src/GameEconomy.cpp.i
-
-src/GameEconomy.s: src/GameEconomy.cpp.s
-.PHONY : src/GameEconomy.s
-
-# target to generate assembly for a file
-src/GameEconomy.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameEconomy.cpp.s
-.PHONY : src/GameEconomy.cpp.s
-
-src/GameManager.o: src/GameManager.cpp.o
-.PHONY : src/GameManager.o
-
-# target to build an object file
-src/GameManager.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameManager.cpp.o
-.PHONY : src/GameManager.cpp.o
-
-src/GameManager.i: src/GameManager.cpp.i
-.PHONY : src/GameManager.i
-
-# target to preprocess a source file
-src/GameManager.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameManager.cpp.i
-.PHONY : src/GameManager.cpp.i
-
-src/GameManager.s: src/GameManager.cpp.s
-.PHONY : src/GameManager.s
-
-# target to generate assembly for a file
-src/GameManager.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameManager.cpp.s
-.PHONY : src/GameManager.cpp.s
-
-src/GameSeason.o: src/GameSeason.cpp.o
-.PHONY : src/GameSeason.o
-
-# target to build an object file
-src/GameSeason.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameSeason.cpp.o
-.PHONY : src/GameSeason.cpp.o
-
-src/GameSeason.i: src/GameSeason.cpp.i
-.PHONY : src/GameSeason.i
-
-# target to preprocess a source file
-src/GameSeason.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameSeason.cpp.i
-.PHONY : src/GameSeason.cpp.i
-
-src/GameSeason.s: src/GameSeason.cpp.s
-.PHONY : src/GameSeason.s
-
-# target to generate assembly for a file
-src/GameSeason.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/GameSeason.cpp.s
-.PHONY : src/GameSeason.cpp.s
-
-src/PlayerEntity.o: src/PlayerEntity.cpp.o
-.PHONY : src/PlayerEntity.o
-
-# target to build an object file
-src/PlayerEntity.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/PlayerEntity.cpp.o
-.PHONY : src/PlayerEntity.cpp.o
-
-src/PlayerEntity.i: src/PlayerEntity.cpp.i
-.PHONY : src/PlayerEntity.i
-
-# target to preprocess a source file
-src/PlayerEntity.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/PlayerEntity.cpp.i
-.PHONY : src/PlayerEntity.cpp.i
-
-src/PlayerEntity.s: src/PlayerEntity.cpp.s
-.PHONY : src/PlayerEntity.s
-
-# target to generate assembly for a file
-src/PlayerEntity.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/PlayerEntity.cpp.s
-.PHONY : src/PlayerEntity.cpp.s
-
-src/ShotProbability.o: src/ShotProbability.cpp.o
-.PHONY : src/ShotProbability.o
-
-# target to build an object file
-src/ShotProbability.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/ShotProbability.cpp.o
-.PHONY : src/ShotProbability.cpp.o
-
-src/ShotProbability.i: src/ShotProbability.cpp.i
-.PHONY : src/ShotProbability.i
-
-# target to preprocess a source file
-src/ShotProbability.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/ShotProbability.cpp.i
-.PHONY : src/ShotProbability.cpp.i
-
-src/ShotProbability.s: src/ShotProbability.cpp.s
-.PHONY : src/ShotProbability.s
-
-# target to generate assembly for a file
-src/ShotProbability.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/ShotProbability.cpp.s
-.PHONY : src/ShotProbability.cpp.s
-
-src/SynergyEngine.o: src/SynergyEngine.cpp.o
-.PHONY : src/SynergyEngine.o
-
-# target to build an object file
-src/SynergyEngine.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/SynergyEngine.cpp.o
-.PHONY : src/SynergyEngine.cpp.o
-
-src/SynergyEngine.i: src/SynergyEngine.cpp.i
-.PHONY : src/SynergyEngine.i
-
-# target to preprocess a source file
-src/SynergyEngine.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/SynergyEngine.cpp.i
-.PHONY : src/SynergyEngine.cpp.i
-
-src/SynergyEngine.s: src/SynergyEngine.cpp.s
-.PHONY : src/SynergyEngine.s
-
-# target to generate assembly for a file
-src/SynergyEngine.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/engine.dir/build.make CMakeFiles/engine.dir/src/SynergyEngine.cpp.s
-.PHONY : src/SynergyEngine.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -354,33 +354,33 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... engine"
-	@echo "... src/Basketball.o"
-	@echo "... src/Basketball.i"
-	@echo "... src/Basketball.s"
+	@echo "... shared-core/src/Basketball.o"
+	@echo "... shared-core/src/Basketball.i"
+	@echo "... shared-core/src/Basketball.s"
+	@echo "... shared-core/src/Court.o"
+	@echo "... shared-core/src/Court.i"
+	@echo "... shared-core/src/Court.s"
+	@echo "... shared-core/src/GameEconomy.o"
+	@echo "... shared-core/src/GameEconomy.i"
+	@echo "... shared-core/src/GameEconomy.s"
+	@echo "... shared-core/src/GameManager.o"
+	@echo "... shared-core/src/GameManager.i"
+	@echo "... shared-core/src/GameManager.s"
+	@echo "... shared-core/src/GameSeason.o"
+	@echo "... shared-core/src/GameSeason.i"
+	@echo "... shared-core/src/GameSeason.s"
+	@echo "... shared-core/src/PlayerEntity.o"
+	@echo "... shared-core/src/PlayerEntity.i"
+	@echo "... shared-core/src/PlayerEntity.s"
+	@echo "... shared-core/src/ShotProbability.o"
+	@echo "... shared-core/src/ShotProbability.i"
+	@echo "... shared-core/src/ShotProbability.s"
+	@echo "... shared-core/src/SynergyEngine.o"
+	@echo "... shared-core/src/SynergyEngine.i"
+	@echo "... shared-core/src/SynergyEngine.s"
 	@echo "... src/Bindings.o"
 	@echo "... src/Bindings.i"
 	@echo "... src/Bindings.s"
-	@echo "... src/Court.o"
-	@echo "... src/Court.i"
-	@echo "... src/Court.s"
-	@echo "... src/GameEconomy.o"
-	@echo "... src/GameEconomy.i"
-	@echo "... src/GameEconomy.s"
-	@echo "... src/GameManager.o"
-	@echo "... src/GameManager.i"
-	@echo "... src/GameManager.s"
-	@echo "... src/GameSeason.o"
-	@echo "... src/GameSeason.i"
-	@echo "... src/GameSeason.s"
-	@echo "... src/PlayerEntity.o"
-	@echo "... src/PlayerEntity.i"
-	@echo "... src/PlayerEntity.s"
-	@echo "... src/ShotProbability.o"
-	@echo "... src/ShotProbability.i"
-	@echo "... src/ShotProbability.s"
-	@echo "... src/SynergyEngine.o"
-	@echo "... src/SynergyEngine.i"
-	@echo "... src/SynergyEngine.s"
 .PHONY : help
 
 

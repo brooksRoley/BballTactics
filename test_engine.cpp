@@ -2,9 +2,9 @@
 #include <cassert>
 #include <string>
 #include <cmath>
-#include "include/GameManager.h"
-#include "include/ShotProbability.h"
-#include "include/Basketball.h"
+#include "GameManager.h"
+#include "ShotProbability.h"
+#include "Basketball.h"
 
 void TestBasicMovement() {
     std::cout << "--- Test: Basic Movement ---\n";

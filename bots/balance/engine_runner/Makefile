@@ -1,9 +1,10 @@
 CXX      := g++
-CXXFLAGS := -std=c++17 -O2 -Iinclude
+CXXFLAGS := -std=c++17 -O2
 
 ROOT     := ../../..
-INCDIR   := $(ROOT)/include
-SRCDIR   := $(ROOT)/src
+COREDIR  := $(ROOT)/shared-core
+INCDIR   := $(COREDIR)/include
+SRCDIR   := $(COREDIR)/src
 
 # All engine sources EXCEPT Bindings.cpp (requires <emscripten/bind.h>)
 ENGINE_SRCS := \

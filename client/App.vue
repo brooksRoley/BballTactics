@@ -14,7 +14,37 @@
       </div>
     </header>
 
-    <div v-if="loading" class="loading">Loading Engine...</div>
+    <!-- Scouting Report (loading screen) -->
+    <div v-if="loading" class="scouting-report">
+      <div class="sr-card">
+        <div class="sr-badge">SCOUTING REPORT</div>
+        <h2 class="sr-title">Preparing the Arena</h2>
+
+        <div class="sr-progress">
+          <div class="sr-step" :class="{ done: loadStep >= 1, active: loadStep === 0 }">
+            <span class="sr-dot"></span>
+            <span>Initializing Referee (WASM)</span>
+          </div>
+          <div class="sr-step" :class="{ done: loadStep >= 2, active: loadStep === 1 }">
+            <span class="sr-dot"></span>
+            <span>Loading Roster Data</span>
+          </div>
+          <div class="sr-step" :class="{ done: loadStep >= 3, active: loadStep === 2 }">
+            <span class="sr-dot"></span>
+            <span>Generating Draft Board</span>
+          </div>
+        </div>
+
+        <div class="sr-tip">
+          <span class="sr-tip-label">STRATEGY TIP</span>
+          <p>{{ currentTip }}</p>
+        </div>
+
+        <div class="sr-bar-track">
+          <div class="sr-bar-fill" :style="{ width: (loadStep / 3 * 100) + '%' }"></div>
+        </div>
+      </div>
+    </div>
 
     <template v-else>
       <!-- Tutorial (first time only) -->
@@ -58,11 +88,25 @@
         </div>
       </div>
 
+      <!-- Tip-off transition -->
+      <div v-if="phase === 'tipoff'" class="tipoff-overlay">
+        <div class="tipoff-content" :class="{ 'tipoff-zoom': tipoffZoom }">
+          <div class="tipoff-whistle">
+            <div class="whistle-ring"></div>
+            <div class="whistle-ring ring-2"></div>
+            <div class="whistle-icon">&#127925;</div>
+          </div>
+          <h2 class="tipoff-text">TIP OFF!</h2>
+          <p class="tipoff-sub">Round {{ round }}</p>
+        </div>
+      </div>
+
       <!-- Sim -->
       <CourtCanvas
         v-if="phase === 'sim'"
         :engine="engine"
         :court-lineup="courtLineup"
+        :round-stats="roundStats"
         @sim-complete="onSimComplete"
       />
 
@@ -70,8 +114,32 @@
       <div v-if="phase === 'result'" class="result-screen">
         <div class="result-card" :class="lastResult">
           <h2>{{ lastResult === 'win' ? 'Victory' : 'Defeat' }}</h2>
-          <p v-if="lastResult === 'loss'">-20 HP</p>
-          <p v-else>No damage taken</p>
+          <div class="result-score">{{ lastScore.home }} - {{ lastScore.away }}</div>
+          <p v-if="lastResult === 'loss'" class="result-damage">-20 HP</p>
+          <p v-else class="result-safe">No damage taken</p>
+
+          <!-- Per-player breakdown -->
+          <div v-if="roundStats.playerScoring && roundStats.playerScoring.length" class="combat-log">
+            <h3 class="log-title">Player Performance</h3>
+            <div class="log-entries">
+              <div v-for="ps in roundStats.playerScoring" :key="ps.id" class="log-entry">
+                <span class="log-name">{{ ps.name }}</span>
+                <span class="log-pts">{{ ps.points }} PTS</span>
+                <div class="log-bar-track">
+                  <div class="log-bar-fill" :style="{ width: (ps.points / (maxPlayerPts || 1) * 100) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key moments -->
+          <div v-if="roundStats.events && roundStats.events.length" class="key-moments">
+            <h3 class="log-title">Key Moments</h3>
+            <div class="moment" v-for="(ev, i) in roundStats.events.slice(-5)" :key="i">
+              {{ ev }}
+            </div>
+          </div>
+
           <p class="record-summary">Record: {{ wins }}W - {{ losses }}L</p>
           <button v-if="health > 0 && round <= 10" @click="nextRound">Next Round</button>
           <div v-else class="game-over">
@@ -85,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, provide } from 'vue';
+import { ref, computed, onMounted, provide } from 'vue';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 import CourtCanvas from './components/CourtCanvas.vue';
@@ -93,6 +161,7 @@ import PlanningPhase from './components/PlanningPhase.vue';
 import TutorialPhase1 from './components/TutorialPhase1.vue';
 
 const loading = ref(true);
+const loadStep = ref(0);
 const phase = ref('tutorial');
 const round = ref(1);
 const health = ref(100);
@@ -102,20 +171,43 @@ const losses = ref(0);
 const shop = ref([]);
 const bench = ref([]);
 const lastResult = ref('');
+const lastScore = ref({ home: 0, away: 0 });
 const engine = ref(null);
 const courtLineup = ref([]);
+const tipoffZoom = ref(false);
+const roundStats = ref({ playerScoring: [], events: [] });
 let allPlayers = [];
+
+const STRATEGY_TIPS = [
+  'Posting up a Power Forward against small-ball increases Paint Dominance by 15%.',
+  'The "Splash Family" synergy triggers at 3+ shooters with 85+ shooting — +20 to all.',
+  'Twin Towers activates with 2+ players over 6\'10" — massive defense boost but slower pace.',
+  '"7 Seconds or Less" needs 4+ players averaging 85+ speed — explosive offense, glass defense.',
+  'Franchise synergies stack: 2 Lakers = Tier 1, 4 Lakers = Tier 2. Each tier adds +5 shooting.',
+  'Cost 5 players are rare early — you won\'t see them reliably until Round 7+.',
+  'Selling a player refunds half their cost. Sell early if you\'re pivoting synergies.',
+  'Gold interest caps at +5 per round. Banking gold above 50 doesn\'t help.',
+  'Position matters: players near the hoop shoot at higher probability due to distance decay.',
+  'A contested shot loses ~10% accuracy per foot of defender proximity within 5 feet.',
+];
+const currentTip = ref(STRATEGY_TIPS[Math.floor(Math.random() * STRATEGY_TIPS.length)]);
+
+const maxPlayerPts = computed(() => {
+  if (!roundStats.value.playerScoring.length) return 0;
+  return Math.max(...roundStats.value.playerScoring.map(p => p.points));
+});
 
 provide('engine', engine);
 
 const initWasm = async () => {
   if (typeof Module === 'undefined') {
     console.warn('Wasm engine.js not loaded — running without C++ engine');
+    loadStep.value = 1;
     return;
   }
   const wasmModule = await Module();
   engine.value = new wasmModule.GameManager();
-  console.log('C++ Engine Loaded');
+  loadStep.value = 1;
 };
 
 const fetchRoster = async () => {
@@ -124,7 +216,9 @@ const fetchRoster = async () => {
     const apiResponse = await fetch(`${API_BASE}/api/roster`);
     if (apiResponse.ok) {
       allPlayers = await apiResponse.json();
+      loadStep.value = 2;
       refreshShop();
+      loadStep.value = 3;
       return;
     }
   } catch (e) {
@@ -134,7 +228,9 @@ const fetchRoster = async () => {
   try {
     const response = await fetch(import.meta.env.BASE_URL + 'engine_roster.json');
     allPlayers = await response.json();
+    loadStep.value = 2;
     refreshShop();
+    loadStep.value = 3;
   } catch (error) {
     console.error('Failed to load roster data from both sources.', error);
   }
@@ -196,12 +292,30 @@ const onLockedIn = (lineup) => {
   if (engine.value) {
     engine.value.StartRound();
   }
-  phase.value = 'sim';
+  // Reset round stats for tracking
+  roundStats.value = { playerScoring: [], events: [] };
+  // Tip-off transition
+  phase.value = 'tipoff';
+  tipoffZoom.value = false;
+  setTimeout(() => { tipoffZoom.value = true; }, 100);
+  setTimeout(() => { phase.value = 'sim'; }, 1800);
 };
 
 const onSimComplete = (result) => {
-  lastResult.value = result;
-  if (result === 'loss') {
+  // result is now { outcome, homeScore, awayScore, playerScoring, events }
+  const outcome = typeof result === 'string' ? result : result.outcome;
+  lastResult.value = outcome;
+  lastScore.value = {
+    home: typeof result === 'object' ? result.homeScore : 0,
+    away: typeof result === 'object' ? result.awayScore : 0,
+  };
+  if (typeof result === 'object') {
+    roundStats.value = {
+      playerScoring: result.playerScoring || [],
+      events: result.events || [],
+    };
+  }
+  if (outcome === 'loss') {
     health.value = Math.max(0, health.value - 20);
     losses.value++;
   } else {
@@ -320,7 +434,245 @@ body {
   font-weight: bold;
 }
 
-.loading { text-align: center; padding: 60px; font-size: 1.2rem; }
+/* ── Scouting Report Loading ─────────────────────────────────────── */
+.scouting-report {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 420px;
+  padding: 20px;
+}
+.sr-card {
+  max-width: 440px;
+  width: 100%;
+  background: #1a1a1a;
+  border: 2px solid #8b5a2b;
+  border-radius: 8px;
+  padding: 28px 24px;
+  text-align: center;
+}
+.sr-badge {
+  display: inline-block;
+  background: #8b5a2b;
+  color: #ffd700;
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  padding: 3px 12px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+}
+.sr-title {
+  margin: 0 0 20px;
+  font-size: 1.3rem;
+  color: #e0e0e0;
+}
+.sr-progress {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.sr-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  color: #555;
+  transition: color 0.3s;
+}
+.sr-step.active { color: #ffd700; }
+.sr-step.done { color: #27ae60; }
+.sr-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #333;
+  border: 2px solid #555;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.sr-step.active .sr-dot {
+  background: #ffd700;
+  border-color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+.sr-step.done .sr-dot {
+  background: #27ae60;
+  border-color: #27ae60;
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.7); }
+}
+.sr-tip {
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.sr-tip-label {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: #5bc0de;
+  margin-bottom: 6px;
+}
+.sr-tip p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #aaa;
+  line-height: 1.4;
+}
+.sr-bar-track {
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.sr-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5a2b, #ffd700);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ── Tip-off Transition ─────────────────────────────────────────── */
+.tipoff-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 420px;
+  position: relative;
+}
+.tipoff-content {
+  text-align: center;
+  transform: scale(0.8);
+  opacity: 0;
+  animation: tipoff-enter 0.6s ease-out forwards;
+}
+.tipoff-content.tipoff-zoom {
+  animation: tipoff-enter 0.4s ease-out forwards, tipoff-zoom-out 0.8s ease-in 1.0s forwards;
+}
+@keyframes tipoff-enter {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes tipoff-zoom-out {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.tipoff-whistle {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+}
+.whistle-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid #ffd700;
+  border-radius: 50%;
+  animation: whistle-pulse 0.8s ease-out infinite;
+}
+.whistle-ring.ring-2 {
+  animation-delay: 0.3s;
+}
+@keyframes whistle-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2); opacity: 0; }
+}
+.whistle-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+}
+.tipoff-text {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+.tipoff-sub {
+  margin: 8px 0 0;
+  font-size: 1rem;
+  color: #888;
+}
+
+/* ── Result screen upgrades ─────────────────────────────────────── */
+.result-score {
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  margin: 8px 0;
+}
+.result-card.win .result-score { color: #27ae60; }
+.result-card.loss .result-score { color: #d9534f; }
+.result-damage { color: #d9534f; font-weight: bold; }
+.result-safe { color: #27ae60; }
+
+.combat-log {
+  text-align: left;
+  margin: 16px 0;
+  padding: 12px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+.log-title {
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #888;
+  margin: 0 0 10px;
+}
+.log-entries { display: flex; flex-direction: column; gap: 6px; }
+.log-entry {
+  display: grid;
+  grid-template-columns: 1fr 50px 80px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+.log-name { color: #e0e0e0; }
+.log-pts { color: #ffd700; font-weight: bold; text-align: right; }
+.log-bar-track {
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.log-bar-fill {
+  height: 100%;
+  background: #d9534f;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.key-moments {
+  text-align: left;
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #222;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+.moment {
+  font-size: 0.75rem;
+  color: #aaa;
+  padding: 3px 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+.moment:last-child { border-bottom: none; }
 
 /* Shop */
 .shop-section { margin-top: 15px; }

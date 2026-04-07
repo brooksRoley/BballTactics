@@ -4,18 +4,24 @@ project(BBallTacticsEngine CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Header search path
-include_directories(include)
+# Shared core (submodule) provides headers and engine sources
+set(CORE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shared-core")
+include_directories(${CORE_DIR}/include)
 
+set(CORE_SOURCES
+    ${CORE_DIR}/src/PlayerEntity.cpp
+    ${CORE_DIR}/src/Court.cpp
+    ${CORE_DIR}/src/Basketball.cpp
+    ${CORE_DIR}/src/SynergyEngine.cpp
+    ${CORE_DIR}/src/GameEconomy.cpp
+    ${CORE_DIR}/src/GameSeason.cpp
+    ${CORE_DIR}/src/ShotProbability.cpp
+    ${CORE_DIR}/src/GameManager.cpp
+)
+
+# Bindings.cpp is consumer-specific (WASM embind for this project)
 set(SOURCE_FILES
-    src/PlayerEntity.cpp
-    src/Court.cpp
-    src/Basketball.cpp
-    src/SynergyEngine.cpp
-    src/GameEconomy.cpp
-    src/GameSeason.cpp
-    src/ShotProbability.cpp
-    src/GameManager.cpp
+    ${CORE_SOURCES}
     src/Bindings.cpp
 )
 
