@@ -2,6 +2,8 @@ import json
 import statistics
 from typing import List, Dict
 
+SALARY_CAP = 151_000_000
+
 class NBADatasetProcessor:
     def __init__(self):
         # In production, this gets populated by requests.get()
