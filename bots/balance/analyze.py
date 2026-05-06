@@ -176,17 +176,37 @@ def formation_heatmap(df: pd.DataFrame, out: Path = CHART_DIR):
     Uses the FIRST player in home_team as a proxy (the best shooter gets
     initial possession). For a deeper analysis, run in 'players' mode.
     """
-    # This requires position data which isn't in the sim output.
-    # Generate a synthetic heatmap from the default placements.
-    grid = np.full((5, 5), 0.5)  # placeholder — fill from real data if available
+    grid = np.zeros((5, 5))
+    counts = np.zeros((5, 5))
+
+    for _, row in df.iterrows():
+        try:
+            home_team = json.loads(row["home_team"]) if isinstance(row["home_team"], str) else row["home_team"]
+            if not home_team or not isinstance(home_team, list) or len(home_team) == 0:
+                continue
+            p = home_team[0]
+            cx = int(np.clip(p.get("x", 2), 0, 4))
+            cy = int(np.clip(p.get("y", 2), 0, 4))
+            counts[cy, cx] += 1
+            if row.get("home_win", False):
+                grid[cy, cx] += 1
+        except (json.JSONDecodeError, KeyError, TypeError):
+            continue
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        win_rates = np.where(counts > 0, grid / counts, 0.5)
 
     fig, ax = plt.subplots(figsize=(6, 5))
-    im = ax.imshow(grid, cmap="RdYlGn", vmin=0, vmax=1, origin="lower")
+    im = ax.imshow(win_rates, cmap="RdYlGn", vmin=0, vmax=1, origin="lower")
     ax.set_xlabel("courtX")
     ax.set_ylabel("courtY")
     ax.set_title("Formation Win-Rate Heatmap (5x5 Grid)")
     ax.set_xticks(range(5))
     ax.set_yticks(range(5))
+    for i in range(5):
+        for j in range(5):
+            n = int(counts[i, j])
+            ax.text(j, i, f"{win_rates[i,j]:.0%}\n(n={n})", ha="center", va="center", fontsize=7)
     fig.colorbar(im, ax=ax, label="Win Rate")
     fig.tight_layout()
     fig.savefig(out / "formation_heatmap.png", dpi=150)
