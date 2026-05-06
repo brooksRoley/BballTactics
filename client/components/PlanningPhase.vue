@@ -19,7 +19,7 @@
         <div v-for="cell in gridCells"
              :key="cell.id"
              class="court-cell"
-             :class="{ 'cell-highlight': selectedPlayer }"
+             :class="{ 'cell-highlight': selectedPlayer, 'cell-shake': shakeCellId === cell.id }"
              :data-x="cell.x"
              :data-y="cell.y"
              :style="cellStyle(cell)"
@@ -58,7 +58,7 @@
              @click="onTapBench(player)">
           <span class="bp-name">{{ player.name }}</span>
           <span class="bp-stats">
-            SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }}
+            SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }} / DEF {{ player.stats.defense }}
           </span>
           <button class="sell-btn"
                   @click.stop="$emit('sell-player', player)"
@@ -74,9 +74,14 @@
 
     <!-- Lock in -->
     <div class="lock-in-bar">
-      <span class="roster-count" :class="{ ready: onCourt.length >= 1 }">
-        {{ onCourt.length }}/5 on court
-      </span>
+      <div class="lock-in-left">
+        <span class="roster-count" :class="{ ready: onCourt.length >= 3 }">
+          {{ onCourt.length }}/5 on court
+        </span>
+        <span v-if="onCourt.length > 0 && onCourt.length < 3" class="roster-warning">
+          Add at least 3 players for a fair fight
+        </span>
+      </div>
       <button
         class="lock-in-btn"
         :disabled="onCourt.length < 1"
@@ -102,7 +107,13 @@ export default {
     const selectedPlayer = ref(null);
     const courtScaler = ref(null);
     const courtScale = ref(1);
+    const shakeCellId = ref(null);
     let resizeObserver = null;
+
+    const triggerShake = (cx, cy) => {
+      shakeCellId.value = `c-${cx}-${cy}`;
+      setTimeout(() => { shakeCellId.value = null; }, 400);
+    };
     const getEngine = () => props.engine || inject('engine', null);
 
     const COURT_W = 500;
@@ -162,6 +173,7 @@ export default {
 
       // Check if cell is occupied
       if (onCourt.value.find(p => p.courtX === cx && p.courtY === cy && p.id !== player.id)) {
+        triggerShake(cx, cy);
         dragState.value = { player: null, from: null };
         return;
       }
@@ -244,6 +256,7 @@ export default {
 
       // Check if cell is occupied
       if (onCourt.value.find(p => p.courtX === cx && p.courtY === cy && p.id !== selectedPlayer.value.id)) {
+        triggerShake(cx, cy);
         return;
       }
 
@@ -301,7 +314,7 @@ export default {
       cellStyle, playerStyle, shortName,
       onDragStart, onDropCourt, onDropBench,
       onTapBench, onTapCell, onTapCourtPlayer,
-      selectedPlayer, courtScaler, courtScale, COURT_H
+      selectedPlayer, shakeCellId, courtScaler, courtScale, COURT_H
     };
   }
 };
@@ -327,7 +340,7 @@ export default {
   position: relative;
   width: 500px;
   height: 400px;
-  background: #c59b6d;
+  background: #9c7040;
   border: 3px solid #8b5a2b;
   border-radius: 4px;
   overflow: hidden;
@@ -384,6 +397,19 @@ export default {
 .court-cell:hover {
   border-color: rgba(255,255,255,0.3);
   background: rgba(255,255,255,0.05);
+}
+.court-cell.cell-shake {
+  animation: cell-shake 0.35s ease;
+  background: rgba(217, 83, 79, 0.2);
+  border-color: rgba(217, 83, 79, 0.6) !important;
+}
+@keyframes cell-shake {
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-5px); }
+  40%  { transform: translateX(5px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
 }
 
 /* Placed players */
@@ -455,8 +481,17 @@ export default {
   align-items: center;
   padding: 8px 0;
 }
+.lock-in-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .roster-count { color: #888; font-size: 0.9rem; }
 .roster-count.ready { color: #27ae60; }
+.roster-warning {
+  font-size: 0.75rem;
+  color: #f0a500;
+}
 
 .lock-in-btn {
   background: #d9534f;
@@ -492,7 +527,7 @@ export default {
   .bench-player { padding: 8px 12px; }
   .bp-name { font-size: 0.9rem; }
   .bp-stats { font-size: 0.7rem; }
-  .lock-in-bar { flex-direction: column; gap: 8px; }
+  .lock-in-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
   .lock-in-btn { width: 100%; padding: 12px; font-size: 1.1rem; }
 }
 </style>

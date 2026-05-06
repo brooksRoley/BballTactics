@@ -137,7 +137,7 @@ export default {
       c.scale(dpr, dpr);
 
       // Court floor
-      c.fillStyle = '#c59b6d';
+      c.fillStyle = '#9c7040';
       c.fillRect(0, 0, COURT_W, COURT_H);
 
       // Court border
@@ -196,8 +196,8 @@ export default {
 
       // Away players (blue)
       for (const bot of botPlayers.value) {
-        const bx = clamp(bot.x + 10, 10, COURT_W - 10);
-        const by = clamp(bot.y + 10, 10, COURT_H - 10);
+        const bx = clamp(bot.x + 15, 15, COURT_W - 15);
+        const by = clamp(bot.y + 15, 15, COURT_H - 15);
         const hasBall = possId === bot.id;
 
         if (hasBall) {
@@ -205,24 +205,32 @@ export default {
           c.shadowBlur = 10;
         }
 
-        c.globalAlpha = hasBall ? 1.0 : 0.8;
+        c.globalAlpha = hasBall ? 1.0 : 0.85;
         c.fillStyle = '#5bc0de';
         c.strokeStyle = hasBall ? '#f4a300' : '#fff';
         c.lineWidth = 2;
         c.beginPath();
-        c.arc(bx, by, 10, 0, Math.PI * 2);
+        c.arc(bx, by, 15, 0, Math.PI * 2);
         c.fill();
         c.stroke();
 
         c.shadowColor = 'transparent';
         c.shadowBlur = 0;
         c.globalAlpha = 1.0;
+
+        // Bot label
+        const botLabel = bot.name ? bot.name.split(' ').pop().slice(0, 3) : 'OPP';
+        c.fillStyle = '#fff';
+        c.font = 'bold 8px sans-serif';
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(botLabel, bx, by);
       }
 
       // Home players (red)
       for (const player of livePlayers.value) {
-        const px = clamp(player.x + 10, 10, COURT_W - 10);
-        const py = clamp(player.y + 10, 10, COURT_H - 10);
+        const px = clamp(player.x + 15, 15, COURT_W - 15);
+        const py = clamp(player.y + 15, 15, COURT_H - 15);
         const hasBall = possId === player.id;
 
         if (hasBall) {
@@ -234,7 +242,7 @@ export default {
         c.strokeStyle = hasBall ? '#f4a300' : '#fff';
         c.lineWidth = 2;
         c.beginPath();
-        c.arc(px, py, 10, 0, Math.PI * 2);
+        c.arc(px, py, 15, 0, Math.PI * 2);
         c.fill();
         c.stroke();
 
@@ -244,7 +252,7 @@ export default {
         // Player name label
         const label = player.name ? player.name.split(' ').pop().slice(0, 3) : String(player.id);
         c.fillStyle = '#fff';
-        c.font = 'bold 7px sans-serif';
+        c.font = 'bold 8px sans-serif';
         c.textAlign = 'center';
         c.textBaseline = 'middle';
         c.fillText(label, px, py);

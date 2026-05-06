@@ -55,6 +55,14 @@
 
       <!-- Draft + Plan (unified screen) -->
       <div v-if="phase === 'planning'" class="planning-screen">
+
+        <!-- First-round coach tip -->
+        <div v-if="round === 1 && !planningIntroDismissed" class="planning-intro">
+          <div class="pi-label">COACH MILLER</div>
+          <p class="pi-text">Buy players from the Free Agents shop below, then <strong>drag or tap them onto the court</strong>. Place at least 3, then hit <strong>Lock In &amp; Fight</strong>.</p>
+          <button class="pi-dismiss" @click="planningIntroDismissed = true">Got it</button>
+        </div>
+
         <PlanningPhase
           :engine="engine"
           :bench="bench"
@@ -163,6 +171,7 @@ import TutorialPhase1 from './components/TutorialPhase1.vue';
 const loading = ref(true);
 const loadStep = ref(0);
 const phase = ref('tutorial');
+const planningIntroDismissed = ref(false);
 const round = ref(1);
 const health = ref(100);
 const gold = ref(10);
@@ -179,16 +188,16 @@ const roundStats = ref({ playerScoring: [], events: [] });
 let allPlayers = [];
 
 const STRATEGY_TIPS = [
-  'Posting up a Power Forward against small-ball increases Paint Dominance by 15%.',
-  'The "Splash Family" synergy triggers at 3+ shooters with 85+ shooting — +20 to all.',
-  'Twin Towers activates with 2+ players over 6\'10" — massive defense boost but slower pace.',
-  '"7 Seconds or Less" needs 4+ players averaging 85+ speed — explosive offense, glass defense.',
-  'Franchise synergies stack: 2 Lakers = Tier 1, 4 Lakers = Tier 2. Each tier adds +5 shooting.',
   'Cost 5 players are rare early — you won\'t see them reliably until Round 7+.',
-  'Selling a player refunds half their cost. Sell early if you\'re pivoting synergies.',
-  'Gold interest caps at +5 per round. Banking gold above 50 doesn\'t help.',
-  'Position matters: players near the hoop shoot at higher probability due to distance decay.',
-  'A contested shot loses ~10% accuracy per foot of defender proximity within 5 feet.',
+  'Selling a player refunds half their cost. Sell early when pivoting your lineup.',
+  'Position your best shooter close to the hoop — shot probability scales with distance.',
+  'You earn gold each round: a base amount plus a bonus that grows with your round number.',
+  'Rerolling costs 1G. Save rerolls for when you really need a specific player tier.',
+  'Losing a round costs 20 HP. You start with 100 HP and are eliminated at 0.',
+  'Your lineup carries over each round — you don\'t have to rebuild from scratch.',
+  'DEF (defense) stat helps your players contest opponent shots during the simulation.',
+  'Cost 1 and 2 players appear most often in early rounds. Higher tiers unlock as rounds progress.',
+  'Speed determines how fast players move on court — important for getting into shooting position.',
 ];
 const currentTip = ref(STRATEGY_TIPS[Math.floor(Math.random() * STRATEGY_TIPS.length)]);
 
@@ -673,6 +682,47 @@ body {
   border-bottom: 1px solid #2a2a2a;
 }
 .moment:last-child { border-bottom: none; }
+
+/* Planning intro coach bubble */
+.planning-intro {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #1e1e1e;
+  border: 2px solid #8b5a2b;
+  border-left: 6px solid #d9534f;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.pi-label {
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #d9534f;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pi-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ccc;
+  line-height: 1.4;
+  flex: 1;
+}
+.pi-text strong { color: #e0e0e0; }
+.pi-dismiss {
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  background: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pi-dismiss:hover { background: #444; }
 
 /* Shop */
 .shop-section { margin-top: 15px; }

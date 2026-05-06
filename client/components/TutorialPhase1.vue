@@ -6,12 +6,12 @@
       <div class="coach-portrait">
         <span class="coach-name">COACH MILLER</span>
       </div>
-      <p class="dialogue-text">{{ tutorialText[currentStep] }}</p>
-      <button 
-        v-if="currentStep < 2" 
-        class="next-btn" 
+      <p class="dialogue-text">{{ coachError || tutorialText[currentStep] }}</p>
+      <button
+        v-if="currentStep < 2"
+        class="next-btn"
         @click="advanceTutorial">
-        Continue (Press Space)
+        Continue
       </button>
     </div>
 
@@ -71,6 +71,7 @@ export default {
     const currentStep = ref(0);
     const draftCapital = ref(10);
     const purchasedPlayer = ref(null);
+    const coachError = ref('');
 
     const tutorialText = [
       "You don't win championships with just money, but you sure as hell lose without it. Welcome to the Draft Shop.",
@@ -96,8 +97,8 @@ export default {
       // Enforce tutorial rules: They MUST click Caruso to proceed
       if (currentStep.value === 2) {
         if (player.id !== 'caruso_1') {
-          // Play a buzz/error sound here in full production
-          console.log("Coach Miller: 'I said draft Caruso, rookie. Pay attention.'");
+          coachError.value = "I said draft Caruso, rookie. Pay attention.";
+          setTimeout(() => { coachError.value = ''; }, 2500);
           return;
         }
         
@@ -126,6 +127,7 @@ export default {
       draftCapital,
       shopPool,
       purchasedPlayer,
+      coachError,
       advanceTutorial,
       buyPlayer
     };
