@@ -29,6 +29,28 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
+
+def _make_bot_board(round_number: int) -> dict:
+    """Generate a bot opponent board scaled by round number."""
+    if round_number <= 3:
+        s, d, sp = 50, 50, 50
+        name, team = "Bench Squad", "Rookie AI"
+    elif round_number <= 6:
+        s, d, sp = 65, 65, 65
+        name, team = "Rotation Player", "Veteran AI"
+    else:
+        s, d, sp = 80, 75, 70
+        name, team = "All-Star", "Elite AI"
+    return {
+        "is_bot": True,
+        "team_name": team,
+        "units": [
+            {"id": "bot_1", "name": f"{name} 1", "cost": 2, "x": 1, "y": 1, "stats": {"shooting": s, "defense": d, "speed": sp}},
+            {"id": "bot_2", "name": f"{name} 2", "cost": 2, "x": 2, "y": 2, "stats": {"shooting": s, "defense": d, "speed": sp}},
+            {"id": "bot_3", "name": f"{name} 3", "cost": 2, "x": 3, "y": 3, "stats": {"shooting": s, "defense": d, "speed": sp}},
+        ]
+    }
+
 # Pydantic Schemas for Request Validation
 class StartRunRequest(BaseModel):
     player_id: str
@@ -81,13 +103,7 @@ async def submit_and_fetch(req: SubmitBoardRequest, db: AsyncSession = Depends(g
 
     # 3. Fallback logic: If no opponent exists yet, serve the Bot
     if not opponent:
-        bot_board = {
-            "is_bot": True,
-            "team_name": "Rookie AI",
-            "units": [
-                {"id": "bot_1", "name": "Bench Warmer", "cost": 1, "x": 2, "y": 3, "stats": {"shooting": 40, "defense": 40, "speed": 40}}
-            ]
-        }
+        bot_board = _make_bot_board(req.round_number)
         return {"opponent_board": bot_board}
 
     return {"opponent_board": opponent[0]}
