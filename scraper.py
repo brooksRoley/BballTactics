@@ -13,11 +13,11 @@ class NBADatasetProcessor:
     def fetch_mock_data(self):
         """Simulating an API pull of raw NBA stats and salary percentages."""
         self.raw_players = [
-            {"id": 1, "name": "Steph Curry", "pts": 29.4, "spd": 8.5, "def_ws": 0.110, "cap_pct": 0.35},
-            {"id": 2, "name": "De'Aaron Fox", "pts": 25.0, "spd": 9.8, "def_ws": 0.080, "cap_pct": 0.25},
-            {"id": 3, "name": "Rudy Gobert", "pts": 14.0, "spd": 4.5, "def_ws": 0.180, "cap_pct": 0.30},
-            {"id": 4, "name": "Alex Caruso", "pts": 9.0, "spd": 7.5, "def_ws": 0.150, "cap_pct": 0.08},
-            {"id": 5, "name": "Udonis Haslem", "pts": 2.0, "spd": 3.0, "def_ws": 0.010, "cap_pct": 0.02}
+            {"id": 1, "name": "Steph Curry", "team": "GSW", "pts": 29.4, "spd": 8.5, "def_ws": 0.110, "cap_pct": 0.35, "injury_status": ""},
+            {"id": 2, "name": "De'Aaron Fox", "team": "SAS", "pts": 25.0, "spd": 9.8, "def_ws": 0.080, "cap_pct": 0.25, "injury_status": ""},
+            {"id": 3, "name": "Rudy Gobert", "team": "MIN", "pts": 14.0, "spd": 4.5, "def_ws": 0.180, "cap_pct": 0.30, "injury_status": ""},
+            {"id": 4, "name": "Alex Caruso", "team": "OKC", "pts": 9.0, "spd": 7.5, "def_ws": 0.150, "cap_pct": 0.08, "injury_status": ""},
+            {"id": 5, "name": "Udonis Haslem", "team": "MIA", "pts": 2.0, "spd": 3.0, "def_ws": 0.010, "cap_pct": 0.02, "injury_status": ""}
         ]
 
     def _calculate_z_scores(self, stat_key: str) -> Dict[int, int]:
@@ -64,10 +64,14 @@ class NBADatasetProcessor:
         
         for p in self.raw_players:
             pid = p["id"]
+            injury = p.get("injury_status", "")
             self.processed_roster.append({
                 "id": pid,
                 "name": p["name"],
+                "team": p.get("team", ""),
                 "cost": self._determine_cost(p.get("cap_pct", 0)),
+                "is_active": injury == "",
+                "injury_status": injury,
                 "stats": {
                     "shooting": shooting_map.get(pid, 50),
                     "speed": speed_map.get(pid, 50),

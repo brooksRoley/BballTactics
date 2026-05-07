@@ -38,5 +38,21 @@ class TestNBAPipeline(unittest.TestCase):
         self.assertIn("cost", first_player)
         self.assertIn("shooting", first_player["stats"])
 
+    def test_injured_players_flagged_inactive(self):
+        """Injured players must have is_active=False so the engine skips them."""
+        self.processor.raw_players = [
+            {"id": 1, "name": "Healthy Star", "team": "OKC", "pts": 30.0, "spd": 8.0, "def_ws": 0.12, "cap_pct": 0.30, "injury_status": ""},
+            {"id": 2, "name": "Injured Star", "team": "LAL", "pts": 28.0, "spd": 7.0, "def_ws": 0.08, "cap_pct": 0.28, "injury_status": "Out — Hamstring (~4 weeks)"},
+        ]
+        self.processor.build_engine_payload()
+
+        healthy = next(p for p in self.processor.processed_roster if p["name"] == "Healthy Star")
+        injured = next(p for p in self.processor.processed_roster if p["name"] == "Injured Star")
+
+        self.assertTrue(healthy["is_active"])
+        self.assertFalse(injured["is_active"])
+        self.assertEqual(injured["injury_status"], "Out — Hamstring (~4 weeks)")
+        self.assertEqual(injured["team"], "LAL")
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,106 @@
+{
+    "_version": "2026-05-07",
+    "_note": "Team synergy tier rankings. S=dominant, A=strong, B=viable, C=weak, X=eliminated. Updated each playoff round.",
+
+    "playoff_survivors": {
+        "OKC": {
+            "tier": "S",
+            "synergy_focus": "depth_defense",
+            "form": "5-0 in playoffs, no losses. Depth-first without Luka trade asset."
+        },
+        "SAS": {
+            "tier": "A",
+            "synergy_focus": "center_dominant",
+            "form": "Series tied 1-1 vs MIN. Wemby anchoring both ends. 38-pt Game 2 blowout."
+        },
+        "NYK": {
+            "tier": "A",
+            "synergy_focus": "balanced_scoring",
+            "form": "Commanding series vs PHI. Brunson/Anunoby/KAT three-headed attack."
+        },
+        "DET": {
+            "tier": "A",
+            "synergy_focus": "star_playmaker",
+            "form": "Up 1-0 vs CLE. Cunningham driving the offense."
+        },
+        "MIN": {
+            "tier": "B",
+            "synergy_focus": "twin_towers",
+            "form": "Tied 1-1 vs SAS after 38-pt loss. Gobert/KAT-less twin towers."
+        },
+        "CLE": {
+            "tier": "B",
+            "synergy_focus": "balanced_scoring",
+            "form": "Down 0-1 vs DET. D. Mitchell carrying but role players underperforming."
+        },
+        "PHI": {
+            "tier": "C",
+            "synergy_focus": "guard_iso",
+            "form": "Down 0-2 vs NYK. No Embiid all series. Maxey solo carry."
+        },
+        "LAL": {
+            "tier": "C",
+            "synergy_focus": "star_playmaker",
+            "form": "Down 0-1 vs OKC. Luka out ~4 weeks. LeBron + role players."
+        }
+    },
+
+    "eliminated_round1": {
+        "BOS": {
+            "tier": "X",
+            "previous_tier": "S",
+            "synergy_focus": "3pt_spacing",
+            "drop_reason": "Eliminated R1. 3pt-heavy meta countered. Synergy dropped S -> X."
+        },
+        "HOU": {
+            "tier": "X",
+            "previous_tier": "A",
+            "synergy_focus": "transition_speed",
+            "drop_reason": "Eliminated R1. Young core couldn't sustain playoff pace. Synergy dropped A -> X."
+        },
+        "MIL": {
+            "tier": "X",
+            "previous_tier": "A",
+            "synergy_focus": "star_anchor",
+            "drop_reason": "Eliminated R1."
+        },
+        "DEN": {
+            "tier": "X",
+            "previous_tier": "A",
+            "synergy_focus": "center_playmaker",
+            "drop_reason": "Eliminated R1."
+        },
+        "MEM": {
+            "tier": "X",
+            "previous_tier": "B",
+            "synergy_focus": "athleticism",
+            "drop_reason": "Eliminated R1."
+        },
+        "IND": {
+            "tier": "X",
+            "previous_tier": "B",
+            "synergy_focus": "pace_and_space",
+            "drop_reason": "Eliminated R1."
+        },
+        "MIA": {
+            "tier": "X",
+            "previous_tier": "B",
+            "synergy_focus": "defensive_grit",
+            "drop_reason": "Eliminated R1."
+        },
+        "DAL": {
+            "tier": "X",
+            "previous_tier": "B",
+            "synergy_focus": "star_duo",
+            "drop_reason": "Eliminated R1."
+        }
+    },
+
+    "tier_buffs": {
+        "S": { "shooting": 4, "defense": 4, "speed": 3 },
+        "A": { "shooting": 2, "defense": 2, "speed": 2 },
+        "B": { "shooting": 1, "defense": 1, "speed": 1 },
+        "C": { "shooting": 0, "defense": 0, "speed": 0 },
+        "X": { "shooting": -2, "defense": -2, "speed": -1 }
+    }
+}
