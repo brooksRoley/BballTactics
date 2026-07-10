@@ -5,6 +5,8 @@ EMSCRIPTEN_BINDINGS(bball_tactics) {
     emscripten::class_<GameManager>("GameManager")
         .constructor<>()
         .function("SpawnPlayer", &GameManager::SpawnPlayer)
+        .function("SpawnUnit", &GameManager::SpawnUnit)
+        .function("SetAwayTeamJSON", &GameManager::SetAwayTeamJSON)
         .function("SetPlayerPlay", &GameManager::SetPlayerPlay)
         .function("TickSimulation", &GameManager::TickSimulation)
         .function("GetGameStateJSON", &GameManager::GetGameStateJSON)

@@ -1,6 +1,6 @@
 CMakeFiles/engine.dir/shared-core/src/SynergyEngine.cpp.o: \
-  /Users/brooksroley/Documents/BballTactics/shared-core/src/SynergyEngine.cpp \
-  /Users/brooksroley/Documents/BballTactics/shared-core/include/SynergyEngine.h \
+  /Users/brooksroley/Desktop/BballTactics/shared-core/src/SynergyEngine.cpp \
+  /Users/brooksroley/Desktop/BballTactics/shared-core/include/SynergyEngine.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/vector \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__config_site \
@@ -624,8 +624,8 @@ CMakeFiles/engine.dir/shared-core/src/SynergyEngine.cpp.o: \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wbuffer_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__locale_dir/wstring_convert.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/cstdarg \
-  /Users/brooksroley/Documents/BballTactics/shared-core/include/PlayerEntity.h \
-  /Users/brooksroley/Documents/BballTactics/shared-core/include/Vector.h \
+  /Users/brooksroley/Desktop/BballTactics/shared-core/include/PlayerEntity.h \
+  /Users/brooksroley/Desktop/BballTactics/shared-core/include/Vector.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/map \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__functional/is_transparent.h \
   /opt/homebrew/Cellar/emscripten/5.0.2/libexec/cache/sysroot/include/c++/v1/__fwd/map.h \

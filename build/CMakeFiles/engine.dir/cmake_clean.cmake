@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/Users/brooksroley/Documents/BballTactics/public/engine.js"
-  "/Users/brooksroley/Documents/BballTactics/public/engine.pdb"
+  "/Users/brooksroley/Desktop/BballTactics/public/engine.js"
+  "/Users/brooksroley/Desktop/BballTactics/public/engine.pdb"
   "CMakeFiles/engine.dir/shared-core/src/Basketball.cpp.o"
   "CMakeFiles/engine.dir/shared-core/src/Basketball.cpp.o.d"
   "CMakeFiles/engine.dir/shared-core/src/Court.cpp.o"

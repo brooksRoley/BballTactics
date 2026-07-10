@@ -2,6 +2,22 @@
 
 A basketball auto-battler built with a C++ WebAssembly physics engine, Vue 3 frontend, and Python/FastAPI backend.
 
+## Play it
+
+**Live:** https://brooksroley.github.io/BballTactics/
+
+Deploys automatically on every push to `main` via `.github/workflows/deploy-pages.yml` (builds the Vite client with `VITE_API_BASE=https://www.brooksroley.com` — override with a repo variable named `VITE_API_BASE` — and publishes to GitHub Pages).
+
+**One-time repo setup:** GitHub → Settings → Pages → Build and deployment → Source: **GitHub Actions**. Then push to `main`.
+
+**Local dev:**
+```bash
+npm install
+npm run dev          # http://localhost:5173
+# Backend API: run the zero-next app on localhost:3000 (yarn dev in that repo),
+# or point at prod: VITE_API_BASE=https://www.brooksroley.com npm run dev
+```
+
 ## Project Structure
 
 ```
@@ -92,7 +108,7 @@ BballTactics/
 ### Deployment
 - **API**: Deployed to Fly.io at `https://bballtactics.fly.dev` (`fly.toml`, `Dockerfile`).
 - **Database**: Fly.io Postgres (`bballtactics-db`). Tables initialized via `docker/init.sql`. Attached to the app — `DATABASE_URL` injected automatically as a secret.
-- **Frontend**: Deployed to GitHub Pages at `https://brooksroley.github.io/BballTactics/` via `npm run deploy`. Production builds use `VITE_API_BASE_URL=https://bballtactics.fly.dev` so all API calls route to Fly.io.
+- **Frontend**: Deployed to GitHub Pages at `https://brooksroley.github.io/BballTactics/` via the `deploy-pages.yml` GitHub Actions workflow (on push to `main`). Production builds bake `VITE_API_BASE=https://www.brooksroley.com` so API calls route to the zero-next backend (`/api/bball/*`).
 - **Local dev**: `docker compose up` runs API + Postgres locally. Vite proxy handles `/api` → `localhost:8000`.
 
 ### Wasm Build
@@ -149,8 +165,9 @@ flyctl deploy -a bballtactics
 ```
 
 ### Deploy Frontend to GitHub Pages
+Automatic: push to `main` and the `deploy-pages.yml` workflow builds and publishes. Manual fallback:
 ```bash
-npm run deploy
+npm run deploy   # gh-pages branch deploy (legacy; prefer the Actions workflow)
 ```
 
 ### Initialize a fresh Fly.io Postgres database

@@ -1,0 +1,346 @@
+{
+  "version": 1,
+  "comment": "Data spine for Hardwood Autochess tactics. Counter multipliers are the OFFENSE's efficiency multiplier vs that coverage. Base band is 0.85-1.15 (rock-paper-scissors with teeth, no hard counters); personnel modifiers layer on top, final clamp 0.80-1.25 in tactics.js. Coverage terms mirror Brooks's NBASwiftTactics PuzzleModel.swift vocabulary (Drop, ICE, Switch All, Blitz/Trap).",
+  "band": { "min": 0.85, "max": 1.15 },
+  "finalClamp": { "min": 0.8, "max": 1.25 },
+  "offenses": [
+    {
+      "id": "spread_pnr",
+      "name": "Spread Pick-and-Roll",
+      "lingo": ["Spread PnR", "1-4 flat", "high ball screen"],
+      "translation": "One ball screen up top, four shooters holding the arc — give the defense two bad choices on every possession.",
+      "wants": "A downhill handler (speed) plus a floor full of credible shooters.",
+      "personnel": [
+        {
+          "type": "topStat",
+          "stat": "speed",
+          "baseline": 55,
+          "perPoint": 0.003,
+          "cap": 0.05,
+          "note": "{name} bends the screen — the spread PnR is only as scary as its downhill handler ({value} speed)."
+        },
+        {
+          "type": "avgStat",
+          "stat": "shooting",
+          "baseline": 48,
+          "perPoint": 0.0025,
+          "cap": 0.05,
+          "note": "Spacing is credibility: your floor shoots {value} on average, so help defenders have to stay home."
+        }
+      ],
+      "counters": {
+        "drop": {
+          "multiplier": 1.12,
+          "note": "Their drop big sagged into the paint and your handler rose up — pull-up jumpers all night. Drop's known bill: it concedes the pull-up to protect the rim."
+        },
+        "ice": {
+          "multiplier": 0.9,
+          "note": "Their ICE pushed every screen down the sideline — no middle, no corner outlet. The spread's math dies on the baseline."
+        },
+        "switch": {
+          "multiplier": 1.02,
+          "note": "They switched to kill the action, but every switch writes a mismatch somewhere — hunt their weakest defender."
+        },
+        "blitz": {
+          "multiplier": 1.0,
+          "note": "Two on the ball, 4-on-3 behind it — a wash: the trap hurt your handler, but four spacers made them pay for gambling."
+        },
+        "zone23": {
+          "multiplier": 1.08,
+          "note": "A zone guards the floor, not shooters — five spacers bend a 2-3 until the corners come open."
+        }
+      },
+      "citation": "The Hoops Geek: offenses counter low drop by screening higher so the handler can rise into a pull-up 3 (thehoopsgeek.com/basketball-plays/pick-roll-against-low-drop-defense)."
+    },
+    {
+      "id": "spain_pnr",
+      "name": "Spain Pick-and-Roll",
+      "lingo": ["Spain PnR", "stack PnR", "back-screen the drop"],
+      "translation": "A normal ball screen with an ambush: a shooter back-screens the dropping big, then pops to the arc.",
+      "wants": "A genuine shooting threat to pop, plus enough team speed to run the choreography.",
+      "personnel": [
+        {
+          "type": "topStat",
+          "stat": "shooting",
+          "baseline": 55,
+          "perPoint": 0.003,
+          "cap": 0.05,
+          "note": "{name} is the popper ({value} shooting) — Spain only works if the back-screener is a shot the defense fears."
+        },
+        {
+          "type": "avgStat",
+          "stat": "speed",
+          "baseline": 45,
+          "perPoint": 0.002,
+          "cap": 0.04,
+          "note": "Spain is three players moving on a timer — your team speed ({value} avg) sells the choreography."
+        }
+      ],
+      "counters": {
+        "drop": {
+          "multiplier": 1.15,
+          "note": "Spain is drop coverage's nightmare: the back-screen ambushed their dropping big, and the popper walked into an open three."
+        },
+        "ice": {
+          "multiplier": 0.95,
+          "note": "Their ICE flattened the screen angle before the back-screen could land — the ambush needs a big who drops, and he never did."
+        },
+        "switch": {
+          "multiplier": 0.88,
+          "note": "Switching keeps a body on every screener — your Spain back-screen hit nothing but a pre-switched defender."
+        },
+        "blitz": {
+          "multiplier": 1.02,
+          "note": "The trap came, but Spain's second screener became the 4-on-3 release valve behind it."
+        },
+        "zone23": {
+          "multiplier": 0.92,
+          "note": "Zone defenders guard space, not screens — Spain's choreography screened the air."
+        }
+      },
+      "citation": "Hooper University: Spain PnR adds a back-screen on the roll man's defender, demanding coordination from three defenders at once (hooperuniversity.com/breakdowns/ball-screen-offense-spain-pnr-explained)."
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom (Chicago) Action",
+      "lingo": ["Zoom", "Chicago", "pindown into DHO"],
+      "translation": "A pindown screen that flows straight into a dribble hand-off — the shooter catches the ball already moving downhill.",
+      "wants": "Shooters, plural. Zoom manufactures catch-and-shoot and pull-up looks; it is worthless without them.",
+      "personnel": [
+        {
+          "type": "avgStat",
+          "stat": "shooting",
+          "baseline": 50,
+          "perPoint": 0.003,
+          "cap": 0.06,
+          "note": "Zoom manufactures shooting looks — your floor averages {value}, so the looks it creates actually go in."
+        }
+      ],
+      "counters": {
+        "drop": {
+          "multiplier": 1.06,
+          "note": "The pindown-into-handoff put your catcher downhill with their big still dropping — a free runway into a pull-up."
+        },
+        "ice": {
+          "multiplier": 1.06,
+          "note": "ICE is a ball-screen rule; Zoom's hand-off isn't a ball screen. Their coverage never triggered."
+        },
+        "switch": {
+          "multiplier": 0.9,
+          "note": "They switched the hand-off at the exchange — Zoom's whole product is a head start, and the switch erased it."
+        },
+        "blitz": {
+          "multiplier": 0.92,
+          "note": "They trapped the hand-off at the exchange point — your catcher never got downhill with the ball."
+        },
+        "zone23": {
+          "multiplier": 1.02,
+          "note": "Zoom's motion probed the zone's seams; the kick-out three was there whenever the help pinched."
+        }
+      },
+      "citation": "The Hoops Geek: Zoom (also called Chicago) combines a down screen with a dribble hand-off, creating double and triple gaps for drives and kick-out 3s (thehoopsgeek.com/basketball-zoom-action)."
+    },
+    {
+      "id": "delay_5out",
+      "name": "Delay 5-Out",
+      "lingo": ["Delay", "5-out", "hub offense"],
+      "translation": "Your big runs the offense from the top of the key while all five players start beyond the arc — every drive and cut has a runway.",
+      "wants": "A playmaking hub big (defense + touch) and cutters with speed.",
+      "personnel": [
+        {
+          "type": "hubBig",
+          "defenseMin": 50,
+          "shootingMin": 45,
+          "baseline": 50,
+          "perPoint": 0.003,
+          "cap": 0.05,
+          "missingPenalty": 0.05,
+          "note": "{name} is your Delay hub — a big who can catch at the top and make a read is the whole engine.",
+          "missingNote": "No hub: Delay 5-Out needs a big with hands and touch at the top of the key, and you don't have one."
+        },
+        {
+          "type": "avgStat",
+          "stat": "speed",
+          "baseline": 48,
+          "perPoint": 0.002,
+          "cap": 0.04,
+          "note": "5-out is a cutting offense — your team speed ({value} avg) is what turns empty lanes into layups."
+        }
+      ],
+      "counters": {
+        "drop": {
+          "multiplier": 0.94,
+          "note": "Five-out cutting into a set rim protector — their drop big just stood where all your cuts finish."
+        },
+        "ice": {
+          "multiplier": 1.02,
+          "note": "ICE wants sideline ball screens; Delay lives at the top of the key, outside ICE's jurisdiction."
+        },
+        "switch": {
+          "multiplier": 1.0,
+          "note": "Even matchups everywhere — your hub kept probing, but their switches kept the floor honest."
+        },
+        "blitz": {
+          "multiplier": 1.12,
+          "note": "They trapped your hub and he short-rolled into a 4-on-3 — five-out spacing makes blitzes bleed."
+        },
+        "zone23": {
+          "multiplier": 0.9,
+          "note": "A 2-3 packs exactly the lanes Delay's cutters need — the rim was walled off before the cut began."
+        }
+      },
+      "citation": "Basketball Action Dictionary / HoopTalkTV glossaries: in 5-out all five players start beyond the arc, opening the lane for drives and cuts; Delay initiates through the big at the top."
+    },
+    {
+      "id": "seven_sol",
+      "name": "Seven Seconds or Less",
+      "lingo": ["7SOL", "push pace", "run-and-gun"],
+      "translation": "Push off every rebound and every make — get a shot up before the defense can even call a coverage.",
+      "wants": "Speed everywhere. Pace is the whole offense.",
+      "personnel": [
+        {
+          "type": "avgStat",
+          "stat": "speed",
+          "baseline": 50,
+          "perPoint": 0.004,
+          "cap": 0.08,
+          "note": "Pace is personnel: your floor averages {value} speed, and transition efficiency is bought with legs."
+        }
+      ],
+      "counters": {
+        "drop": {
+          "multiplier": 0.92,
+          "note": "Drop teams keep their floor balance — their big was already back protecting the rim before your break started."
+        },
+        "ice": {
+          "multiplier": 1.0,
+          "note": "You can't ICE a fast break — but they matched speed with speed. Even money."
+        },
+        "switch": {
+          "multiplier": 1.05,
+          "note": "Transition cross-matches broke their switching rules before they could even set them."
+        },
+        "blitz": {
+          "multiplier": 1.1,
+          "note": "Every failed trap became a runout the other way — pace punishes gamblers."
+        },
+        "zone23": {
+          "multiplier": 1.05,
+          "note": "A zone has to be set to exist — you beat the paint-packers down the floor and it was layup city."
+        }
+      },
+      "citation": "Cleaning the Glass tracks halfcourt vs transition splits precisely because transition possessions are the most efficient in basketball (cleaningtheglass.com/stats — context estimation of halfcourt vs transition play). Name honors the engine's existing '7 Seconds or Less' synergy."
+    }
+  ],
+  "coverages": [
+    {
+      "id": "drop",
+      "name": "Drop",
+      "lingo": ["Drop", "deep drop", "soft coverage"],
+      "translation": "Your big sinks toward the rim on every ball screen: wall off layups and lobs, live with pull-up jumpers.",
+      "wants": "A true rim anchor (high defense) stationed in the paint — the back line of your grid.",
+      "personnel": [
+        {
+          "type": "paintAnchor",
+          "stat": "defense",
+          "threshold": 55,
+          "baseline": 55,
+          "perPoint": 0.004,
+          "cap": 0.06,
+          "missingPenalty": 0.06,
+          "note": "{name} anchored the paint ({value} defense) — drop coverage is a wall only if the wall is real.",
+          "missingNote": "Drop with no rim protector in the paint is a welcome mat — the whole scheme funnels drivers at a big who isn't there."
+        }
+      ],
+      "citation": "Brew Hoop's Bucks dictionary + Slappin' Glass: drop shields a slower big, protects the rim, and avoids rotations — the accepted bill is pull-up jumpers and pick-and-pop 3s (brewhoop.com 'Drop' PnR defense; slappinglass.com drop-and-pop). Wording matches PuzzleModel.swift: 'dropping the big man into the paint... take away the lob threat.'"
+    },
+    {
+      "id": "ice",
+      "name": "ICE (Push / Blue)",
+      "lingo": ["ICE", "Down", "Push", "Blue"],
+      "translation": "On side ball screens, force the handler down the sideline — the baseline becomes your sixth defender.",
+      "wants": "On-ball pursuit: your two fastest defenders do the forcing.",
+      "personnel": [
+        {
+          "type": "topTwoAvgStat",
+          "stat": "speed",
+          "baseline": 52,
+          "perPoint": 0.003,
+          "cap": 0.05,
+          "note": "ICE is an on-ball chase — the top guards average {value} speed, quick enough to jump the screen and force baseline."
+        }
+      ],
+      "citation": "Basketball Action Dictionary: ICE/Down forces the handler away from the screen toward the sideline (medium.com/thebasketballactiondictionary PnR coverages). Matches PuzzleModel.swift: 'using the baseline as an extra defender.'"
+    },
+    {
+      "id": "switch",
+      "name": "Switch Everything",
+      "lingo": ["Switch All", "switch 1-through-5"],
+      "translation": "Trade assignments on every screen: nobody ever gets open, but somebody ends up guarding the wrong guy.",
+      "wants": "Five interchangeable defenders — the scheme is only as strong as its weakest switcher.",
+      "personnel": [
+        {
+          "type": "statSpreadInverse",
+          "stat": "defense",
+          "baseline": 25,
+          "perPoint": 0.002,
+          "cap": 0.04,
+          "note": "The defenders are interchangeable (defense spread of {value}) — switching works when every switch is a fair trade."
+        },
+        {
+          "type": "minStat",
+          "stat": "defense",
+          "baseline": 42,
+          "perPoint": 0.002,
+          "cap": 0.04,
+          "note": "Every switch eventually lands on {name} ({value} defense) — offenses hunt the weakest link in a switching scheme."
+        }
+      ],
+      "citation": "The Hoops Geek '7 ways to defend the PnR' + Basketball Action Dictionary: switching kills the offense's rhythm and avoids rotations, at the cost of mismatches the offense will hunt. Matches PuzzleModel.swift: 'switching keeps a body on the 3-point shooter.'"
+    },
+    {
+      "id": "blitz",
+      "name": "Blitz (Trap)",
+      "lingo": ["Blitz", "trap", "two to the ball"],
+      "translation": "Send two defenders at the star the moment the screen hits: rip the ball out of his hands and gamble 4-on-3 behind you.",
+      "wants": "Energy defenders to trap and recover — and an opponent whose offense runs through one star.",
+      "personnel": [
+        {
+          "type": "starShare",
+          "target": "opponent",
+          "baseline": 0.26,
+          "scale": 0.5,
+          "cap": 0.06,
+          "note": "Their offense runs through {name} ({value}% of their board's production) — the blitz takes the ball out of exactly those hands."
+        },
+        {
+          "type": "avgStat",
+          "stat": "speed",
+          "baseline": 50,
+          "perPoint": 0.002,
+          "cap": 0.04,
+          "note": "Trapping is a sprint economy — the trapping defenders average {value} speed, enough to trap and still recover behind it."
+        }
+      ],
+      "citation": "Hoop Mentality: the blitz traps the handler the moment he uses the screen, forcing the ball out of the star's hands at the cost of a 4-on-3 behind the trap (hoopmentality.com blitz-the-pick-and-roll). Matches PuzzleModel.swift's Blitz/Trap card."
+    },
+    {
+      "id": "zone23",
+      "name": "2-3 Zone",
+      "lingo": ["2-3", "zone", "pack the paint"],
+      "translation": "Guard the floor, not the man: pack the paint, wall off the rim, and dare them to beat you from outside.",
+      "wants": "Collective length — team-wide defense keeps the zone's seams closed.",
+      "personnel": [
+        {
+          "type": "avgStat",
+          "stat": "defense",
+          "baseline": 50,
+          "perPoint": 0.003,
+          "cap": 0.05,
+          "note": "A zone is five closeouts sharing one brain — the team defense averages {value}, so the seams stay shut."
+        }
+      ],
+      "citation": "Coaching consensus (Coach's Clipboard, Basketball Action Dictionary): a 2-3 protects the rim and hides individual defenders, conceding perimeter shots and vulnerable before it is set — hence transition and spacing beat it."
+    }
+  ]
+}
