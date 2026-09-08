@@ -1,6 +1,26 @@
 <template>
   <div class="planning-phase">
 
+    <!-- Cap-space bar: presentation mirror of GameSeason SALARY_CAP / SALARY_FLOOR -->
+    <div class="cap-bar" :class="capState">
+      <div class="cap-bar-head">
+        <span class="cap-label">SALARY CAP</span>
+        <span class="cap-space" :class="capState">
+          {{ capSpace >= 0
+              ? formatMoney(capSpace) + ' cap space'
+              : formatMoney(-capSpace) + ' over the cap' }}
+        </span>
+      </div>
+      <div class="cap-track">
+        <div class="cap-used" :style="{ width: usedPct + '%' }"></div>
+        <div class="cap-floor-marker" :style="{ left: floorPct + '%' }" title="Salary floor"></div>
+      </div>
+      <div class="cap-bar-foot">
+        <span>{{ formatMoney(usedSalary) }} committed</span>
+        <span class="cap-limits">Floor {{ formatMoney(SALARY_FLOOR) }} &middot; Cap {{ formatMoney(SALARY_CAP) }}</span>
+      </div>
+    </div>
+
     <!-- Half-court grid -->
     <div class="court-wrapper">
       <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
@@ -19,10 +39,11 @@
         <div v-for="cell in gridCells"
              :key="cell.id"
              class="court-cell"
-             :class="{ 'cell-highlight': selectedPlayer, 'cell-shake': shakeCellId === cell.id }"
+             :class="{ 'cell-highlight': selectedPlayer, 'cell-shake': shakeCellId === cell.id, 'cell-crowded': isCrowdedHover(cell) }"
              :data-x="cell.x"
              :data-y="cell.y"
-             :style="cellStyle(cell)"
+             :style="[cellStyle(cell), cellGlowStyle(cell)]"
+             @dragenter.prevent="onCellDragEnter(cell)"
              @click="onTapCell(cell)">
         </div>
 
@@ -30,10 +51,11 @@
         <div v-for="player in onCourt"
              :key="'court-' + player.id"
              class="court-player"
-             :class="{ selected: selectedPlayer && selectedPlayer.id === player.id }"
+             :class="{ selected: selectedPlayer && selectedPlayer.id === player.id, 'synergy-lit': isSynergyLit(player.id) }"
              :style="playerStyle(player)"
              draggable="true"
              @dragstart="onDragStart($event, player, 'court')"
+             @dragend="onDragEndReset"
              @click.stop="onTapCourtPlayer(player)">
           <span class="player-name">{{ shortName(player.name) }}</span>
         </div>
@@ -41,6 +63,19 @@
       </div>
 
       <div class="court-label">{{ selectedPlayer ? 'Tap a court cell to place, or tap bench to return' : 'Tap or drag players onto the court' }}</div>
+
+      <!-- Synergy ghost-preview banner (approximation of the C++ SynergyEngine) -->
+      <div v-if="previewCandidate && synergyPreview.synergies.length" class="synergy-preview-banner">
+        <span class="spb-tag">SYNERGY</span>
+        Placing <strong>{{ shortName(previewCandidate.name) }}</strong> would activate
+        <strong>{{ synergyPreview.synergies.join(' + ') }}</strong>
+      </div>
+
+      <!-- Shot-zone glow legend -->
+      <div class="zone-legend">
+        <span class="zl-item"><i class="zl-swatch zl-hot"></i> High-value zone (paint, corner 3)</span>
+        <span class="zl-item"><i class="zl-swatch zl-cold"></i> Low-value zone (long mid-range)</span>
+      </div>
     </div>
 
     <!-- Bench -->
@@ -55,6 +90,7 @@
              :class="[`cost-${player.cost}`, { selected: selectedPlayer && selectedPlayer.id === player.id }]"
              draggable="true"
              @dragstart="onDragStart($event, player, 'bench')"
+             @dragend="onDragEndReset"
              @click="onTapBench(player)">
           <span class="bp-name">{{ player.name }}</span>
           <span class="bp-stats">
@@ -94,6 +130,26 @@
 
 <script>
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
+import { getZoneGlowStyle } from '../composables/useZoneEfficiency.js';
+import { previewSynergyContributors } from '../composables/useSynergyPreview.js';
+
+// Mirror of shared-core/include/GameSeason.h (GameState::SALARY_CAP / SALARY_FLOOR).
+// Kept as local JS constants for the presentation-layer cap bar — we do NOT call
+// into WASM for this. Keep in sync with the header if the engine values change.
+const SALARY_CAP = 151000000;
+const SALARY_FLOOR = 136000000;
+
+// Representative salary per draft-cost tier. Derived from scraper.py:_determine_cost(),
+// which buckets a player's share of the salary cap into a 1-5 gold cost:
+//   cost 5 >= 25% cap, 4 >= 15%, 3 >= 8%, 2 >= 3%, else 1. We take a representative
+//   percentage inside each band x SALARY_CAP so the cap bar reads in real dollars.
+const COST_SALARY = {
+  1: Math.round(0.015 * SALARY_CAP), // ~2.3M  (veteran minimum band)
+  2: Math.round(0.055 * SALARY_CAP), // ~8.3M  (rotation)
+  3: Math.round(0.115 * SALARY_CAP), // ~17.4M (starter)
+  4: Math.round(0.200 * SALARY_CAP), // ~30.2M (all-star)
+  5: Math.round(0.300 * SALARY_CAP), // ~45.3M (supermax)
+};
 
 export default {
   props: {
@@ -108,6 +164,7 @@ export default {
     const courtScaler = ref(null);
     const courtScale = ref(1);
     const shakeCellId = ref(null);
+    const hoverCellId = ref(null);
     let resizeObserver = null;
 
     const triggerShake = (cx, cy) => {
@@ -293,6 +350,71 @@ export default {
       }
     };
 
+    // --- Geometry glow + crowding ---------------------------------------
+    // A cell counts as "crowded" if a unit is currently being dragged, this is
+    // the cell the drag is hovering, and an already-placed unit sits in one of
+    // the 8 adjacent cells (the dragged unit itself is ignored).
+    const hasAdjacentUnit = (x, y) => {
+      const draggedId = dragState.value.player ? dragState.value.player.id : null;
+      return onCourt.value.some(p =>
+        p.id !== draggedId &&
+        Math.abs(p.courtX - x) <= 1 &&
+        Math.abs(p.courtY - y) <= 1
+      );
+    };
+
+    const isCrowdedHover = (cell) =>
+      !!dragState.value.player &&
+      hoverCellId.value === cell.id &&
+      hasAdjacentUnit(cell.x, cell.y);
+
+    const cellGlowStyle = (cell) =>
+      getZoneGlowStyle(cell.x, cell.y, COLS, ROWS, { crowded: isCrowdedHover(cell) });
+
+    const onCellDragEnter = (cell) => { hoverCellId.value = cell.id; };
+
+    const onDragEndReset = () => {
+      dragState.value = { player: null, from: null };
+      hoverCellId.value = null;
+    };
+
+    // --- Synergy ghost-preview (approximates the C++ SynergyEngine) ------
+    // The candidate is whichever bench unit is being dragged toward the court,
+    // or a bench unit selected via tap-to-place on mobile.
+    const previewCandidate = computed(() => {
+      const ds = dragState.value;
+      if (ds.player && ds.from === 'bench') return ds.player;
+      if (selectedPlayer.value && selectedPlayer.value._from === 'bench') return selectedPlayer.value;
+      return null;
+    });
+
+    const synergyPreview = computed(() =>
+      previewSynergyContributors(onCourt.value, previewCandidate.value)
+    );
+
+    const isSynergyLit = (playerId) =>
+      !!previewCandidate.value && synergyPreview.value.ids.has(playerId);
+
+    // --- Cap-space bar --------------------------------------------------
+    const usedSalary = computed(() => {
+      const roster = [...onCourt.value, ...props.bench];
+      return roster.reduce((sum, p) => sum + (COST_SALARY[p.cost] || 0), 0);
+    });
+    const capSpace = computed(() => SALARY_CAP - usedSalary.value);
+    const usedPct = computed(() =>
+      Math.max(0, Math.min(100, (usedSalary.value / SALARY_CAP) * 100))
+    );
+    const floorPct = computed(() => (SALARY_FLOOR / SALARY_CAP) * 100);
+    const capState = computed(() => {
+      if (usedSalary.value > SALARY_CAP) return 'over-cap';
+      if (usedSalary.value < SALARY_FLOOR) return 'below-floor';
+      return 'healthy';
+    });
+    const formatMoney = (n) => {
+      const m = n / 1000000;
+      return '$' + (Math.round(m * 10) / 10).toFixed(1) + 'M';
+    };
+
     // --- Responsive scaling ---
     onMounted(() => {
       const updateScale = () => {
@@ -314,7 +436,14 @@ export default {
       cellStyle, playerStyle, shortName,
       onDragStart, onDropCourt, onDropBench,
       onTapBench, onTapCell, onTapCourtPlayer,
-      selectedPlayer, shakeCellId, courtScaler, courtScale, COURT_H
+      selectedPlayer, shakeCellId, courtScaler, courtScale, COURT_H,
+      // geometry glow + crowding
+      cellGlowStyle, isCrowdedHover, onCellDragEnter, onDragEndReset,
+      // synergy ghost-preview
+      previewCandidate, synergyPreview, isSynergyLit,
+      // cap-space bar
+      usedSalary, capSpace, usedPct, floorPct, capState, formatMoney,
+      SALARY_CAP, SALARY_FLOOR
     };
   }
 };
@@ -521,6 +650,120 @@ export default {
 .court-cell.cell-highlight:hover {
   border-color: rgba(91, 192, 222, 0.5);
   background: rgba(91, 192, 222, 0.1);
+}
+
+/* Cap-space bar */
+.cap-bar {
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+.cap-bar.over-cap { border-color: #8b3b3b; }
+.cap-bar.below-floor { border-color: #6b5a2b; }
+.cap-bar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.cap-label {
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #888;
+  font-weight: 700;
+}
+.cap-space { font-size: 0.95rem; font-weight: bold; color: #ffd700; }
+.cap-space.over-cap { color: #ff6b6b; }
+.cap-space.below-floor { color: #f0a500; }
+.cap-track {
+  position: relative;
+  height: 12px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cap-used {
+  height: 100%;
+  background: linear-gradient(90deg, #27ae60, #ffd700);
+  transition: width 0.25s ease;
+}
+.cap-bar.over-cap .cap-used {
+  background: linear-gradient(90deg, #d9534f, #ff6b6b);
+}
+.cap-bar.below-floor .cap-used {
+  background: linear-gradient(90deg, #6b5a2b, #f0a500);
+}
+.cap-floor-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+.cap-bar-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 0.68rem;
+  color: #777;
+}
+.cap-limits { color: #666; }
+
+/* Synergy ghost-preview */
+.court-player.synergy-lit {
+  box-shadow: 0 0 14px 5px rgba(255, 215, 0, 0.85);
+  border-color: #ffd700;
+  animation: synergy-pulse 1.1s ease-in-out infinite;
+}
+@keyframes synergy-pulse {
+  0%   { box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.55); }
+  50%  { box-shadow: 0 0 18px 7px rgba(255, 215, 0, 0.95); }
+  100% { box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.55); }
+}
+.synergy-preview-banner {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #1e1e1e;
+  border: 1px solid #8b7a2b;
+  border-left: 4px solid #ffd700;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: #e0e0e0;
+}
+.spb-tag {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffd700;
+  margin-right: 8px;
+}
+
+/* Shot-zone glow legend */
+.zone-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: #777;
+}
+.zl-item { display: inline-flex; align-items: center; gap: 6px; }
+.zl-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.zl-hot { background: hsla(35, 80%, 57%, 0.85); box-shadow: inset 0 0 6px hsla(35, 80%, 69%, 0.6); }
+.zl-cold { background: hsla(200, 35%, 45%, 0.5); }
+
+/* Crowded cell (units packed too close) */
+.court-cell.cell-crowded {
+  border-style: dashed !important;
+  border-color: rgba(217, 83, 79, 0.6) !important;
 }
 
 @media (max-width: 520px) {

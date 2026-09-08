@@ -7,12 +7,10 @@
     </div>
 
     <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
-      <canvas ref="courtCanvas"
-              :width="COURT_W * dpr"
-              :height="COURT_H * dpr"
-              class="court-canvas"
-              :style="{ width: COURT_W + 'px', height: COURT_H + 'px', transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
-      </canvas>
+      <div ref="courtCanvas"
+           class="court-canvas"
+           :style="{ width: COURT_W + 'px', height: COURT_H + 'px', transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
+      </div>
 
       <!-- Floating event popups -->
       <div v-for="popup in activePopups"
@@ -24,7 +22,34 @@
       </div>
     </div>
 
-    <div class="sim-status">{{ statusText }}</div>
+    <!-- Pre-fight defensive coverage picker (preview only) -->
+    <div v-if="simPhase === 'prefight'" class="coverage-panel">
+      <div class="coverage-head">
+        <span class="coverage-coach">COACH MILLER</span>
+        <span class="coverage-preview-tag">PREVIEW</span>
+      </div>
+      <p class="coverage-blurb">
+        Call our coverage before tip. The glow on <strong>their</strong> end shows where we funnel them —
+        <span class="warm-key">warm = we send them here</span>,
+        <span class="cool-key">cool = we take it away</span>.
+        <em>This is a preview only — the ref doesn't enforce it yet.</em>
+      </p>
+      <div class="coverage-options">
+        <button
+          v-for="s in COVERAGE_SCHEMES"
+          :key="s.id"
+          class="coverage-btn"
+          :class="{ active: selectedSchemeId === s.id }"
+          @click="selectScheme(s.id)"
+        >
+          <span class="cb-name">{{ s.name }}</span>
+          <span class="cb-tag">{{ s.tagline }}</span>
+        </button>
+      </div>
+      <button class="coverage-start" @click="startFight">Start Fight</button>
+    </div>
+
+    <div v-else class="sim-status">{{ statusText }}</div>
   </div>
 </template>
 
@@ -89,11 +114,63 @@ export default {
     const SIM_DURATION = 10.0;
     const dpr = Math.ceil(window.devicePixelRatio || 1);
 
+    // ── Cosmetic shot-clock pressure ring ─────────────────────────
+    // Purely visual: a ring around the ball-carrier that winds down and
+    // heats up (blue → red). Never affects the simulation outcome.
+    const SHOT_CLOCK_MAX = 6.0;
+    const shotClock = ref(SHOT_CLOCK_MAX);
+    let lastPossessionTeam = null;
+
+    // ── Pre-fight coverage picker (preview only) ──────────────────
+    // simPhase gates the existing sim loop behind a "Start Fight" button
+    // so the player can preview a defensive scheme first. This is a
+    // presentational layer — the WASM engine is not told about it.
+    const simPhase = ref('prefight'); // 'prefight' | 'live'
+    const selectedSchemeId = ref('drop');
+    let flashT0 = 0;               // timestamp of the last preview flash
+    let prefightRAF = null;
+
+    // Effect value per opponent shot zone, in [-1, 1].
+    // Positive = attempts ELEVATED / funnelled here (warm, brighter).
+    // Negative = attempts SUPPRESSED / taken away (cool, dimmer).
+    // Read from the DEFENSE's point of view: pushing an opponent toward
+    // the low-value mid-range still reads "warm" because we WANT them there.
+    const COVERAGE_SCHEMES = [
+      { id: 'drop',   name: 'Drop',   tagline: 'Wall off the rim, live with mid-range.',
+        effects: { rim: -0.85, mid:  0.85, cornerTop: -0.20, cornerBottom: -0.20, wing:  0.10 } },
+      { id: 'switch', name: 'Switch', tagline: 'Switch 1–5, no blown coverages.',
+        effects: { rim: -0.45, mid:  0.35, cornerTop: -0.55, cornerBottom: -0.55, wing: -0.35 } },
+      { id: 'blitz',  name: 'Blitz',  tagline: 'Trap the ball, dare the pass.',
+        effects: { rim:  0.60, mid: -0.45, cornerTop:  0.50, cornerBottom:  0.50, wing: -0.85 } },
+      { id: 'ice',    name: 'ICE',    tagline: 'Force baseline, kill the corner three.',
+        effects: { rim: -0.15, mid:  0.60, cornerTop: -0.90, cornerBottom: -0.90, wing:  0.25 } },
+      { id: 'zone',   name: 'Zone',   tagline: 'Pack the paint, contest the arc late.',
+        effects: { rim: -0.70, mid: -0.40, cornerTop:  0.70, cornerBottom:  0.70, wing:  0.65 } },
+    ];
+
+    // Opponent shot zones, positioned around THEIR basket (the left hoop —
+    // the away team attacks left; see the fallback sim's target of x≈30).
+    const COVERAGE_ZONES = [
+      { key: 'rim',          label: 'RIM', cx: 58,  cy: 200, rx: 40, ry: 52 },
+      { key: 'mid',          label: 'MID', cx: 128, cy: 200, rx: 46, ry: 72 },
+      { key: 'cornerTop',    label: 'C3',  cx: 72,  cy: 56,  rx: 46, ry: 34 },
+      { key: 'cornerBottom', label: 'C3',  cx: 72,  cy: 344, rx: 46, ry: 34 },
+      { key: 'wing',         label: '3',   cx: 192, cy: 200, rx: 34, ry: 82 },
+    ];
+
+    const selectedScheme = () => COVERAGE_SCHEMES.find(s => s.id === selectedSchemeId.value) || null;
+
+    const selectScheme = (id) => {
+      selectedSchemeId.value = id;
+      flashT0 = performance.now(); // re-trigger the preview flash
+    };
+
     const courtScaler = ref(null);
     const courtCanvas = ref(null);
     const courtScale = ref(1);
     let resizeObserver = null;
-    let ctx = null;
+    let renderer = null;   // PixiJS CourtRenderer (lazy-loaded on mount)
+    let unmounted = false;
 
     const getEngine = () => props.engine || inject('engine', null);
 
@@ -129,157 +206,47 @@ export default {
       });
     };
 
-    // ── Canvas rendering ──────────────────────────────────────────
+    // ── Coverage preview state (cosmetic) ─────────────────────────
+    // Builds the per-zone draw data for the currently selected scheme and
+    // hands it to the Pixi renderer. Warm = attempts elevated/funnelled here,
+    // cool = attempts suppressed/taken away. The flash envelope spikes on
+    // select, then settles to a steady glow so the active scheme stays legible.
+    const buildCoverage = () => {
+      if (simPhase.value !== 'prefight') return null;
+      const scheme = selectedScheme();
+      if (!scheme) return null;
+
+      const elapsed = (performance.now() - flashT0) / 1000;
+      let alpha;
+      if (elapsed < 0.15) alpha = elapsed / 0.15;                 // 0 → 1
+      else alpha = 0.55 + 0.45 * Math.exp(-(elapsed - 0.15) * 3); // → 0.55
+      alpha = Math.min(1, alpha);
+
+      return COVERAGE_ZONES.map((z) => {
+        const e = scheme.effects[z.key] || 0;
+        return {
+          cx: z.cx, cy: z.cy, rx: z.rx, ry: z.ry, label: z.label,
+          warm: e >= 0, mag: Math.abs(e), alpha,
+        };
+      });
+    };
+
+    // ── Frame render: delegate to the Pixi CourtRenderer ──────────
+    // All drawing now lives in client/rendering/CourtRenderer.js. This just
+    // packages the current sim state into plain data each frame; the WASM
+    // engine and sim loop are untouched.
     const renderFrame = () => {
-      if (!ctx) return;
-      const c = ctx;
-      c.save();
-      c.scale(dpr, dpr);
-
-      // Court floor
-      c.fillStyle = '#9c7040';
-      c.fillRect(0, 0, COURT_W, COURT_H);
-
-      // Court border
-      c.strokeStyle = '#8b5a2b';
-      c.lineWidth = 4;
-      c.strokeRect(2, 2, COURT_W - 4, COURT_H - 4);
-
-      // Half-court line
-      c.strokeStyle = 'rgba(255,255,255,0.3)';
-      c.lineWidth = 2;
-      c.beginPath();
-      c.moveTo(COURT_W / 2, 0);
-      c.lineTo(COURT_W / 2, COURT_H);
-      c.stroke();
-
-      // Center circle
-      c.beginPath();
-      c.arc(COURT_W / 2, COURT_H / 2, 40, 0, Math.PI * 2);
-      c.stroke();
-
-      // Three-point arcs (left and right)
-      c.beginPath();
-      c.arc(0, COURT_H / 2, 160, -Math.PI * 0.4, Math.PI * 0.4);
-      c.stroke();
-      c.beginPath();
-      c.arc(COURT_W, COURT_H / 2, 160, Math.PI * 0.6, Math.PI * 1.4);
-      c.stroke();
-
-      // Paint / key areas
-      c.strokeStyle = 'rgba(255,255,255,0.25)';
-      c.strokeRect(0, COURT_H / 2 - 60, 120, 120);
-      c.strokeRect(COURT_W - 120, COURT_H / 2 - 60, 120, 120);
-
-      // Backboards
-      c.strokeStyle = 'rgba(255,255,255,0.4)';
-      c.lineWidth = 3;
-      c.beginPath();
-      c.moveTo(10, COURT_H / 2 - 20);
-      c.lineTo(10, COURT_H / 2 + 20);
-      c.stroke();
-      c.beginPath();
-      c.moveTo(COURT_W - 10, COURT_H / 2 - 20);
-      c.lineTo(COURT_W - 10, COURT_H / 2 + 20);
-      c.stroke();
-
-      const b = ball.value;
-      const possId = b.possessorId;
-
-      // Ball shadow (when airborne)
-      if (b.x !== null && (b.z || 0) > 1) {
-        c.fillStyle = 'rgba(0,0,0,0.3)';
-        c.beginPath();
-        c.ellipse(clamp(b.x + 6, 6, COURT_W - 6), clamp(b.y + 10, 6, COURT_H - 6), 7, 3, 0, 0, Math.PI * 2);
-        c.fill();
-      }
-
-      // Away players (blue)
-      for (const bot of botPlayers.value) {
-        const bx = clamp(bot.x + 15, 15, COURT_W - 15);
-        const by = clamp(bot.y + 15, 15, COURT_H - 15);
-        const hasBall = possId === bot.id;
-
-        if (hasBall) {
-          c.shadowColor = 'rgba(244, 163, 0, 0.8)';
-          c.shadowBlur = 10;
-        }
-
-        c.globalAlpha = hasBall ? 1.0 : 0.85;
-        c.fillStyle = '#5bc0de';
-        c.strokeStyle = hasBall ? '#f4a300' : '#fff';
-        c.lineWidth = 2;
-        c.beginPath();
-        c.arc(bx, by, 15, 0, Math.PI * 2);
-        c.fill();
-        c.stroke();
-
-        c.shadowColor = 'transparent';
-        c.shadowBlur = 0;
-        c.globalAlpha = 1.0;
-
-        // Bot label
-        const botLabel = bot.name ? bot.name.split(' ').pop().slice(0, 3) : 'OPP';
-        c.fillStyle = '#fff';
-        c.font = 'bold 8px sans-serif';
-        c.textAlign = 'center';
-        c.textBaseline = 'middle';
-        c.fillText(botLabel, bx, by);
-      }
-
-      // Home players (red)
-      for (const player of livePlayers.value) {
-        const px = clamp(player.x + 15, 15, COURT_W - 15);
-        const py = clamp(player.y + 15, 15, COURT_H - 15);
-        const hasBall = possId === player.id;
-
-        if (hasBall) {
-          c.shadowColor = 'rgba(244, 163, 0, 0.8)';
-          c.shadowBlur = 10;
-        }
-
-        c.fillStyle = '#d9534f';
-        c.strokeStyle = hasBall ? '#f4a300' : '#fff';
-        c.lineWidth = 2;
-        c.beginPath();
-        c.arc(px, py, 15, 0, Math.PI * 2);
-        c.fill();
-        c.stroke();
-
-        c.shadowColor = 'transparent';
-        c.shadowBlur = 0;
-
-        // Player name label
-        const label = player.name ? player.name.split(' ').pop().slice(0, 3) : String(player.id);
-        c.fillStyle = '#fff';
-        c.font = 'bold 8px sans-serif';
-        c.textAlign = 'center';
-        c.textBaseline = 'middle';
-        c.fillText(label, px, py);
-      }
-
-      // Ball
-      if (b.x !== null) {
-        const z = b.z || 0;
-        const lift = z * 3;
-        const radius = 6 * (1 + z * 0.04);
-        const bx = clamp(b.x + 6, 6, COURT_W - 6);
-        const by = clamp(b.y - lift + 6, 6, COURT_H - 6);
-
-        c.shadowColor = '#f4a300';
-        c.shadowBlur = 6;
-        c.fillStyle = '#f4a300';
-        c.strokeStyle = '#fff';
-        c.lineWidth = 2;
-        c.beginPath();
-        c.arc(bx, by, radius, 0, Math.PI * 2);
-        c.fill();
-        c.stroke();
-        c.shadowColor = 'transparent';
-        c.shadowBlur = 0;
-      }
-
-      c.restore();
+      if (!renderer) return;
+      renderer.render({
+        players: livePlayers.value,
+        bots: botPlayers.value,
+        ball: ball.value,
+        phase: simPhase.value,
+        coverage: buildCoverage(),
+        shotClock: simPhase.value === 'live'
+          ? { frac: clamp(shotClock.value / SHOT_CLOCK_MAX, 0, 1) }
+          : null,
+      });
     };
 
     // ── Game loop ─────────────────────────────────────────────────
@@ -384,6 +351,26 @@ export default {
         });
       }
 
+      // ── Cosmetic shot-clock bookkeeping ────────────────────────
+      // Infer possession boundaries from the ball-carrier's TEAM. When the
+      // ball changes teams (a made basket resets possession, a steal/turnover
+      // flips it) we reset the clock. A pass to a teammate keeps it running,
+      // like a real shot clock. If it runs out it resets in place (a purely
+      // cosmetic "violation"); it never alters the simulation.
+      const pid = ball.value.possessorId;
+      const team = (pid === undefined || pid < 0)
+        ? null
+        : (livePlayers.value.some(p => p.id === pid)
+            ? 'home'
+            : (botPlayers.value.some(bp => bp.id === pid) ? 'away' : null));
+      if (team && team !== lastPossessionTeam) {
+        shotClock.value = SHOT_CLOCK_MAX;
+        lastPossessionTeam = team;
+      } else if (team) {
+        shotClock.value -= dt;
+        if (shotClock.value <= 0) shotClock.value = SHOT_CLOCK_MAX;
+      }
+
       renderFrame();
       animationFrameId = requestAnimationFrame(syncLoop);
     };
@@ -412,13 +399,25 @@ export default {
       }, 1500);
     };
 
-    onMounted(() => {
-      // Initialize canvas 2D context
-      const canvas = courtCanvas.value;
-      if (canvas) {
-        ctx = canvas.getContext('2d');
-      }
+    // Idle render loop while the coverage picker is up, so the preview
+    // flash animates without running the simulation.
+    const prefightLoop = () => {
+      if (simPhase.value !== 'prefight') return;
+      renderFrame();
+      prefightRAF = requestAnimationFrame(prefightLoop);
+    };
 
+    const startFight = () => {
+      if (simPhase.value !== 'prefight') return;
+      cancelAnimationFrame(prefightRAF);
+      simPhase.value = 'live';
+      shotClock.value = SHOT_CLOCK_MAX;
+      lastPossessionTeam = null;
+      lastTime = performance.now();
+      animationFrameId = requestAnimationFrame(syncLoop);
+    };
+
+    onMounted(async () => {
       spawnBots();
       if (!getEngine()) {
         initFallbackPlayers();
@@ -429,8 +428,7 @@ export default {
       }
       lastTime = performance.now();
       timeLeft.value = SIM_DURATION;
-      renderFrame();
-      animationFrameId = requestAnimationFrame(syncLoop);
+      flashT0 = performance.now();
 
       const updateScale = () => {
         if (courtScaler.value) {
@@ -440,15 +438,40 @@ export default {
       updateScale();
       resizeObserver = new ResizeObserver(updateScale);
       if (courtScaler.value) resizeObserver.observe(courtScaler.value);
+
+      // Lazy-load the WebGL renderer. Keeping PixiJS behind a dynamic import
+      // means it only ships when a fight actually mounts this component — the
+      // draft/planning screens stay light.
+      try {
+        const { CourtRenderer } = await import('../rendering/CourtRenderer.js');
+        if (unmounted || !courtCanvas.value) return;
+        renderer = new CourtRenderer(courtCanvas.value, {
+          width: COURT_W, height: COURT_H, resolution: dpr,
+        });
+        await renderer.ready;
+        if (unmounted) { renderer.destroy(); renderer = null; return; }
+        // Show the coverage picker first; the sim loop starts on "Start Fight".
+        renderFrame();
+        prefightRAF = requestAnimationFrame(prefightLoop);
+      } catch (e) {
+        console.error('CourtRenderer failed to load', e);
+      }
     });
 
     onUnmounted(() => {
       simDone = true;
+      unmounted = true;
       cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(prefightRAF);
       if (resizeObserver) resizeObserver.disconnect();
+      if (renderer) { renderer.destroy(); renderer = null; }
     });
 
-    return { homeScore, awayScore, timeLeft, statusText, activePopups, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
+    return {
+      homeScore, awayScore, timeLeft, statusText, activePopups,
+      courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr,
+      simPhase, selectedSchemeId, COVERAGE_SCHEMES, selectScheme, startFight,
+    };
   }
 };
 </script>
@@ -520,5 +543,106 @@ export default {
     opacity: 0;
     transform: translateY(-50px) scale(0.9);
   }
+}
+
+/* ── Pre-fight coverage picker ───────────────────────────────────── */
+.coverage-panel {
+  width: 100%;
+  max-width: 800px;
+  background: #1e1e1e;
+  border: 2px solid #8b5a2b;
+  border-left: 8px solid #d9534f;
+  border-radius: 4px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+.coverage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.coverage-coach {
+  font-weight: 900;
+  color: #d9534f;
+  letter-spacing: 2px;
+  font-size: 0.8rem;
+}
+.coverage-preview-tag {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #121212;
+  background: #ffd700;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.coverage-blurb {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #cfcfcf;
+}
+.coverage-blurb strong { color: #fff; }
+.coverage-blurb em { color: #8a8a8a; font-size: 0.76rem; }
+.warm-key { color: #ff9a52; font-weight: bold; }
+.cool-key { color: #5f8cdc; font-weight: bold; }
+
+.coverage-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.coverage-btn {
+  flex: 1 1 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 8px 10px;
+  background: #171717;
+  border: 2px solid #383838;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.coverage-btn:hover { transform: translateY(-2px); border-color: #6b6b6b; }
+.coverage-btn.active {
+  border-color: #f4a300;
+  background: #241d10;
+  box-shadow: 0 0 14px rgba(244, 163, 0, 0.35);
+}
+.cb-name {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #ffd700;
+  letter-spacing: 0.04em;
+}
+.cb-tag {
+  font-size: 0.72rem;
+  color: #9a9a9a;
+  line-height: 1.3;
+}
+
+.coverage-start {
+  display: block;
+  width: 100%;
+  padding: 11px 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #d9534f;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.coverage-start:hover { background: #c9302c; }
+
+@media (max-width: 600px) {
+  .coverage-btn { flex: 1 1 100%; }
 }
 </style>

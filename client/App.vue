@@ -3,14 +3,21 @@
     <header class="top-bar">
       <h1>B-Ball Tactics</h1>
       <div class="status-bar">
-        <span class="round-badge">Round {{ round }}/10</span>
-        <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
-        <span class="hp-bar">
-          HP
-          <span class="hp-fill" :style="{ width: health + '%' }"></span>
-          <span class="hp-text">{{ health }}</span>
-        </span>
-        <span class="gold-badge">{{ gold }}G</span>
+        <button
+          v-if="phase !== 'filmroom' && phase !== 'tutorial'"
+          class="film-room-btn"
+          @click="openFilmRoom"
+        >🎬 Film Room</button>
+        <template v-if="phase !== 'filmroom'">
+          <span class="round-badge">Round {{ round }}/10</span>
+          <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
+          <span class="hp-bar">
+            HP
+            <span class="hp-fill" :style="{ width: health + '%' }"></span>
+            <span class="hp-text">{{ health }}</span>
+          </span>
+          <span class="gold-badge">{{ gold }}G</span>
+        </template>
       </div>
     </header>
 
@@ -47,6 +54,12 @@
     </div>
 
     <template v-else>
+      <!-- Coach Miller's Film Room (daily tactics puzzles) -->
+      <FilmRoom
+        v-if="phase === 'filmroom'"
+        @exit="closeFilmRoom"
+      />
+
       <!-- Tutorial (first time only) -->
       <TutorialPhase1
         v-if="phase === 'tutorial'"
@@ -167,10 +180,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
 import TutorialPhase1 from './components/TutorialPhase1.vue';
+import FilmRoom from './components/FilmRoom.vue';
 
 const loading = ref(true);
 const loadStep = ref(0);
 const phase = ref('tutorial');
+const phaseBeforeFilmRoom = ref('planning');
 const planningIntroDismissed = ref(false);
 const round = ref(1);
 const health = ref(100);
@@ -352,6 +367,15 @@ const resetGame = () => {
   phase.value = 'planning';
 };
 
+const openFilmRoom = () => {
+  phaseBeforeFilmRoom.value = phase.value;
+  phase.value = 'filmroom';
+};
+
+const closeFilmRoom = () => {
+  phase.value = phaseBeforeFilmRoom.value || 'planning';
+};
+
 const onTutorialComplete = (tutorialPlayer) => {
   if (tutorialPlayer) {
     // Find the real roster version by name so stats/id are correct for the engine
@@ -404,6 +428,18 @@ body {
   gap: 15px;
   align-items: center;
 }
+.film-room-btn {
+  background: #1e1e1e;
+  color: #ffd700;
+  border: 1px solid #8b5a2b;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.film-room-btn:hover { background: #2a2a2a; border-color: #d9534f; }
 .round-badge {
   background: #333;
   padding: 4px 12px;
@@ -752,31 +788,93 @@ body {
   font-size: 0.9rem;
 }
 .record-summary { color: #888; font-size: 0.9rem; margin-top: 8px; }
-.shop-panel { display: flex; gap: 8px; flex-wrap: wrap; }
+.shop-panel { display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Collectible-card treatment for the draft shop. Each cost tier reads as a
+   rarity: tier colour drives the top bar, border glow, and hover aura, and a
+   holographic sheen sweeps across affordable cards on hover. */
 .player-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 12px;
-  background: #1a1a1a;
-  border: 2px solid #333;
-  min-width: 140px;
+  gap: 4px;
+  padding: 12px 14px 11px;
+  min-width: 152px;
+  border-radius: 10px;
+  border: 1.5px solid #3a3a3a;
+  background:
+    linear-gradient(160deg, rgba(42,42,48,0.96) 0%, rgba(22,22,26,0.98) 58%, rgba(13,13,16,1) 100%);
+  color: #ececec;
   cursor: not-allowed;
-  opacity: 0.5;
-  transition: all 0.15s ease;
+  opacity: 0.45;
+  overflow: hidden;
+  isolation: isolate;
   font-size: 0.85rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.18s cubic-bezier(.2,.7,.3,1), box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
-.player-card.affordable { cursor: pointer; opacity: 1; }
-.player-card.affordable:hover { transform: translateY(-3px); }
-.card-cost { color: #ffd700; font-weight: bold; font-size: 0.75rem; }
-.card-stats { color: #777; font-size: 0.7rem; }
+/* Rarity bar along the top edge */
+.player-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--tier, #8a97a0);
+  box-shadow: 0 0 10px var(--tier, #8a97a0);
+  z-index: 3;
+}
+/* Holographic sheen, parked off-card until hover */
+.player-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 48%, rgba(255,255,255,0.03) 56%, transparent 72%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.player-card.affordable {
+  cursor: pointer;
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--tier, #8a97a0) 55%, #333);
+}
+.player-card.affordable:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: var(--tier, #8a97a0);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 12px 28px rgba(0,0,0,0.55),
+    0 0 22px color-mix(in srgb, var(--tier, #8a97a0) 45%, transparent);
+}
+.player-card.affordable:hover::after { transform: translateX(120%); }
+.player-card strong { font-size: 0.92rem; letter-spacing: 0.01em; color: #fff; line-height: 1.15; }
+.card-cost {
+  align-self: flex-start;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: #241a00;
+  background: linear-gradient(180deg, #ffe680, #f1c40f);
+  padding: 1px 9px;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.45);
+}
+.card-stats { color: #9a9a9a; font-size: 0.7rem; letter-spacing: 0.02em; }
 
-.cost-1 { border-color: #7f8c8d; }
-.cost-2 { border-color: #27ae60; }
-.cost-3 { border-color: #2980b9; }
-.cost-4 { border-color: #9b59b6; }
-.cost-5 { border-color: #f1c40f; }
+/* Tier colours: keep border-color for the shared bench cards, add --tier for
+   the shop's rarity styling above. */
+.cost-1 { border-color: #7f8c8d; --tier: #8a97a0; }
+.cost-2 { border-color: #27ae60; --tier: #2ecc71; }
+.cost-3 { border-color: #2980b9; --tier: #3498db; }
+.cost-4 { border-color: #9b59b6; --tier: #a569d6; }
+.cost-5 { border-color: #f1c40f; --tier: #f1c40f; }
+
+/* Supermax (cost 5): a warm foil field and a pulsing rarity bar. */
+.player-card.cost-5 {
+  background: linear-gradient(160deg, rgba(62,52,20,0.96) 0%, rgba(28,23,10,0.98) 58%, rgba(16,13,6,1) 100%);
+}
+.player-card.cost-5.affordable::before { animation: foil-pulse 2.2s ease-in-out infinite; }
+@keyframes foil-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
 /* Result */
 .result-screen {
