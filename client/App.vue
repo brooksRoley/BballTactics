@@ -4,7 +4,7 @@
       <h1>B-Ball Tactics</h1>
       <div class="status-bar">
         <button
-          v-if="phase !== 'filmroom' && phase !== 'tutorial'"
+          v-if="phase !== 'filmroom'"
           class="film-room-btn"
           @click="openFilmRoom"
         >🎬 Film Room</button>
@@ -60,20 +60,12 @@
         @exit="closeFilmRoom"
       />
 
-      <!-- Tutorial (first time only) -->
-      <TutorialPhase1
-        v-if="phase === 'tutorial'"
-        @phase-one-complete="onTutorialComplete"
-      />
-
       <!-- Draft + Plan (unified screen) -->
       <div v-if="phase === 'planning'" class="planning-screen">
 
-        <!-- First-round coach tip -->
-        <div v-if="round === 1 && !planningIntroDismissed" class="planning-intro">
-          <div class="pi-label">COACH MILLER</div>
-          <p class="pi-text">Buy players from the Free Agents shop below, then <strong>drag or tap them onto the court</strong>. Place at least 3, then hit <strong>Lock In &amp; Fight</strong>.</p>
-          <button class="pi-dismiss" @click="planningIntroDismissed = true">Got it</button>
+        <!-- Returning players can re-run the onboarding coach -->
+        <div v-if="round === 1 && !tutorial.active" class="replay-tutorial-row">
+          <button class="replay-tutorial-btn" @click="tutorial.replay()">↻ Replay tutorial</button>
         </div>
 
         <PlanningPhase
@@ -81,6 +73,7 @@
           :bench="bench"
           @update:bench="bench = $event"
           @sell-player="sellPlayer"
+          @player-placed="onTutorialPlaced"
           @locked-in="onLockedIn"
         />
 
@@ -128,6 +121,8 @@
         :engine="engine"
         :court-lineup="courtLineup"
         :round-stats="roundStats"
+        @coverage-opened="tutorial.onCoverageOpened"
+        @coverage-selected="tutorial.onCoverageSelected"
         @sim-complete="onSimComplete"
       />
 
@@ -169,6 +164,15 @@
           </div>
         </div>
       </div>
+
+      <!-- Front Office 101 — adaptive onboarding coach (rides the real screens) -->
+      <CoachOverlay
+        :active="tutorial.active && (phase === 'planning' || phase === 'sim')"
+        :act="tutorial.act"
+        :message="tutorial.message"
+        :skill-tag="tutorial.skillTag"
+        @skip="tutorial.skip"
+      />
     </template>
   </div>
 </template>
@@ -179,14 +183,14 @@ import { ref, computed, onMounted, provide, markRaw } from 'vue';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
-import TutorialPhase1 from './components/TutorialPhase1.vue';
 import FilmRoom from './components/FilmRoom.vue';
+import CoachOverlay from './components/CoachOverlay.vue';
+import { useTutorial } from './composables/useTutorial.js';
 
 const loading = ref(true);
 const loadStep = ref(0);
-const phase = ref('tutorial');
+const phase = ref('planning');
 const phaseBeforeFilmRoom = ref('planning');
-const planningIntroDismissed = ref(false);
 const round = ref(1);
 const health = ref(100);
 const gold = ref(10);
@@ -222,6 +226,10 @@ const maxPlayerPts = computed(() => {
 });
 
 provide('engine', engine);
+
+// Front Office 101 — adaptive onboarding coach (guides on the real screens).
+const tutorial = useTutorial();
+const onTutorialPlaced = (payload) => tutorial.onPlayerPlaced(payload || {});
 
 const initWasm = async () => {
   if (typeof Module === 'undefined') {
@@ -309,6 +317,7 @@ const buyPlayer = (player) => {
   gold.value -= player.cost;
   bench.value = [...bench.value, player];
   shop.value = shop.value.filter(p => p.id !== player.id);
+  tutorial.onPlayerBought(player, { goldLeft: gold.value, rosterCount: bench.value.length });
 };
 
 const sellPlayer = (player) => {
@@ -382,24 +391,12 @@ const closeFilmRoom = () => {
   phase.value = phaseBeforeFilmRoom.value || 'planning';
 };
 
-const onTutorialComplete = (tutorialPlayer) => {
-  if (tutorialPlayer) {
-    // Find the real roster version by name so stats/id are correct for the engine
-    const rosterMatch = allPlayers.find(p =>
-      p.name.toLowerCase() === tutorialPlayer.name.toLowerCase()
-    );
-    if (rosterMatch && !bench.value.find(b => b.id === rosterMatch.id)) {
-      bench.value = [...bench.value, rosterMatch];
-      gold.value -= tutorialPlayer.cost; // deduct what the tutorial charged
-    }
-  }
-  phase.value = 'planning';
-};
-
 onMounted(async () => {
   await initWasm();
   await fetchRoster();
   loading.value = false;
+  // Start onboarding for first-time players (no-op if already onboarded).
+  tutorial.maybeStart();
 });
 </script>
 
@@ -725,46 +722,23 @@ body {
 }
 .moment:last-child { border-bottom: none; }
 
-/* Planning intro coach bubble */
-.planning-intro {
+/* Replay-tutorial affordance (returning players) */
+.replay-tutorial-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #1e1e1e;
-  border: 2px solid #8b5a2b;
-  border-left: 6px solid #d9534f;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.replay-tutorial-btn {
+  background: transparent;
+  color: #9a9a9a;
+  border: 1px solid #3a3a3a;
   border-radius: 4px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-}
-.pi-label {
-  font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: #d9534f;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.pi-text {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #ccc;
-  line-height: 1.4;
-  flex: 1;
-}
-.pi-text strong { color: #e0e0e0; }
-.pi-dismiss {
-  padding: 4px 14px;
-  font-size: 0.78rem;
-  background: #333;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-.pi-dismiss:hover { background: #444; }
+.replay-tutorial-btn:hover { color: #ffd700; border-color: #8b5a2b; }
 
 /* Shop */
 .shop-section { margin-top: 15px; }

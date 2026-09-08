@@ -62,7 +62,7 @@ export default {
     courtLineup: { type: Array, default: () => [] },
     roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
   },
-  emits: ['sim-complete'],
+  emits: ['sim-complete', 'coverage-opened', 'coverage-selected'],
   setup(props, { emit }) {
     const livePlayers = ref([]);
     const botPlayers = ref([]);
@@ -163,6 +163,7 @@ export default {
     const selectScheme = (id) => {
       selectedSchemeId.value = id;
       flashT0 = performance.now(); // re-trigger the preview flash
+      emit('coverage-selected', id);
     };
 
     const courtScaler = ref(null);
@@ -418,6 +419,8 @@ export default {
     };
 
     onMounted(async () => {
+      // The prefight coverage picker is visible from mount — cue the coach.
+      emit('coverage-opened');
       spawnBots();
       if (!getEngine()) {
         initFallbackPlayers();

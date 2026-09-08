@@ -130,7 +130,7 @@
 
 <script>
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
-import { getZoneGlowStyle } from '../composables/useZoneEfficiency.js';
+import { getZoneGlowStyle, getZoneEfficiency, zoneWarmth } from '../composables/useZoneEfficiency.js';
 import { previewSynergyContributors } from '../composables/useSynergyPreview.js';
 
 // Mirror of shared-core/include/GameSeason.h (GameState::SALARY_CAP / SALARY_FLOOR).
@@ -156,7 +156,7 @@ export default {
     engine: { type: Object, default: null },
     bench: { type: Array, default: () => [] }
   },
-  emits: ['locked-in', 'update:bench', 'sell-player'],
+  emits: ['locked-in', 'update:bench', 'sell-player', 'player-placed'],
   setup(props, { emit }) {
     const onCourt = ref([]);
     const dragState = ref({ player: null, from: null });
@@ -179,6 +179,15 @@ export default {
     const ROWS = 5;
     const CELL_W = COURT_W / COLS;
     const CELL_H = COURT_H / ROWS;
+
+    // Notify the onboarding coach when a new player lands on the court, with the
+    // shot-value warmth of the target cell so it can teach expected value.
+    const emitPlaced = (cx, cy) => {
+      emit('player-placed', {
+        onCourtCount: onCourt.value.length,
+        zoneWarmth: zoneWarmth(getZoneEfficiency(cx, cy, COLS, ROWS).efg),
+      });
+    };
 
     const benchPlayers = computed(() => props.bench);
 
@@ -253,6 +262,7 @@ export default {
           eng.SpawnPlayer(player.id, player.name, player.stats.speed, player.stats.shooting);
           eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
         }
+        emitPlaced(cx, cy);
       } else {
         // Reposition on court
         onCourt.value = onCourt.value.map(p =>
@@ -330,6 +340,7 @@ export default {
           eng.SpawnPlayer(player.id, player.name, player.stats.speed, player.stats.shooting);
           eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
         }
+        emitPlaced(cx, cy);
       } else {
         // Reposition court player
         onCourt.value = onCourt.value.map(p =>
