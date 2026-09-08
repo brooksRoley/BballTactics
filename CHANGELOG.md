@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-28 — Conference Finals Meta Update (post ECF + WCF G5)
+
+### Meta Weights (data/meta_weights.json)
+
+- **Conference-finals eliminations -> X tier**: DET (A->X, star_playmaker), MIN (B->X, twin_towers), CLE (B->X, balanced_scoring). Moved from `playoff_survivors` to the eliminated bucket. Players on these teams now receive -2 shooting, -2 defense, -1 speed via `tier_buffs["X"]`.
+- **NYK upgraded to S (A->S)**: balanced_scoring synergy, 12-0 playoff run, dominant on both ends.
+- **Maintained**: OKC S (G5 short-handed win holds the top tier), SAS A (Wemby interior anchor).
+- Bumped `_version` to 2026-05-28.
+- Rationale: keep the autochess draft meta fresh — surviving finalists should feel stronger, freshly-eliminated teams weaker.
+
 ## 2026-05-07 — Conference Semifinals Meta Update
 
 ### Meta Weights (data/meta_weights.json)
