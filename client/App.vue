@@ -174,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from 'vue';
+import { ref, computed, onMounted, provide, markRaw } from 'vue';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 import CourtCanvas from './components/CourtCanvas.vue';
@@ -230,7 +230,13 @@ const initWasm = async () => {
     return;
   }
   const wasmModule = await Module();
-  engine.value = new wasmModule.GameManager();
+  // markRaw: the embind GameManager keeps internal pointer bookkeeping
+  // ($$.ptrType.registeredClass) that embind compares by object identity.
+  // Storing it in a reactive ref wraps those internals in a Proxy, so the
+  // identity check in upcastPointer fails ("Expected null or instance of
+  // GameManager, got an instance of GameManager") on every method call.
+  // markRaw keeps the raw instance out of Vue's reactivity system.
+  engine.value = markRaw(new wasmModule.GameManager());
   loadStep.value = 1;
 };
 
