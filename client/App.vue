@@ -3,13 +3,20 @@
     <header class="top-bar">
       <h1>B-Ball Tactics</h1>
       <div class="status-bar">
-        <span class="round-badge">Round {{ Math.min(round, 10) }}/10</span>
-        <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
-        <span v-if="streakCount >= 2" class="streak-badge" :class="streakType">
-          {{ streakCount }}{{ streakType === 'win' ? 'W' : 'L' }} streak
-        </span>
-        <SpringBar :value="health" />
-        <span class="gold-badge" :title="incomeTooltip">{{ gold }}G</span>
+        <button
+          v-if="phase !== 'filmroom'"
+          class="film-room-btn"
+          @click="openFilmRoom"
+        >🎬 Film Room</button>
+        <template v-if="phase !== 'filmroom'">
+          <span class="round-badge">Round {{ Math.min(round, 10) }}/10</span>
+          <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
+          <span v-if="streakCount >= 2" class="streak-badge" :class="streakType">
+            {{ streakCount }}{{ streakType === 'win' ? 'W' : 'L' }} streak
+          </span>
+          <SpringBar :value="health" />
+          <span class="gold-badge" :title="incomeTooltip">{{ gold }}G</span>
+        </template>
       </div>
     </header>
 
@@ -52,21 +59,19 @@
         <a href="#" @click.prevent="reloadPage">Reload</a> to try the real engine again.
       </p>
 
-      <!-- Tutorial (first time only) -->
-      <TutorialPhase1
-        v-if="phase === 'tutorial'"
-        @phase-one-complete="onTutorialComplete"
+      <!-- Coach Miller's Film Room (daily tactics puzzles) -->
+      <FilmRoom
+        v-if="phase === 'filmroom'"
+        @exit="closeFilmRoom"
       />
 
       <!-- Draft + Plan (unified screen). v-show keeps PlanningPhase mounted so
            the court lineup persists across rounds; :key remounts it on reset. -->
       <div v-show="phase === 'planning'" class="planning-screen">
 
-        <!-- First-round coach tip -->
-        <div v-if="round === 1 && !planningIntroDismissed" class="planning-intro">
-          <div class="pi-label">COACH MILLER</div>
-          <p class="pi-text">Buy players from the Free Agents shop below, then <strong>drag or tap them onto the court</strong>. Pick your offense and coverage, then hit <strong>Lock In &amp; Fight</strong>. Three copies of the same player merge into a ★★ upgrade — court or bench, wherever they sit.</p>
-          <button class="pi-dismiss" @click="planningIntroDismissed = true">Got it</button>
+        <!-- Returning players can re-run the onboarding coach -->
+        <div v-if="round === 1 && !tutorial.active" class="replay-tutorial-row">
+          <button class="replay-tutorial-btn" @click="tutorial.replay()">↻ Replay tutorial</button>
         </div>
 
         <!-- Active synergies -->
@@ -108,6 +113,7 @@
           @update:bench="onBenchUpdate"
           @update:court="courtMirror = $event"
           @sell-player="onSellPlayer"
+          @player-placed="onTutorialPlaced"
           @locked-in="onLockedIn"
         />
 
@@ -216,6 +222,8 @@
         :home-multiplier="homeMatchup ? homeMatchup.offenseMultiplier : 1"
         :away-multiplier="awayMatchup ? awayMatchup.offenseMultiplier : 1"
         :round-stats="roundStats"
+        @coverage-opened="tutorial.onCoverageOpened"
+        @coverage-selected="tutorial.onCoverageSelected"
         @sim-complete="onSimComplete"
       />
 
@@ -270,19 +278,30 @@
           </div>
         </div>
       </div>
+
+      <!-- Front Office 101 — adaptive onboarding coach (rides the real screens) -->
+      <CoachOverlay
+        :active="tutorial.active && (phase === 'planning' || phase === 'sim')"
+        :act="tutorial.act"
+        :message="tutorial.message"
+        :skill-tag="tutorial.skillTag"
+        @skip="tutorial.skip"
+      />
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, provide, markRaw } from 'vue';
 
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
-import TutorialPhase1 from './components/TutorialPhase1.vue';
+import FilmRoom from './components/FilmRoom.vue';
+import CoachOverlay from './components/CoachOverlay.vue';
 import SpringBar from './components/SpringBar.vue';
 import { useShop } from './composables/useShop.js';
 import { useMatchmaking, API_BASE } from './composables/useMatchmaking.js';
+import { useTutorial } from './composables/useTutorial.js';
 import {
   REROLL_COST, BENCH_CAP, MAX_ROUNDS, STAT_CAP,
   shopOdds, teamSizeCap, goldIncome, makeUnit, rollShop,
@@ -294,8 +313,8 @@ import { listSchemes, resolveMatchup, suggestCoverage, gradeRead, schemes } from
 const loading = ref(true);
 const engineFailed = ref(false);
 const loadStep = ref(0);
-const phase = ref('tutorial');
-const planningIntroDismissed = ref(false);
+const phase = ref('planning');
+const phaseBeforeFilmRoom = ref('planning');
 const round = ref(1);
 const health = ref(100);
 const wins = ref(0);
@@ -303,6 +322,8 @@ const losses = ref(0);
 const streakType = ref(null);   // 'win' | 'loss' | null
 const streakCount = ref(0);
 const engine = ref(null);
+// PlanningPhase (and CourtCanvas as a fallback) reach the WASM engine via inject.
+provide('engine', engine);
 const courtLineup = ref([]);
 const courtMirror = ref([]);    // live read-only mirror of PlanningPhase's court
 const tipoffZoom = ref(false);
@@ -409,6 +430,10 @@ const getPlayerId = () => {
 // ── boot ────────────────────────────────────────────────────────────────────
 const reloadPage = () => window.location.reload();
 
+// Front Office 101 — adaptive onboarding coach (guides on the real screens).
+const tutorial = useTutorial();
+const onTutorialPlaced = (payload) => tutorial.onPlayerPlaced(payload || {});
+
 const initWasm = async () => {
   // The WASM engine is the primary simulation. If it can't load, the run
   // still plays: CourtCanvas swaps in the pure-JS backup ref
@@ -419,7 +444,13 @@ const initWasm = async () => {
   } else {
     try {
       const wasmModule = await Module();
-      engine.value = new wasmModule.GameManager();
+      // markRaw: the embind GameManager keeps internal pointer bookkeeping
+      // ($$.ptrType.registeredClass) that embind compares by object identity.
+      // Storing it in a reactive ref wraps those internals in a Proxy, so the
+      // identity check in upcastPointer fails ("Expected null or instance of
+      // GameManager, got an instance of GameManager") on every method call.
+      // markRaw keeps the raw instance out of Vue's reactivity system.
+      engine.value = markRaw(new wasmModule.GameManager());
     } catch (e) {
       console.error('Wasm engine failed to initialize — falling back to the JS backup ref:', e);
       engineFailed.value = true;
@@ -473,7 +504,10 @@ const showCombineToast = (unit) => {
 
 const onBuy = (slotIndex) => {
   const result = shopApi.buy(slotIndex);
-  if (result && result.star === 2) showCombineToast(result);
+  if (result) {
+    tutorial.onPlayerBought(result, { goldLeft: gold.value, rosterCount: bench.value.length });
+    if (result.star === 2) showCombineToast(result);
+  }
 };
 
 const onReroll = () => { shopApi.reroll(round.value); };
@@ -724,17 +758,13 @@ const resetGame = () => {
   phase.value = 'planning';
 };
 
-const onTutorialComplete = (tutorialPlayer) => {
-  if (tutorialPlayer) {
-    const rosterMatch = rosterRef.value.find(p =>
-      p.name.toLowerCase() === tutorialPlayer.name.toLowerCase()
-    );
-    if (rosterMatch) {
-      bench.value = [...bench.value, makeUnit(rosterMatch)];
-      gold.value -= tutorialPlayer.cost; // deduct what the tutorial charged
-    }
-  }
-  phase.value = 'planning';
+const openFilmRoom = () => {
+  phaseBeforeFilmRoom.value = phase.value;
+  phase.value = 'filmroom';
+};
+
+const closeFilmRoom = () => {
+  phase.value = phaseBeforeFilmRoom.value || 'planning';
 };
 
 onMounted(async () => {
@@ -746,6 +776,8 @@ onMounted(async () => {
   );
   ensureRun(); // fire-and-forget; lock-in retries if it hasn't landed yet
   loading.value = false;
+  // Start onboarding for first-time players (no-op if already onboarded).
+  tutorial.maybeStart();
 });
 </script>
 
@@ -780,6 +812,18 @@ body {
   gap: 12px;
   align-items: center;
 }
+.film-room-btn {
+  background: #1e1e1e;
+  color: #ffd700;
+  border: 1px solid #8b5a2b;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.film-room-btn:hover { background: #2a2a2a; border-color: #d9534f; }
 .round-badge {
   background: #333;
   padding: 4px 12px;
@@ -1210,46 +1254,23 @@ body {
 .moment:last-child { border-bottom: none; }
 .film-room .moment { color: #9fb8c9; }
 
-/* Planning intro coach bubble */
-.planning-intro {
+/* Replay-tutorial affordance (returning players) */
+.replay-tutorial-row {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #1e1e1e;
-  border: 2px solid #8b5a2b;
-  border-left: 6px solid #d9534f;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.replay-tutorial-btn {
+  background: transparent;
+  color: #9a9a9a;
+  border: 1px solid #3a3a3a;
   border-radius: 4px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-}
-.pi-label {
-  font-size: 0.65rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: #d9534f;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.pi-text {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #ccc;
-  line-height: 1.4;
-  flex: 1;
-}
-.pi-text strong { color: #e0e0e0; }
-.pi-dismiss {
-  padding: 4px 14px;
-  font-size: 0.78rem;
-  background: #333;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-.pi-dismiss:hover { background: #444; }
+.replay-tutorial-btn:hover { color: #ffd700; border-color: #8b5a2b; }
 
 /* Shop */
 .shop-section { margin-top: 15px; }
@@ -1304,25 +1325,78 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .record-summary { color: #888; font-size: 0.9rem; margin-top: 8px; }
-.shop-panel { display: flex; gap: 8px; flex-wrap: wrap; }
+.shop-panel { display: flex; gap: 12px; flex-wrap: wrap; }
 
+/* Collectible-card treatment for the draft shop. Each cost tier reads as a
+   rarity: tier colour drives the top bar, border glow, and hover aura, and a
+   holographic sheen sweeps across affordable cards on hover. */
 .player-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 12px;
-  background: #1a1a1a;
-  border: 2px solid #333;
-  min-width: 140px;
+  gap: 4px;
+  padding: 12px 14px 11px;
+  min-width: 152px;
+  border-radius: 10px;
+  border: 1.5px solid #3a3a3a;
+  background:
+    linear-gradient(160deg, rgba(42,42,48,0.96) 0%, rgba(22,22,26,0.98) 58%, rgba(13,13,16,1) 100%);
+  color: #ececec;
   cursor: not-allowed;
-  opacity: 0.5;
-  transition: all 0.15s ease;
+  opacity: 0.45;
+  overflow: hidden;
+  isolation: isolate;
   font-size: 0.85rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.18s cubic-bezier(.2,.7,.3,1), box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
-.player-card.affordable { cursor: pointer; opacity: 1; }
-.player-card.affordable:hover { transform: translateY(-3px); }
-.card-cost { color: #ffd700; font-weight: bold; font-size: 0.75rem; }
-.card-stats { color: #777; font-size: 0.7rem; }
+/* Rarity bar along the top edge */
+.player-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--tier, #8a97a0);
+  box-shadow: 0 0 10px var(--tier, #8a97a0);
+  z-index: 3;
+}
+/* Holographic sheen, parked off-card until hover */
+.player-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 48%, rgba(255,255,255,0.03) 56%, transparent 72%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.player-card.affordable {
+  cursor: pointer;
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--tier, #8a97a0) 55%, #333);
+}
+.player-card.affordable:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: var(--tier, #8a97a0);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 12px 28px rgba(0,0,0,0.55),
+    0 0 22px color-mix(in srgb, var(--tier, #8a97a0) 45%, transparent);
+}
+.player-card.affordable:hover::after { transform: translateX(120%); }
+.player-card strong { font-size: 0.92rem; letter-spacing: 0.01em; color: #fff; line-height: 1.15; }
+.card-cost {
+  align-self: flex-start;
+  font-weight: 800;
+  font-size: 0.7rem;
+  color: #241a00;
+  background: linear-gradient(180deg, #ffe680, #f1c40f);
+  padding: 1px 9px;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.45);
+}
+.card-stats { color: #9a9a9a; font-size: 0.7rem; letter-spacing: 0.02em; }
 .copies-badge {
   font-size: 0.62rem;
   font-weight: bold;
@@ -1337,11 +1411,20 @@ body {
 .bench-full-note { color: #f0a500; font-size: 0.75rem; margin: 8px 0 0; }
 .income-note { color: #666; font-size: 0.72rem; margin: 6px 0 0; }
 
-.cost-1 { border-color: #7f8c8d; }
-.cost-2 { border-color: #27ae60; }
-.cost-3 { border-color: #2980b9; }
-.cost-4 { border-color: #9b59b6; }
-.cost-5 { border-color: #f1c40f; }
+/* Tier colours: keep border-color for the shared bench cards, add --tier for
+   the shop's rarity styling above. */
+.cost-1 { border-color: #7f8c8d; --tier: #8a97a0; }
+.cost-2 { border-color: #27ae60; --tier: #2ecc71; }
+.cost-3 { border-color: #2980b9; --tier: #3498db; }
+.cost-4 { border-color: #9b59b6; --tier: #a569d6; }
+.cost-5 { border-color: #f1c40f; --tier: #f1c40f; }
+
+/* Supermax (cost 5): a warm foil field and a pulsing rarity bar. */
+.player-card.cost-5 {
+  background: linear-gradient(160deg, rgba(62,52,20,0.96) 0%, rgba(28,23,10,0.98) 58%, rgba(16,13,6,1) 100%);
+}
+.player-card.cost-5.affordable::before { animation: foil-pulse 2.2s ease-in-out infinite; }
+@keyframes foil-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
 /* Result */
 .result-screen {

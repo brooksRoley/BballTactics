@@ -13,5 +13,7 @@ EMSCRIPTEN_BINDINGS(bball_tactics) {
         .function("StartRound", &GameManager::StartRound)
         .function("LoadRosterJSON", &GameManager::LoadRosterJSON)
         .function("SetPlayerCoordinates", &GameManager::SetPlayerCoordinates)
-        .function("RemovePlayer", &GameManager::RemovePlayer);
+        .function("RemovePlayer", &GameManager::RemovePlayer)
+        .function("SetSeriesContext", &GameManager::SetSeriesContext)
+        .function("SimulateGame", &GameManager::SimulateGame);
 }

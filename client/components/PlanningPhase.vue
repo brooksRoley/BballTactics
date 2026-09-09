@@ -111,6 +111,7 @@
 import { ref, computed, inject, onMounted, onUnmounted, reactive } from 'vue';
 import { FEEL, Spring, ParticlePool, spawnDust, drawParticles, prefersReducedMotion } from '../fx/feel.js';
 import { sellValue } from '../game/economy.js';
+import { getZoneEfficiency, zoneWarmth } from '../composables/useZoneEfficiency.js';
 
 export default {
   props: {
@@ -118,7 +119,7 @@ export default {
     bench: { type: Array, default: () => [] },
     maxOnCourt: { type: Number, default: 5 }
   },
-  emits: ['locked-in', 'update:bench', 'update:court', 'sell-player'],
+  emits: ['locked-in', 'update:bench', 'update:court', 'sell-player', 'player-placed'],
   setup(props, { emit }) {
     const onCourt = ref([]);
     const selectedPlayer = ref(null);
@@ -249,6 +250,12 @@ export default {
           eng.SpawnPlayer(player.id, player.name, player.stats.speed, player.stats.shooting);
           eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
         }
+        // Notify the onboarding coach a new player landed, with the target cell's
+        // shot-value warmth so it can teach expected value (cold-spot tip).
+        emit('player-placed', {
+          onCourtCount: onCourt.value.length,
+          zoneWarmth: zoneWarmth(getZoneEfficiency(cx, cy, COLS, ROWS).efg),
+        });
       } else {
         onCourt.value = onCourt.value.map(p =>
           p.id === player.id ? { ...p, courtX: cx, courtY: cy } : p
