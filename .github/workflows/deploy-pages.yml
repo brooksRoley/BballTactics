@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    # The desktop launcher has its own workflow; it doesn't change the web game.
+    paths-ignore: ['launcher/**', '.github/workflows/launcher.yml', 'docs/**']
   workflow_dispatch:
 
 permissions:

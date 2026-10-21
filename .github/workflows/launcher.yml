@@ -1,0 +1,30 @@
+name: Launcher CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+  pull_request:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+
+defaults:
+  run:
+    working-directory: launcher
+
+jobs:
+  check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      # Starts the built app, checks the live window, exits 0 or 1.
+      - run: npm run smoke
