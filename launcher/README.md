@@ -1,6 +1,6 @@
 # Hardwood Launcher
 
-A small desktop launcher for [Hardwood Autochess](https://github.com/brooksRoley/BballTactics):
+A small desktop launcher for Hardwood Autochess, the game in this repository:
 install, patch and launch the game, plus a native C++ build of its simulation engine.
 Electron, React and TypeScript.
 
@@ -8,9 +8,11 @@ A personal project, built to learn and show desktop-client work end to end:
 a web UI in a desktop shell, chunked patching with rollback, and C++ shared
 between the web build (WebAssembly) and the desktop build (a native Node addon).
 
-**Status:** M0, the scaffold. Plan: [`BballTactics/docs/design/launcher-plan.md`](https://github.com/brooksRoley/BballTactics/blob/main/docs/design/launcher-plan.md).
+**Status:** M0, the scaffold. Plan: [`docs/design/launcher-plan.md`](../docs/design/launcher-plan.md).
 
 ## Run it
+
+From this `launcher/` directory:
 
 ```bash
 npm install

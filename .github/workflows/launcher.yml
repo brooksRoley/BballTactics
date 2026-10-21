@@ -1,9 +1,15 @@
-name: CI
+name: Launcher CI
 
 on:
   push:
     branches: [main]
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
   pull_request:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+
+defaults:
+  run:
+    working-directory: launcher
 
 jobs:
   check:
@@ -14,10 +20,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: launcher/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      # Starts the built app, waits for the window to load, exits 0.
+      # Starts the built app, checks the live window, exits 0 or 1.
       - run: npm run smoke
