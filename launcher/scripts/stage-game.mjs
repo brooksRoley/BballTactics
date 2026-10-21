@@ -24,7 +24,9 @@ execFileSync('npx', ['vite', 'build', '--base=/', '--outDir', files, '--emptyOut
 
 const git = (...args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
 const sha = git('rev-parse', '--short', 'HEAD')
-const dirty = git('status', '--porcelain', '--', '.', ':!launcher').length > 0
+// Dirty means uncommitted *source*: build outputs (the committed dist/ that
+// the Pages deploy rebuilds first, dist-hardwood/) don't make a release dirty.
+const dirty = git('status', '--porcelain', '--', '.', ':!launcher', ':!dist', ':!dist-hardwood').length > 0
 const version = `${git('log', '-1', '--format=%cs', 'HEAD')}-${sha}${dirty ? '-dirty' : ''}`
 
 function walk(dir) {
