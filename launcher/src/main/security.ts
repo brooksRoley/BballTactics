@@ -6,9 +6,10 @@ import type { WebPreferences } from 'electron'
  * no direct Electron access, and a sandboxed process; everything it needs
  * goes through the typed preload API.
  */
-export function secureWebPreferences(preload: string): WebPreferences {
+export function secureWebPreferences(preload?: string): WebPreferences {
   return {
-    preload,
+    // A game window gets no preload at all: it never talks to main.
+    ...(preload ? { preload } : {}),
     contextIsolation: true,
     sandbox: true,
     nodeIntegration: false,
