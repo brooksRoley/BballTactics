@@ -123,10 +123,19 @@ export function useTutorial() {
     completeTimer = setTimeout(complete, 3600);
   };
 
+  // Tip-off ends onboarding: the player has seen every act, and a coach card
+  // left up through the fight covers the scoreboard (Start Fight without
+  // changing coverage never fired onCoverageSelected).
+  const onFightStarted = () => {
+    if (!state.active) return;
+    clearTimeout(completeTimer);
+    complete();
+  };
+
   // Attach methods onto the reactive state so consumers can use one object:
   // tutorial.active (reactive) and tutorial.replay() (method) both work.
   return Object.assign(state, {
     maybeStart, replay, skip, complete,
-    onPlayerBought, onPlayerPlaced, onCoverageOpened, onCoverageSelected,
+    onPlayerBought, onPlayerPlaced, onCoverageOpened, onCoverageSelected, onFightStarted,
   });
 }

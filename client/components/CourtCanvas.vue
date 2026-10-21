@@ -68,7 +68,7 @@ export default {
     awayMultiplier: { type: Number, default: 1 },
     roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
   },
-  emits: ['sim-complete', 'coverage-opened', 'coverage-selected'],
+  emits: ['sim-complete', 'coverage-opened', 'coverage-selected', 'fight-started'],
   setup(props, { emit }) {
     const livePlayers = ref([]);
     const botPlayers = ref([]);
@@ -365,6 +365,7 @@ export default {
       if (simPhase.value !== 'prefight') return;
       cancelAnimationFrame(prefightRAF);
       simPhase.value = 'live';
+      emit('fight-started');
       shotClock.value = SHOT_CLOCK_MAX;
       lastPossessionTeam = null;
       lastTime = performance.now();
