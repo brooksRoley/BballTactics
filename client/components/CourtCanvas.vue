@@ -2,7 +2,7 @@
   <div class="sim-container">
     <div class="sim-header">
       <div class="team-score home">YOU: {{ homeScore }}</div>
-      <div class="sim-timer">{{ timeLeft.toFixed(1) }}s</div>
+      <div class="sim-timer" :class="{ overtime }">{{ overtime ? 'OT ' : '' }}{{ timeLeft.toFixed(1) }}s</div>
       <div class="team-score away">OPP: {{ awayScore }}</div>
     </div>
 
@@ -54,12 +54,18 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, inject } from 'vue';
+import { ref, onMounted, onUnmounted, inject, unref } from 'vue';
+import { createFallbackSim } from '../game/fallbackSim.js';
 
 export default {
   props: {
     engine: { type: Object, default: null },
     courtLineup: { type: Array, default: () => [] },
+    // Ghost board + tactics multipliers drive the JS backup ref when the
+    // engine is missing (with the engine they're applied in syncEngineForRound)
+    opponentUnits: { type: Array, default: () => [] },
+    homeMultiplier: { type: Number, default: 1 },
+    awayMultiplier: { type: Number, default: 1 },
     roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
   },
   emits: ['sim-complete', 'coverage-opened', 'coverage-selected'],
@@ -69,13 +75,15 @@ export default {
     const ball = ref({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
     const homeScore = ref(0);
     const awayScore = ref(0);
-    const timeLeft = ref(10.0);
+    const timeLeft = ref(12.0);
+    const overtime = ref(false);
     const statusText = ref('Tip-off!');
     const activePopups = ref([]);
     let popupCounter = 0;
     let animationFrameId = null;
     let lastTime = 0;
     let simDone = false;
+    let fallback = null; // pure-JS backup ref, built only when the engine is missing
 
     // Scoring attribution tracking
     const playerPoints = {};
@@ -89,8 +97,11 @@ export default {
       }, 1200);
     };
 
+    // The engine reports who made the basket; by the time we see the score
+    // the ball already belongs to the inbounding team, so possession lies.
+    let lastScorerId = -1;
     const attributeScore = (pts, isHome) => {
-      const possId = ball.value.possessorId;
+      const possId = lastScorerId >= 0 ? lastScorerId : ball.value.possessorId;
       if (isHome) {
         const scorer = livePlayers.value.find(p => p.id === possId);
         const name = scorer?.name || `Player ${possId}`;
@@ -111,7 +122,13 @@ export default {
 
     const COURT_W = 800;
     const COURT_H = 400;
-    const SIM_DURATION = 10.0;
+    // A round is 12s on screen but 30s of basketball (the engine runs at
+    // SIM_SPEED), enough for ~5 possessions a side. A tie at the horn goes to
+    // sudden-death overtime: next basket wins.
+    const SIM_DURATION = 12.0;
+    const OT_DURATION = 6.0;
+    const SIM_SPEED = 2.5;
+    const SIM_SUBSTEP = 1 / 60;
     const dpr = Math.ceil(window.devicePixelRatio || 1);
 
     // ── Cosmetic shot-clock pressure ring ─────────────────────────
@@ -173,39 +190,12 @@ export default {
     let renderer = null;   // PixiJS CourtRenderer (lazy-loaded on mount)
     let unmounted = false;
 
-    const getEngine = () => props.engine || inject('engine', null);
+    // inject() only works during setup, so resolve it once here. App
+    // provides the engine *ref*, so unwrap it at call time.
+    const injectedEngine = inject('engine', null);
+    const getEngine = () => props.engine || unref(injectedEngine);
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-    const gridToSim = (gx, gy) => ({
-      x: gx * 70 + 40,
-      y: gy * 70 + 40
-    });
-
-    const spawnBots = () => {
-      botPlayers.value = [
-        { id: 901, x: 600, y: 80,  tx: 580, ty: 100 },
-        { id: 902, x: 650, y: 200, tx: 620, ty: 180 },
-        { id: 903, x: 580, y: 320, tx: 560, ty: 300 },
-      ];
-    };
-
-    const initFallbackPlayers = () => {
-      if (props.courtLineup.length === 0) return;
-      livePlayers.value = props.courtLineup.map(p => {
-        const sim = gridToSim(p.courtX, p.courtY);
-        return {
-          id: p.id,
-          name: p.name,
-          x: sim.x,
-          y: sim.y,
-          tx: 420 + Math.random() * 180,
-          ty: 80 + Math.random() * 240,
-          speed: (p.stats?.speed || 50) / 100 * 15,
-          shooting: p.stats?.shooting || 50
-        };
-      });
-    };
 
     // ── Coverage preview state (cosmetic) ─────────────────────────
     // Builds the per-zone draw data for the currently selected scheme and
@@ -259,97 +249,33 @@ export default {
       timeLeft.value -= dt;
 
       if (timeLeft.value <= 0) {
-        timeLeft.value = 0;
-        renderFrame();
-        finishSim();
-        return;
+        if (!overtime.value && homeScore.value === awayScore.value) {
+          overtime.value = true;
+          timeLeft.value = OT_DURATION;
+          statusText.value = 'Overtime — next basket wins!';
+        } else {
+          timeLeft.value = 0;
+          renderFrame();
+          finishSim();
+          return;
+        }
       }
 
       const engine = getEngine();
+      // Fixed substeps keep the sim frame-rate independent at SIM_SPEED
+      const steps = Math.max(1, Math.round((dt * SIM_SPEED) / SIM_SUBSTEP));
+      const stepDt = (dt * SIM_SPEED) / steps;
       if (engine) {
-        engine.TickSimulation(dt);
+        for (let i = 0; i < steps; i++) engine.TickSimulation(stepDt);
         try {
-          const state = JSON.parse(engine.GetGameStateJSON());
-          livePlayers.value = state.players || [];
-          botPlayers.value  = state.bots    || [];
-          if (state.ball) ball.value = state.ball;
-
-          const prevHome = homeScore.value;
-          const prevAway = awayScore.value;
-          homeScore.value = state.homeScore ?? homeScore.value;
-          awayScore.value = state.awayScore ?? awayScore.value;
-
-          if (homeScore.value > prevHome) {
-            const pts = homeScore.value - prevHome;
-            attributeScore(pts, true);
-          } else if (awayScore.value > prevAway) {
-            const pts = awayScore.value - prevAway;
-            attributeScore(pts, false);
-          }
+          applySimState(JSON.parse(engine.GetGameStateJSON()));
         } catch (e) { /* engine may not have state yet */ }
-      } else {
-        // --- Fallback: simplified JS sim with possession tracking ---
-        const BASKET_X = 770;
-        const BASKET_Y = 200;
-
-        livePlayers.value = livePlayers.value.map(p => {
-          const dx = p.tx - p.x;
-          const dy = p.ty - p.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > 2) {
-            const step = (p.speed || 8) * dt;
-            return { ...p, x: p.x + (dx / dist) * step, y: p.y + (dy / dist) * step };
-          }
-          return { ...p, tx: 450 + Math.random() * 200, ty: 80 + Math.random() * 240 };
-        });
-
-        const carrierId = ball.value.possessorId;
-        const carrier = livePlayers.value.find(p => p.id === carrierId);
-        if (carrier) {
-          ball.value = { ...ball.value, x: carrier.x, y: carrier.y, z: 0 };
-          carrier.tx = BASKET_X;
-          carrier.ty = BASKET_Y;
-          const distToBasket = Math.sqrt((carrier.x - BASKET_X) ** 2 + (carrier.y - BASKET_Y) ** 2);
-          if (distToBasket < 100) {
-            const shotProb = (carrier.shooting || 50) / 100 * 0.4;
-            if (Math.random() < shotProb * dt * 2) {
-              const pts = distToBasket > 200 ? 3 : 2;
-              homeScore.value += pts;
-              attributeScore(pts, true);
-              if (botPlayers.value.length > 0) {
-                ball.value = { ...ball.value, possessorId: botPlayers.value[0].id };
-              }
-            }
-          }
-        } else {
-          const botCarrier = botPlayers.value.find(b => b.id === carrierId);
-          if (botCarrier) {
-            ball.value = { ...ball.value, x: botCarrier.x, y: botCarrier.y, z: 0 };
-            botCarrier.tx = 30;
-            botCarrier.ty = 200;
-            const distToBasket = Math.sqrt((botCarrier.x - 30) ** 2 + (botCarrier.y - 200) ** 2);
-            if (distToBasket < 100 && Math.random() < 0.3 * dt * 2) {
-              const pts = Math.random() < 0.3 ? 3 : 2;
-              awayScore.value += pts;
-              attributeScore(pts, false);
-              if (livePlayers.value.length > 0) {
-                ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
-              }
-            }
-          } else if (livePlayers.value.length > 0) {
-            ball.value = { ...ball.value, possessorId: livePlayers.value[0].id };
-          }
-        }
-
-        botPlayers.value = botPlayers.value.map(b => {
-          const dx = b.tx - b.x;
-          const dy = b.ty - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > 3) return { ...b, x: b.x + (dx / dist) * 3, y: b.y + (dy / dist) * 3 };
-          return { ...b,
-            tx: clamp(b.x + (Math.random() - 0.5) * 200, 400, COURT_W - 40),
-            ty: clamp(b.y + (Math.random() - 0.5) * 150, 20,  COURT_H - 40) };
-        });
+      } else if (fallback) {
+        // Backup ref: pure-JS sim over the real ghost board with the round's
+        // tactics multipliers (see client/game/fallbackSim.js).
+        let state;
+        for (let i = 0; i < steps; i++) state = fallback.step(stepDt);
+        applySimState(state);
       }
 
       // ── Cosmetic shot-clock bookkeeping ────────────────────────
@@ -373,17 +299,44 @@ export default {
       }
 
       renderFrame();
+
+      // Sudden death: the first basket of overtime ends it
+      if (overtime.value && homeScore.value !== awayScore.value) {
+        finishSim();
+        return;
+      }
       animationFrameId = requestAnimationFrame(syncLoop);
+    };
+
+    // The engine and the JS backup ref emit the same state shape, so one
+    // apply path drives rendering, scoring, and attribution for both.
+    const applySimState = (state) => {
+      livePlayers.value = state.players || [];
+      botPlayers.value  = state.bots    || [];
+      if (state.ball) ball.value = state.ball;
+      lastScorerId = state.lastScorerId ?? -1;
+
+      const prevHome = homeScore.value;
+      const prevAway = awayScore.value;
+      homeScore.value = state.homeScore ?? homeScore.value;
+      awayScore.value = state.awayScore ?? awayScore.value;
+
+      if (homeScore.value > prevHome) {
+        attributeScore(homeScore.value - prevHome, true);
+      } else if (awayScore.value > prevAway) {
+        attributeScore(awayScore.value - prevAway, false);
+      }
     };
 
     const finishSim = () => {
       simDone = true;
       const outcome = homeScore.value > awayScore.value ? 'win' : 'loss';
+      const ot = overtime.value ? ' in overtime' : '';
       statusText.value = outcome === 'win'
-        ? 'Final — You win!'
+        ? `Final — You win${ot}!`
         : homeScore.value === awayScore.value
-          ? 'Final — Draw counts as a loss!'
-          : 'Final — You lose.';
+          ? 'Final — Still tied after OT: counts as a loss.'
+          : `Final — You lose${ot}.`;
 
       // Build per-player scoring sorted by points
       const playerScoring = Object.values(playerPoints)
@@ -421,13 +374,22 @@ export default {
     onMounted(async () => {
       // The prefight coverage picker is visible from mount — cue the coach.
       emit('coverage-opened');
-      spawnBots();
-      if (!getEngine()) {
-        initFallbackPlayers();
-        if (livePlayers.value.length > 0) {
-          const best = livePlayers.value.reduce((a, b) => (b.shooting || 0) > (a.shooting || 0) ? b : a);
-          ball.value = { x: best.x, y: best.y, z: 0, possessorId: best.id, isPossessed: true };
-        }
+      if (getEngine()) {
+        // Show the opening formation the engine built in StartRound
+        try { applySimState(JSON.parse(getEngine().GetGameStateJSON())); } catch (e) { /* no state yet */ }
+      } else {
+        // The WASM engine failed to load: build the pure-JS backup ref so the
+        // fight still happens against the actual ghost board, with the same
+        // tactics multipliers the engine would have baked into shooting.
+        fallback = createFallbackSim({
+          homeUnits: props.courtLineup,
+          awayUnits: props.opponentUnits,
+          homeMultiplier: props.homeMultiplier,
+          awayMultiplier: props.awayMultiplier,
+          seed: Date.now() >>> 0,
+        });
+        applySimState(fallback.step(0));
+        statusText.value = 'Backup ref — simplified sim';
       }
       lastTime = performance.now();
       timeLeft.value = SIM_DURATION;
@@ -471,7 +433,7 @@ export default {
     });
 
     return {
-      homeScore, awayScore, timeLeft, statusText, activePopups,
+      homeScore, awayScore, timeLeft, overtime, statusText, activePopups,
       courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr,
       simPhase, selectedSchemeId, COVERAGE_SCHEMES, selectScheme, startFight,
     };
@@ -508,6 +470,7 @@ export default {
 .team-score.home { color: #d9534f; }
 .team-score.away { color: #5bc0de; }
 .sim-timer { font-size: 1.5rem; font-variant-numeric: tabular-nums; color: #ffd700; }
+.sim-timer.overtime { color: #ff7a45; }
 
 .court-canvas {
   display: block;

@@ -108,7 +108,7 @@
 </template>
 
 <script>
-import { ref, computed, inject, onMounted, onUnmounted, reactive } from 'vue';
+import { ref, computed, inject, unref, onMounted, onUnmounted, reactive } from 'vue';
 import { FEEL, Spring, ParticlePool, spawnDust, drawParticles, prefersReducedMotion } from '../fx/feel.js';
 import { sellValue } from '../game/economy.js';
 import { getZoneEfficiency, zoneWarmth } from '../composables/useZoneEfficiency.js';
@@ -139,7 +139,10 @@ export default {
       shakeCellId.value = `c-${cx}-${cy}`;
       setTimeout(() => { shakeCellId.value = null; }, 400);
     };
-    const getEngine = () => props.engine || inject('engine', null);
+    // inject() only works during setup, so resolve it once here. App
+    // provides the engine *ref*, so unwrap it at call time.
+    const injectedEngine = inject('engine', null);
+    const getEngine = () => props.engine || unref(injectedEngine);
 
     const COURT_W = 500;
     const COURT_H = 400;

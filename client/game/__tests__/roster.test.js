@@ -39,6 +39,7 @@ console.log(`  roster: ${roster.length} players`);
 const allowedKeys = new Set(Object.keys(schema.items.properties));
 const allowedStatKeys = new Set(Object.keys(schema.items.properties.stats.properties));
 const statBounds = schema.items.properties.stats.properties; // {shooting:{minimum,maximum},...}
+const statRequired = new Set(schema.items.properties.stats.required);
 const costBounds = schema.items.properties.cost;
 
 test('roster is a non-empty array', () => {
@@ -84,6 +85,8 @@ test('every stat is an integer inside its schema bounds', () => {
   for (const p of roster) {
     for (const [stat, bounds] of Object.entries(statBounds)) {
       const v = p.stats[stat];
+      // Stats outside the schema's required list are optional (engine defaults them)
+      if (v === undefined && !statRequired.has(stat)) continue;
       assert.ok(Number.isInteger(v) && v >= bounds.minimum && v <= bounds.maximum,
         `${p.name}: ${stat}=${v} outside [${bounds.minimum}, ${bounds.maximum}]`);
     }

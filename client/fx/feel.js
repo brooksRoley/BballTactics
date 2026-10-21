@@ -29,8 +29,10 @@ export const FEEL = {
 
   // ── Screen shake (CourtCanvas) ─────────────────────────────────
   shake: {
-    weights: { score: 1.0, steal: 0.6, pass: 0.22, miss: 0.45 },
-    maxOffset: 7,             // px at weight 1.0
+    // Effect hierarchy: only decisive plays shake. Passes and misses are
+    // carried by the ball trail and backboard shudder instead.
+    weights: { gameWinner: 1.0, three: 0.45, score: 0.25, steal: 0.2, pass: 0, miss: 0 },
+    maxOffset: 4,             // px at weight 1.0
     decay: 6.5,               // 1/s exponential decay of trauma
     freq: 31,                 // rad/s noise frequency
   },

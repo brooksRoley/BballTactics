@@ -53,7 +53,9 @@ const getStat = (u, key) => {
 
 /** Planning-grid (0-4) coords → sim CENTER coords. Same 70px cells CourtCanvas
  *  uses in gridToSim (top-left +40), shifted +15 to the unit's center. */
-const gridToCenter = (gx, gy) => ({ x: gx * 70 + 55, y: gy * 70 + 55 });
+// Planning grid → court, as drawn: the board is home's attacking half with
+// the hoop at the bottom (mirrors GameManager::PlanningToCourt in the engine).
+const gridToCenter = (gx, gy) => ({ x: COURT_W - 30 - (40 + (4 - gy) * 75), y: 40 + gx * 80 });
 
 /**
  * Shot quality at launch: shooting stat sets the base, deep attempts and a
@@ -95,7 +97,7 @@ export function createFallbackSim({
       return {
         id: idBase + i,
         name: u.name || (isHome ? `Player ${i + 1}` : `Ghost ${i + 1}`),
-        x: isHome ? c.x : COURT_W - c.x, // ghosts mirror onto the right half
+        x: isHome ? c.x : c.x + 25, // ghosts open on defense, a step toward the hoop
         y: c.y,
         speed: getStat(u, 'speed'),
         shooting: getStat(u, 'shooting'),

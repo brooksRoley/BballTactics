@@ -51,10 +51,10 @@ const STAR_BOARD = [
   u(20, 'Jose Alvarado', 1, 40, 62, 55),
 ];
 
-// Defense with a true rim anchor placed in the paint (courtX <= 1)
+// Defense with a true rim anchor placed in the paint (courtY >= 3, courtX 1-3)
 const ANCHOR_D = [
-  u(3, 'Rudy Gobert', 5, 47, 35, 72, 0, 2),
-  u(10, 'Draymond Green', 2, 30, 45, 70, 1, 1),
+  u(3, 'Rudy Gobert', 5, 47, 35, 72, 2, 4),
+  u(10, 'Draymond Green', 2, 30, 45, 70, 1, 3),
   u(4, 'Alex Caruso', 3, 38, 56, 63, 3, 0),
   u(12, 'Derrick White', 3, 54, 55, 60, 3, 4),
   u(17, 'Jrue Holiday', 4, 55, 58, 66, 4, 2),
