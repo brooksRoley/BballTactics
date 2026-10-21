@@ -140,8 +140,11 @@ export default {
 .tutorial-wrapper {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #e0e0e0;
-  height: 100vh;
-  width: 100vw;
+  /* Sized to the app column, not the window: at 100vw inside the 900px .app
+     column the screen ran off the right edge and cut the Draft Capital bar. */
+  width: 100%;
+  height: clamp(520px, 78vh, 760px);
+  border-radius: 8px;
   background-color: #121212; /* Deep slate */
   position: relative;
   overflow: hidden;
@@ -199,6 +202,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  box-sizing: border-box;
   padding: 20px;
   z-index: 5;
 }

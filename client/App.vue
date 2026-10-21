@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <header class="top-bar">
-      <h1>B-Ball Tactics</h1>
+      <h1>Hardwood Autochess</h1>
       <div class="status-bar">
         <span class="round-badge">Round {{ Math.min(round, 10) }}/10</span>
         <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
