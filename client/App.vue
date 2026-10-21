@@ -224,6 +224,7 @@
         :round-stats="roundStats"
         @coverage-opened="tutorial.onCoverageOpened"
         @coverage-selected="tutorial.onCoverageSelected"
+        @fight-started="tutorial.onFightStarted"
         @sim-complete="onSimComplete"
       />
 
@@ -523,10 +524,18 @@ const onBenchUpdate = (newBench) => {
 };
 
 // ── ghost helpers ───────────────────────────────────────────────────────────
+// Bench-hero tags live only in the roster (the server rebuilds ghost units
+// from it and drops extra fields), so both teams look them up by rosterId.
+const benchHeroOf = (rosterId) => {
+  const p = rosterRef.value.find(r => r.id === rosterId);
+  return p && p.role === 'bench_hero' ? p : null;
+};
+
 const normalizeGhostUnits = (board) => {
   const units = Array.isArray(board?.units) ? board.units : [];
   return units.map((u, i) => ({
     id: typeof u.id === 'number' ? u.id : 900 + i,
+    rosterId: u.rosterId ?? null,
     name: u.name || `Ghost ${i + 1}`,
     cost: u.cost ?? 1,
     star: u.star ?? 1,
@@ -568,6 +577,7 @@ const localGhostBoard = () => {
     is_bot: true,
     units: picks.map((p, i) => ({
       id: 900 + i,
+      rosterId: p.id,
       name: p.name,
       cost: p.cost,
       x: 1 + (i % 3),
@@ -662,20 +672,28 @@ const syncEngineForRound = (homeMult, awayMult) => {
       eng.SpawnPlayer(eid, u.name, u.stats.speed, shooting);
     }
     eng.SetPlayerCoordinates(eid, u.courtX, u.courtY, u.courtX, u.courtY);
+    const hero = benchHeroOf(u.rosterId);
+    if (hero && typeof eng.SetBenchHero === 'function') {
+      eng.SetBenchHero(eid, hero.ppg_mean ?? 0, hero.ppg_stddev ?? 0);
+    }
     engineUids.add(eid);
   });
 
   if (hasNewBindings) {
-    const scaledAway = theirUnits.value.map(g => ({
-      id: g.id,
-      name: g.name,
-      x: g.courtX,
-      y: g.courtY,
-      stats: {
-        ...g.stats,
-        shooting: Math.min(STAT_CAP, Math.round(g.stats.shooting * awayMult)),
-      },
-    }));
+    const scaledAway = theirUnits.value.map(g => {
+      const hero = benchHeroOf(g.rosterId);
+      return {
+        id: g.id,
+        name: g.name,
+        x: g.courtX,
+        y: g.courtY,
+        stats: {
+          ...g.stats,
+          shooting: Math.min(STAT_CAP, Math.round(g.stats.shooting * awayMult)),
+        },
+        ...(hero ? { role: 'bench_hero', ppg_mean: hero.ppg_mean, ppg_stddev: hero.ppg_stddev } : {}),
+      };
+    });
     eng.SetAwayTeamJSON(JSON.stringify({ units: scaledAway }));
   }
 

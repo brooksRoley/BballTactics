@@ -45,9 +45,10 @@ console.log('engine.smoke.test.js');
 
 const eng = new wasm.GameManager();
 
-test('new bindings exist (SpawnUnit, SetAwayTeamJSON)', () => {
+test('new bindings exist (SpawnUnit, SetAwayTeamJSON, SetBenchHero)', () => {
   assert.strictEqual(typeof eng.SpawnUnit, 'function');
   assert.strictEqual(typeof eng.SetAwayTeamJSON, 'function');
+  assert.strictEqual(typeof eng.SetBenchHero, 'function');
 });
 
 // Mirror App.vue's syncEngineForRound: home units with tactics-scaled shooting.

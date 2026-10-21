@@ -7,6 +7,7 @@ EMSCRIPTEN_BINDINGS(bball_tactics) {
         .function("SpawnPlayer", &GameManager::SpawnPlayer)
         .function("SpawnUnit", &GameManager::SpawnUnit)
         .function("SetAwayTeamJSON", &GameManager::SetAwayTeamJSON)
+        .function("SetBenchHero", &GameManager::SetBenchHero)
         .function("SetPlayerPlay", &GameManager::SetPlayerPlay)
         .function("TickSimulation", &GameManager::TickSimulation)
         .function("GetGameStateJSON", &GameManager::GetGameStateJSON)
