@@ -619,16 +619,19 @@ const syncEngineForRound = (homeMult, awayMult) => {
   for (const uid of engineUids) eng.RemovePlayer(uid);
   engineUids.clear();
 
-  for (const u of courtLineup.value) {
+  // Engine ids are lineup slots, not roster ids: two unmerged copies of the
+  // same player share a roster id and would overwrite each other in-engine.
+  courtLineup.value.forEach((u, slot) => {
+    const eid = slot + 1;
     const shooting = Math.min(STAT_CAP, Math.round(u.stats.shooting * homeMult));
     if (hasNewBindings) {
-      eng.SpawnUnit(u.id, u.name, u.team || '', u.stats.speed, shooting, u.stats.defense);
+      eng.SpawnUnit(eid, u.name, u.team || '', u.stats.speed, shooting, u.stats.defense);
     } else {
-      eng.SpawnPlayer(u.id, u.name, u.stats.speed, shooting);
+      eng.SpawnPlayer(eid, u.name, u.stats.speed, shooting);
     }
-    eng.SetPlayerCoordinates(u.id, u.courtX, u.courtY, u.courtX, u.courtY);
-    engineUids.add(u.id);
-  }
+    eng.SetPlayerCoordinates(eid, u.courtX, u.courtY, u.courtX, u.courtY);
+    engineUids.add(eid);
+  });
 
   if (hasNewBindings) {
     const scaledAway = theirUnits.value.map(g => ({

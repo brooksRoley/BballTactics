@@ -8,8 +8,9 @@
  *
  * Unit shape (matches the App.vue / board_states schema):
  *   { id, name, cost, stats: { shooting, speed, defense }, courtX?, courtY? }
- * courtX/courtY are planning-grid coords 0-4. The home team defends the left
- * hoop (Court.cpp: hoops at x=30 / x=770), so courtX <= 1 is "the paint" for
+ * courtX/courtY are planning-grid coords 0-4, drawn as a half court with the
+ * hoop at the bottom (GameManager::PlanningToCourt), so courtY >= 3 with
+ * courtX 1-3 is "the paint" for
  * positional rules like Drop's rim anchor.
  *
  * Exports:
@@ -73,9 +74,10 @@ function starShare(units) {
 }
 
 function inPaint(unit) {
-  // Home defends the left hoop; back-line grid columns 0-1 are the paint.
+  // The two rows nearest the drawn hoop, inside the lane lines, are the paint.
   // If the unit has no placement yet, count it (stat-only evaluation).
-  return unit.courtX === undefined || unit.courtX === null || unit.courtX <= 1;
+  if (unit.courtX === undefined || unit.courtX === null) return true;
+  return unit.courtY >= 3 && unit.courtX >= 1 && unit.courtX <= 3;
 }
 
 function fillNote(template, name, value) {

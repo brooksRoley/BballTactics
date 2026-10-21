@@ -2,7 +2,7 @@
   <div class="tutorial-wrapper">
     <div class="tutorial-overlay" :class="{ 'active': currentStep > 0 }"></div>
 
-    <div class="dialogue-box" v-if="currentStep <= 3">
+    <div class="dialogue-box" :class="{ docked: currentStep >= 2 }" v-if="currentStep <= 3">
       <div class="coach-portrait">
         <span class="coach-name">COACH MILLER</span>
       </div>
@@ -31,7 +31,10 @@
             class="player-card"
             :class="[
               `cost-${player.cost}`, 
-              { 'tutorial-target': currentStep === 2 && player.id === 'caruso_1' }
+              {
+                'tutorial-target': currentStep === 2 && player.id === 'caruso_1',
+                'tutorial-muted': currentStep === 2 && player.id !== 'caruso_1'
+              }
             ]"
             @click="buyPlayer(player)"
           >
@@ -176,6 +179,13 @@ export default {
   z-index: 100;
   box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
+/* Once Coach asks for a click, dock him at the top so he never covers the
+   card he's pointing at (he used to sit right on top of Caruso). */
+.dialogue-box.docked {
+  top: 12px;
+  padding: 12px 18px;
+}
+.dialogue-box.docked .dialogue-text { font-size: 1rem; margin: 8px 0 0; }
 .coach-name {
   font-weight: 900;
   color: #d9534f;
@@ -265,6 +275,7 @@ export default {
   cursor: not-allowed; /* Disabled until tutorial says so */
 }
 .player-card.tutorial-target { cursor: pointer; }
+.player-card.tutorial-muted { opacity: 0.4; }
 .player-card:hover { transform: translateY(-5px); }
 
 /* Border colors mapped to cost */

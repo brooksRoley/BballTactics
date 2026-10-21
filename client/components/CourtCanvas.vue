@@ -2,7 +2,7 @@
   <div class="sim-container">
     <div class="sim-header">
       <div class="team-score home">YOU: <span class="score-val" :key="'h' + homeScore">{{ homeScore }}</span></div>
-      <div class="sim-timer">{{ timeLeft.toFixed(1) }}s</div>
+      <div class="sim-timer" :class="{ overtime }">{{ overtime ? 'OT ' : '' }}{{ timeLeft.toFixed(1) }}s</div>
       <div class="team-score away">OPP: <span class="score-val" :key="'a' + awayScore">{{ awayScore }}</span></div>
     </div>
 
@@ -43,7 +43,8 @@ export default {
     const ball = ref({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
     const homeScore = ref(0);
     const awayScore = ref(0);
-    const timeLeft = ref(10.0);
+    const timeLeft = ref(12.0);
+    const overtime = ref(false);
     const statusText = ref('Tip-off!');
     let animationFrameId = null;
     let lastTime = 0;
@@ -56,7 +57,13 @@ export default {
 
     const COURT_W = 800;
     const COURT_H = 400;
-    const SIM_DURATION = 10.0;
+    // A round is 12s on screen but 30s of basketball (the engine runs at
+    // SIM_SPEED), enough for ~5 possessions a side. A tie at the horn goes to
+    // sudden-death overtime: next basket wins.
+    const SIM_DURATION = 12.0;
+    const OT_DURATION = 6.0;
+    const SIM_SPEED = 2.5;
+    const SIM_SUBSTEP = 1 / 60;
     const dpr = Math.ceil(window.devicePixelRatio || 1);
 
     // Rims: home attacks right, bots attack left (matches the WASM engine)
@@ -131,7 +138,7 @@ export default {
       });
     };
 
-    const triggerMake = (side) => {
+    const triggerMake = (side, pts) => {
       const rim = RIMS[side];
       if (!reduced) {
         const cfg = FEEL.rim;
@@ -140,7 +147,7 @@ export default {
         }
         netFlick[side] = cfg.netFlickDuration;
       }
-      shake.add(FEEL.shake.weights.score);
+      shake.add(pts === 3 ? FEEL.shake.weights.three : FEEL.shake.weights.score);
     };
 
     const triggerMiss = (side) => {
@@ -150,8 +157,11 @@ export default {
       setTimeout(() => { if (!simDone && statusText.value === 'Off the iron!') statusText.value = ''; }, 900);
     };
 
+    // The engine reports who made the basket; by the time we see the score
+    // the ball already belongs to the inbounding team, so possession lies.
+    let lastScorerId = -1;
     const attributeScore = (pts, isHome) => {
-      const possId = ball.value.possessorId;
+      const possId = lastScorerId >= 0 ? lastScorerId : ball.value.possessorId;
       lastScoreT = simTime;
       const side = isHome ? 'right' : 'left';
       const rim = RIMS[side];
@@ -174,7 +184,7 @@ export default {
         spawnFloater(rim.x + 44, rim.y - 34, `+${pts}`, '#7fd4f2');
         statusText.value = 'Opponent scores...';
       }
-      triggerMake(side);
+      triggerMake(side, pts);
       setTimeout(() => { if (!simDone) statusText.value = ''; }, 1000);
     };
 
@@ -601,6 +611,7 @@ export default {
       livePlayers.value = state.players || [];
       botPlayers.value  = state.bots    || [];
       if (state.ball) ball.value = state.ball;
+      lastScorerId = state.lastScorerId ?? -1;
 
       const prevHome = homeScore.value;
       const prevAway = awayScore.value;
@@ -623,23 +634,34 @@ export default {
       timeLeft.value -= dt;
 
       if (timeLeft.value <= 0) {
-        timeLeft.value = 0;
-        fxUpdate(dt);
-        renderFrame();
-        finishSim();
-        return;
+        if (!overtime.value && homeScore.value === awayScore.value) {
+          overtime.value = true;
+          timeLeft.value = OT_DURATION;
+          statusText.value = 'Overtime — next basket wins!';
+        } else {
+          timeLeft.value = 0;
+          fxUpdate(dt);
+          renderFrame();
+          finishSim();
+          return;
+        }
       }
 
       const engine = getEngine();
+      // Fixed substeps keep the sim frame-rate independent at SIM_SPEED
+      const steps = Math.max(1, Math.round((dt * SIM_SPEED) / SIM_SUBSTEP));
+      const stepDt = (dt * SIM_SPEED) / steps;
       if (engine) {
-        engine.TickSimulation(dt);
+        for (let i = 0; i < steps; i++) engine.TickSimulation(stepDt);
         try {
           applySimState(JSON.parse(engine.GetGameStateJSON()));
         } catch (e) { /* engine may not have state yet */ }
       } else if (fallback) {
         // Backup ref: pure-JS sim over the real ghost board with the round's
         // tactics multipliers (see client/game/fallbackSim.js).
-        applySimState(fallback.step(dt));
+        let state;
+        for (let i = 0; i < steps; i++) state = fallback.step(stepDt);
+        applySimState(state);
       } else {
         // No engine AND no fallback (unmounted mid-flight edge) — stop clean.
         statusText.value = 'Engine unavailable — refresh the page.';
@@ -651,17 +673,25 @@ export default {
       detectEvents();
       fxUpdate(dt);
       renderFrame();
+
+      // Sudden death: the first basket of overtime ends it
+      if (overtime.value && homeScore.value !== awayScore.value) {
+        shake.add(FEEL.shake.weights.gameWinner);
+        finishSim();
+        return;
+      }
       animationFrameId = requestAnimationFrame(syncLoop);
     };
 
     const finishSim = () => {
       simDone = true;
       const outcome = homeScore.value > awayScore.value ? 'win' : 'loss';
+      const ot = overtime.value ? ' in overtime' : '';
       statusText.value = outcome === 'win'
-        ? 'Final — You win!'
+        ? `Final — You win${ot}!`
         : homeScore.value === awayScore.value
-          ? 'Final — Draw counts as a loss!'
-          : 'Final — You lose.';
+          ? 'Final — Still tied after OT: counts as a loss.'
+          : `Final — You lose${ot}.`;
 
       // Build per-player scoring sorted by points
       const playerScoring = Object.values(playerPoints)
@@ -727,7 +757,7 @@ export default {
       if (resizeObserver) resizeObserver.disconnect();
     });
 
-    return { homeScore, awayScore, timeLeft, statusText, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
+    return { homeScore, awayScore, timeLeft, overtime, statusText, courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr };
   }
 };
 </script>
@@ -761,6 +791,7 @@ export default {
 .team-score.home { color: #e05a4e; }
 .team-score.away { color: #4aa8c9; }
 .sim-timer { font-size: 1.5rem; font-variant-numeric: tabular-nums; color: #ffd700; }
+.sim-timer.overtime { color: #ff7a45; }
 
 /* Score pop — the re-keyed span restarts this animation on every change */
 .score-val {

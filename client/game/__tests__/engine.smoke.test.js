@@ -9,6 +9,7 @@
 
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -17,8 +18,12 @@ const repoRoot = join(here, '..', '..', '..');
 const publicDir = join(repoRoot, 'public');
 
 // engine.js is a classic-script Emscripten factory (`var Module = ...`), not
-// an ES module — evaluate it and hand back the factory.
-const factory = new Function(`${readFileSync(join(publicDir, 'engine.js'), 'utf8')}; return Module;`)();
+// an ES module — evaluate it and hand back the factory. Its Node branch calls
+// require() and __dirname, which don't exist in ESM scope, so pass them in.
+const factory = new Function('require', '__dirname', `${readFileSync(join(publicDir, 'engine.js'), 'utf8')}; return Module;`)(
+  createRequire(import.meta.url),
+  publicDir,
+);
 const wasm = await factory({
   locateFile: (file) => join(publicDir, file),
 });
@@ -46,14 +51,15 @@ test('new bindings exist (SpawnUnit, SetAwayTeamJSON)', () => {
 });
 
 // Mirror App.vue's syncEngineForRound: home units with tactics-scaled shooting.
+// Coordinates are planning-grid cells (0-4), as PlanningPhase emits them.
 eng.SpawnUnit(1, 'Steph Curry', 'GSW', 63, 74, 51);
-eng.SetPlayerCoordinates(1, 120, 150, 120, 150);
+eng.SetPlayerCoordinates(1, 2, 1, 2, 1);
 eng.SpawnUnit(2, 'Rudy Gobert', 'MIN', 35, 47, 72);
-eng.SetPlayerCoordinates(2, 80, 200, 80, 200);
+eng.SetPlayerCoordinates(2, 1, 3, 1, 3);
 eng.SetAwayTeamJSON(JSON.stringify({
   units: [
-    { id: 901, name: 'Ghost Guard', x: 600, y: 150, stats: { shooting: 60, speed: 55, defense: 45 } },
-    { id: 902, name: 'Ghost Big', x: 650, y: 250, stats: { shooting: 45, speed: 35, defense: 65 } },
+    { id: 901, name: 'Ghost Guard', x: 2, y: 1, stats: { shooting: 60, speed: 55, defense: 45 } },
+    { id: 902, name: 'Ghost Big', x: 1, y: 3, stats: { shooting: 45, speed: 35, defense: 65 } },
   ],
 }));
 eng.StartRound();
@@ -96,7 +102,7 @@ test('RemovePlayer + respawn rebuilds a clean round (per-round reset path)', () 
   eng.RemovePlayer(1);
   eng.RemovePlayer(2);
   eng.SpawnUnit(3, 'Fresh Legs', 'LAL', 50, 50, 50);
-  eng.SetPlayerCoordinates(3, 100, 100, 100, 100);
+  eng.SetPlayerCoordinates(3, 2, 2, 2, 2);
   eng.StartRound();
   const s = JSON.parse(eng.GetGameStateJSON());
   assert.strictEqual(s.players.length, 1);
