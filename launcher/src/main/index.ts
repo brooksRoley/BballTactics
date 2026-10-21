@@ -5,12 +5,23 @@ import { CHANNELS, type AppInfo, type ProgressEvent, type Result } from './ipc'
 import { CATALOG, isGameId, Library, type GameId } from './library'
 import { GAME_SCHEME, GAME_SCHEME_PRIVILEGES, serveGameFile } from './protocol'
 import { assertSecure, isAppUrl, secureWebPreferences } from './security'
+import { Feed } from './updater'
 
 const devServerUrl = process.env['ELECTRON_RENDERER_URL']
-// `--smoke`: start the built app, check the launcher window, then install and
-// play Hardwood in it and check the game runs. CI uses it to prove "a fresh
-// machine can install and play", not just that the code compiles.
+// `--smoke` (driven by scripts/smoke.mjs against a local feed): stage
+// "install" checks the launcher window, installs from the feed, plays, and
+// checks the game runs; stage "update" updates to a one-line change, checks
+// it downloaded a small fraction, and rolls back. Exits 0 or 1.
 const smoke = process.argv.includes('--smoke')
+const smokeStage = process.env['LAUNCHER_SMOKE_STAGE'] === 'update' ? 'update' : 'install'
+
+/**
+ * Where releases come from: the feed deploy-pages publishes beside the web
+ * game. LAUNCHER_FEED_URL points it elsewhere (the smoke run's local server).
+ * The manifest's hashes are only as trustworthy as the feed itself; signing
+ * releases is M4's job, alongside code signing.
+ */
+const DEFAULT_FEED_URL = 'https://brooksroley.github.io/BballTactics/launcher-feed/'
 
 // Tests and smoke runs point the profile at a throwaway directory.
 if (process.env['LAUNCHER_USER_DATA']) app.setPath('userData', process.env['LAUNCHER_USER_DATA'])
@@ -19,7 +30,7 @@ if (process.env['LAUNCHER_USER_DATA']) app.setPath('userData', process.env['LAUN
 protocol.registerSchemesAsPrivileged([GAME_SCHEME_PRIVILEGES])
 
 const library = new Library({
-  payloadRoot: app.isPackaged ? join(process.resourcesPath, 'payload') : join(app.getAppPath(), 'payload'),
+  feed: new Feed(process.env['LAUNCHER_FEED_URL'] ?? DEFAULT_FEED_URL),
   installRoot: join(app.getPath('userData'), 'games'),
   stateFile: join(app.getPath('userData'), 'library.json'),
 })
@@ -44,7 +55,17 @@ function createMainWindow(): BrowserWindow {
     if (!smoke) win.show()
   })
   if (smoke) {
-    win.webContents.once('did-finish-load', () => void runSmoke(win))
+    // A smoke run must end: any unexpected error fails it, and so does a stall.
+    setTimeout(() => {
+      console.error('smoke: FAIL timed out after 120 s')
+      app.exit(1)
+    }, 120_000).unref()
+    win.webContents.once('did-finish-load', () =>
+      runSmoke(win).catch((e: unknown) => {
+        console.error(`smoke: FAIL ${e instanceof Error ? e.message : String(e)}`)
+        app.exit(1)
+      }),
+    )
     win.webContents.once('did-fail-load', (_e, code, description) => {
       console.error(`smoke: load failed (${code}) ${description}`)
       app.exit(1)
@@ -126,6 +147,19 @@ function registerIpc(): void {
       await library.install(id, (p) => sendProgress(event.sender, { id, ...p }))
     }),
   )
+  ipcMain.handle(CHANNELS.libraryPause, (_event, id: unknown) =>
+    attempt(() => {
+      if (!isGameId(id)) throw new Error('Unknown game')
+      library.pause(id)
+    }),
+  )
+  ipcMain.handle(CHANNELS.libraryRollback, (_event, id: unknown) =>
+    attempt(async () => {
+      if (!isGameId(id)) throw new Error('Unknown game')
+      gameWindows.get(id)?.close()   // the running version is about to stop being current
+      await library.rollback(id)
+    }),
+  )
   ipcMain.handle(CHANNELS.libraryUninstall, (_event, id: unknown) =>
     attempt(async () => {
       if (!isGameId(id)) throw new Error('Unknown game')
@@ -165,6 +199,7 @@ async function runSmoke(win: BrowserWindow): Promise<void> {
   })`)
   console.log(`smoke: bridge=${page.bridge} node-in-renderer=${page.node} meta="${page.meta}"`)
   if (!page.bridge || page.node || !page.meta.startsWith('v')) return fail('launcher window')
+  if (smokeStage === 'update') return smokeUpdate(js, shot, win, fail)
   await shot(win, '1-library')
 
   const install = await js<Result>(`window.launcher.library.install('hardwood')`)
@@ -194,6 +229,46 @@ async function runSmoke(win: BrowserWindow): Promise<void> {
   if (gameErrors.length) console.log(`smoke: game console errors:\n  ${gameErrors.join('\n  ')}`)
   const ok = g.title === 'Hardwood Autochess' && g.engine && g.text.includes('Hardwood')
   app.exit(ok ? 0 : 1)
+}
+
+type Entry = { installed: { version: string } | null; previous: { version: string } | null; available: { version: string } | null }
+
+/** Update to the feed's newer release, check how little it fetched, roll back. */
+async function smokeUpdate(
+  js: <T>(code: string) => Promise<T>,
+  shot: (w: BrowserWindow, name: string) => Promise<void>,
+  win: BrowserWindow,
+  fail: (why: string) => void,
+): Promise<void> {
+  const [before] = await js<Entry[]>(`window.launcher.library.list()`)
+  console.log(`smoke: installed ${before?.installed?.version}, feed has ${before?.available?.version}`)
+  if (!before?.installed || !before.available || before.installed.version === before.available.version) {
+    return fail('expected an installed version and a newer one in the feed')
+  }
+  await new Promise((r) => setTimeout(r, 300))
+  await shot(win, '4-update-available')
+  await js(`window.__done = null; window.launcher.library.onProgress((e) => { if (e.phase === 'done') window.__done = e }); true`)
+  const update = await js<Result>(`window.launcher.library.install('hardwood')`)
+  if (!update.ok) return fail(`update: ${update.error}`)
+  const done = await js<ProgressEvent | null>(`window.__done`)
+  const [after] = await js<Entry[]>(`window.launcher.library.list()`)
+  const fraction = done && done.releaseBytes ? (done.downloadedBytes ?? 0) / done.releaseBytes : 1
+  console.log(
+    `smoke: updated to ${after?.installed?.version}: downloaded ${done?.downloadedBytes} of ${done?.releaseBytes} bytes ` +
+      `(${(fraction * 100).toFixed(1)}%), previous ${after?.previous?.version}`,
+  )
+  await new Promise((r) => setTimeout(r, 300))
+  await shot(win, '5-updated')
+  if (after?.installed?.version !== before.available.version || after.previous?.version !== before.installed.version) {
+    return fail('update did not record current/previous')
+  }
+  if (fraction > 0.2) return fail(`a one-line change downloaded ${(fraction * 100).toFixed(1)}% of the release`)
+
+  const rollback = await js<Result>(`window.launcher.library.rollback('hardwood')`)
+  const [rolled] = await js<Entry[]>(`window.launcher.library.list()`)
+  console.log(`smoke: rolled back to ${rolled?.installed?.version}`)
+  if (!rollback.ok || rolled?.installed?.version !== before.installed.version) return fail('rollback')
+  app.exit(0)
 }
 
 // No window may attach a <webview>, whatever created it.

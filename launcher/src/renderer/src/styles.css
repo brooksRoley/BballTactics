@@ -38,6 +38,8 @@ body {
 .game__status { margin: 4px 0 0; font-size: 13px; color: var(--accent); }
 .game__progress { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
 .game__progress progress { flex: 0 1 260px; height: 8px; accent-color: #3987e5; }
+.game__note { margin: 0; min-height: 0; font-size: 13px; color: #8fd3b0; }
+.game__note:empty { display: none; }
 .game__error { margin: 4px 0 0; font-size: 13px; color: #f2a19e; }
 .game__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: auto; padding-top: 10px; }
 .game__confirm { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
