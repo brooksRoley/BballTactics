@@ -72,7 +72,9 @@ export default {
     let ctx = null;
     let floorGradient = null;
 
-    const getEngine = () => props.engine || inject('engine', null);
+    // inject() only works during setup, so resolve it once here
+    const injectedEngine = inject('engine', null);
+    const getEngine = () => props.engine || injectedEngine;
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     const gridToSim = (gx, gy) => ({ x: gx * 70 + 40, y: gy * 70 + 40 });
 

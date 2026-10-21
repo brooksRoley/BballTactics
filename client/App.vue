@@ -275,7 +275,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, shallowRef, computed, onMounted } from 'vue';
 
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
@@ -302,7 +302,9 @@ const wins = ref(0);
 const losses = ref(0);
 const streakType = ref(null);   // 'win' | 'loss' | null
 const streakCount = ref(0);
-const engine = ref(null);
+// shallowRef: a deep ref wraps the Embind object in a reactive Proxy, and
+// Embind rejects the Proxy as `this` ("Expected instance of GameManager").
+const engine = shallowRef(null);
 const courtLineup = ref([]);
 const courtMirror = ref([]);    // live read-only mirror of PlanningPhase's court
 const tipoffZoom = ref(false);

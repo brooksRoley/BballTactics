@@ -138,7 +138,9 @@ export default {
       shakeCellId.value = `c-${cx}-${cy}`;
       setTimeout(() => { shakeCellId.value = null; }, 400);
     };
-    const getEngine = () => props.engine || inject('engine', null);
+    // inject() only works during setup, so resolve it once here
+    const injectedEngine = inject('engine', null);
+    const getEngine = () => props.engine || injectedEngine;
 
     const COURT_W = 500;
     const COURT_H = 400;
