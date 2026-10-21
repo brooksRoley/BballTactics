@@ -1,11 +1,13 @@
 name: Launcher CI
 
+# The launcher installs the game, so a change to either can break the other:
+# run on launcher changes and on the game sources the payload is built from.
 on:
   push:
     branches: [main]
-    paths: ['launcher/**', '.github/workflows/launcher.yml']
+    paths: ['launcher/**', 'client/**', 'public/**', 'index.html', 'vite.config.js', 'package-lock.json', '.github/workflows/launcher.yml']
   pull_request:
-    paths: ['launcher/**', '.github/workflows/launcher.yml']
+    paths: ['launcher/**', 'client/**', 'public/**', 'index.html', 'vite.config.js', 'package-lock.json', '.github/workflows/launcher.yml']
 
 defaults:
   run:
@@ -20,11 +22,24 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: launcher/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            launcher/package-lock.json
+      # The game's own dependencies, for staging its build into launcher/payload.
+      - run: npm ci
+        working-directory: .
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - run: npm run stage-game
       - run: npm run build
-      # Starts the built app, checks the live window, exits 0 or 1.
-      - run: npm run smoke
+      # In a fresh profile: check the launcher window, install Hardwood with
+      # every file verified, play it, check the engine runs. Exits 0 or 1.
+      - run: mkdir -p smoke-shots && LAUNCHER_SMOKE_SHOTS=$PWD/smoke-shots npm run smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-screenshots
+          path: launcher/smoke-shots/
+          if-no-files-found: ignore

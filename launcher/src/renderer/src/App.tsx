@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { AppInfo } from '../../main/ipc'
+import GameCard from './GameCard'
+import { useLibrary } from './useLibrary'
 
 export default function App() {
   const [info, setInfo] = useState<AppInfo | null>(null)
+  const { games, pending, errors, run } = useLibrary()
 
   useEffect(() => {
     let live = true
@@ -24,7 +27,21 @@ export default function App() {
       </header>
       <section aria-labelledby="library-heading" className="library">
         <h2 id="library-heading">Library</h2>
-        <p>Hardwood Autochess will appear here once install lands (M1).</p>
+        {games === null ? (
+          <p className="library__empty">Loading library…</p>
+        ) : (
+          <div className="library__grid">
+            {games.map((g) => (
+              <GameCard
+                key={g.id}
+                game={g}
+                pending={pending[g.id]}
+                error={errors[g.id]}
+                onAction={(action) => void run(g.id, action)}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )

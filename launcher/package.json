@@ -10,10 +10,11 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "smoke": "electron . --smoke",
+    "smoke": "LAUNCHER_USER_DATA=$(mktemp -d) electron . --smoke",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "stage-game": "node scripts/stage-game.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.13.0",

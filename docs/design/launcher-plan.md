@@ -71,13 +71,13 @@ main. This is a common interview topic and cheap to get right early.
 
 Each one leaves something demoable, so stopping early still yields a story.
 
-### M0 — Scaffold (day 1)
+### M0 — Scaffold (day 1) — done 2026-10-21
 - electron-vite + React + TypeScript; ESLint, Vitest; GitHub Actions on push.
 - Security baseline above, with a test that fails if a window is created with
   `nodeIntegration` or without `contextIsolation`.
 - **Done when:** an empty window opens from CI-built code on macOS.
 
-### M1 — Library and launch (days 2–3)
+### M1 — Library and launch (days 2–3) — done 2026-10-21
 - Library screen: Hardwood's card, installed version, Play / Install / Update.
 - Install from a local build of `dist-hardwood`; launch it in its own
   window served from disk (works offline).
