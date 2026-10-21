@@ -86,7 +86,13 @@ Each one leaves something demoable, so stopping early still yields a story.
 - **Done when:** a fresh machine can install and play Hardwood from the
   launcher. **Apply to Riot at this point** with the repo link.
 
-### M2 — Patcher (days 4–7) — the core
+### M2 — Patcher (days 4–7) — the core — done 2026-10-21
+
+As built: the feed is published on GitHub Pages beside the web game, not as
+GitHub Releases. A client only needs the latest release's chunks, so a static
+host holding one release is enough, and Pages already deploys this repo.
+Chunking is content-defined (gear hash). Measured: a one-line change
+downloads 16 KB of 1.07 MB.
 - `make-release.ts` (runs in BballTactics CI): build → split files into
   content-addressed chunks (SHA-256) → write a versioned manifest → publish to
   GitHub Releases.

@@ -10,11 +10,12 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "smoke": "LAUNCHER_USER_DATA=$(mktemp -d) electron . --smoke",
+    "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
-    "stage-game": "node scripts/stage-game.mjs"
+    "stage-game": "node scripts/stage-game.mjs",
+    "make-release": "tsx scripts/make-release.ts"
   },
   "devDependencies": {
     "@eslint/js": "9.13.0",
@@ -27,6 +28,7 @@
     "eslint": "9.13.0",
     "eslint-plugin-react-hooks": "5.0.0",
     "globals": "15.12.0",
+    "tsx": "4.19.2",
     "typescript": "5.6.3",
     "typescript-eslint": "8.12.2",
     "vite": "5.4.10",

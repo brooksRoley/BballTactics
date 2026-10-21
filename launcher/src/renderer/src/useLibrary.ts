@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer } from 'react'
 import type { GameEntry, Result } from '../../main/ipc'
 import { clearProgress } from './progressStore'
 
-type Action = 'install' | 'uninstall' | 'play'
+export type Action = 'install' | 'pause' | 'rollback' | 'uninstall' | 'play'
 
 type State = {
   games: GameEntry[] | null
@@ -36,8 +36,7 @@ export function useLibrary() {
 
   useEffect(() => {
     void refresh()
-    // Refresh on any finished install, not only ones this window started: an
-    // install can come from elsewhere (the smoke run today, updates in M2).
+    // Refresh on any finished install, not only ones this window started.
     return window.launcher.library.onProgress((e) => {
       if (e.phase === 'done') void refresh()
     })
@@ -45,13 +44,14 @@ export function useLibrary() {
 
   const run = useCallback(
     async (id: string, action: Action) => {
-      dispatch({ type: 'started', id, action })
+      if (action === 'install') clearProgress(id)   // drop the last update's summary
+      // Pause doesn't own the card: the install it interrupts reports the outcome.
+      if (action !== 'pause') dispatch({ type: 'started', id, action })
+      else void refresh()
       const result: Result = await window.launcher.library[action](id)
-      dispatch({ type: 'finished', id, error: result.ok ? undefined : result.error })
-      if (action !== 'play') {
-        clearProgress(id)
-        await refresh()
-      }
+      const error = result.ok || result.error === 'Paused' ? undefined : result.error
+      if (action !== 'pause') dispatch({ type: 'finished', id, error })
+      if (action !== 'play') await refresh()
     },
     [refresh],
   )

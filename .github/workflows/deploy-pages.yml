@@ -3,8 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-    # The desktop launcher has its own workflow; it doesn't change the web game.
-    paths-ignore: ['launcher/**', '.github/workflows/launcher.yml', 'docs/**']
+    # Launcher changes still deploy: the release feed's format (chunking,
+    # layout) lives in launcher/, and an unchanged game republishes the same
+    # content-addressed chunks.
+    paths-ignore: ['.github/workflows/launcher.yml', 'docs/**']
   workflow_dispatch:
 
 permissions:
@@ -39,6 +41,16 @@ jobs:
           # Actions → Variables → VITE_API_BASE) without editing this file.
           VITE_API_BASE: ${{ vars.VITE_API_BASE || 'https://www.brooksroley.com' }}
         run: npx vite build
+
+      # The desktop launcher's update feed, published beside the web game at
+      # /BballTactics/launcher-feed/hardwood/channel.json: the game built for
+      # the launcher (offline), chunked and content-addressed (launcher/README.md).
+      - name: Build the launcher release feed
+        working-directory: launcher
+        run: |
+          npm ci
+          npm run stage-game
+          npm run make-release -- --payload payload/hardwood --out ../dist/launcher-feed
 
       - uses: actions/configure-pages@v5
 

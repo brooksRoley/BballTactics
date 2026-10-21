@@ -8,6 +8,8 @@ const api: LauncherApi = {
   library: {
     list: () => ipcRenderer.invoke(CHANNELS.libraryList),
     install: (id) => ipcRenderer.invoke(CHANNELS.libraryInstall, id),
+    pause: (id) => ipcRenderer.invoke(CHANNELS.libraryPause, id),
+    rollback: (id) => ipcRenderer.invoke(CHANNELS.libraryRollback, id),
     uninstall: (id) => ipcRenderer.invoke(CHANNELS.libraryUninstall, id),
     play: (id) => ipcRenderer.invoke(CHANNELS.libraryPlay, id),
     onProgress: (listener) => {
