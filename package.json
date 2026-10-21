@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "predeploy": "vite build",
     "deploy": "gh-pages -d dist",
-    "build:hardwood": "VITE_API_BASE='' vite build --base=/hardwood/ --outDir ../zero-next/public/hardwood --emptyOutDir"
+    "build:hardwood": "VITE_API_BASE='' vite build --base=/hardwood/ --outDir dist-hardwood --emptyOutDir"
   },
   "dependencies": {
     "vue": "^3.5.0"
