@@ -21,6 +21,7 @@
 
 import { Application, Container, Graphics, Text, Sprite, Texture } from 'pixi.js';
 import { GlowFilter } from 'pixi-filters';
+import { FEEL, prefersReducedMotion, easeOutCubic, dribbleHeight, squashScale, ballShadow } from '../fx/feel.js';
 
 const COURT_W = 800;
 const COURT_H = 400;
@@ -345,6 +346,10 @@ export class CourtRenderer {
     }
   }
 
+  // The ball has three looks: held (glued to the carrier's token, dribbling),
+  // airborne (engine position lifted by z, shadow on the floor, ember trail)
+  // and loose on the floor (no trail). Holder changes — a pass, a steal, a
+  // release — ease from the last drawn spot instead of snapping or streaking.
   _drawBall(ball) {
     const trail = this.ballTrailGfx;
     const g = this.ballGfx;
@@ -352,30 +357,124 @@ export class CourtRenderer {
     g.clear();
     if (ball.x == null) return;
 
-    const z = ball.z || 0;
-    const lift = z * 3;
-    const radius = 6 * (1 + z * 0.04);
-    const bx = clamp(ball.x + 6, 6, COURT_W - 6);
-    const by = clamp(ball.y - lift + 6, 6, COURT_H - 6);
+    const cfg = FEEL.ball;
+    const now = performance.now();
+    const still = prefersReducedMotion();
+    const z = Math.max(0, ball.z || 0);
+    const holder = this._playerNodes.get(ball.possessorId);
+    const holderKey = holder ? ball.possessorId : 'air';
 
-    // Motion trail (fading ghosts of recent positions).
-    this._ballTrail.push({ x: bx, y: by });
-    if (this._ballTrail.length > 8) this._ballTrail.shift();
-    this._ballTrail.forEach((p, i) => {
-      const f = i / this._ballTrail.length;
-      trail.circle(p.x, p.y, radius * (0.4 + 0.5 * f)).fill({ color: COLOR.ball, alpha: 0.05 + 0.12 * f });
-    });
-
-    // Airborne shadow on the floor.
-    if (z > 1) {
-      trail.ellipse(clamp(ball.x + 6, 6, COURT_W - 6), clamp(ball.y + 10, 6, COURT_H - 6), 7, 3)
-        .fill({ color: 0x000000, alpha: 0.3 });
+    let bx, by, gx, gy, h; // ball centre, ground point, height above it (px)
+    let radius = 6;
+    if (holder) {
+      const side = this._ballFacingSide(holder);
+      gx = holder.x + side * cfg.handOffsetX;
+      gy = holder.y + cfg.handOffsetY;
+      h = still ? cfg.dribbleAmp : dribbleHeight(now, cfg);
+      this._ballTrail.length = 0; // never streak from the last shot to the hands
+    } else {
+      gx = ball.x + 6;
+      gy = ball.y + 6;
+      h = z * cfg.liftPerZ;
+      radius = 6 * (1 + z * 0.04);
+      this._ballFacing = null;
     }
 
-    g.circle(bx, by, radius).fill({ color: COLOR.ball });
-    g.circle(bx, by, radius).stroke({ width: 1.5, color: 0xffffff, alpha: 0.9 });
+    // Floor hit: falling through landZ while loose starts a squash.
+    const prevZ = this._ballPrevZ ?? 0;
+    if (!holder && !still && prevZ > cfg.landZ && z <= cfg.landZ) this._ballSquashAt = now;
+    this._ballPrevZ = holder ? 0 : z;
+
+    bx = clamp(gx, 6, COURT_W - 6);
+    by = clamp(gy - h, 6, COURT_H - 6);
+    ({ x: bx, y: by } = this._ballHandoff(holderKey, bx, by, now, still));
+
+    // Floor shadow at the ground point; a held ball's shadow pulses with the
+    // bounce, an airborne one shrinks and fades with height.
+    let sh = ballShadow(z, cfg);
+    if (holder) {
+      const up = h / cfg.dribbleAmp; // 0 at floor contact, 1 in the hand
+      sh = { scale: 1 - 0.5 * cfg.dribbleShadowPulse * up, alpha: cfg.shadowMaxAlpha * (1 - cfg.dribbleShadowPulse * up) };
+    }
+    trail.ellipse(clamp(gx, 6, COURT_W - 6), clamp(gy + 4, 6, COURT_H - 6), 7 * sh.scale, 3 * sh.scale)
+      .fill({ color: 0x000000, alpha: sh.alpha });
+
+    this._drawBallTrail(trail, holder ? null : { x: bx, y: by }, z);
+
+    // Squash-and-stretch on contact, eased back to round.
+    let sx = 1;
+    let sy = 1;
+    if (this._ballSquashAt != null) {
+      const age = now - this._ballSquashAt;
+      if (age >= cfg.squashMs) this._ballSquashAt = null;
+      else ({ sx, sy } = squashScale(age, cfg));
+    }
+    // Squash about the contact point so the ball stays on the floor.
+    const cy = by + radius * (1 - sy);
+    const rx = radius * sx;
+    const ry = radius * sy;
+    g.ellipse(bx, cy, rx, ry).fill({ color: COLOR.ball });
+    g.ellipse(bx, cy, rx, ry).stroke({ width: 1.5, color: 0xffffff, alpha: 0.9 });
     // Seam line for a touch of detail.
-    g.moveTo(bx - radius, by).lineTo(bx + radius, by).stroke({ width: 1, color: 0x7a4a00, alpha: 0.6 });
+    g.moveTo(bx - rx, cy).lineTo(bx + rx, cy).stroke({ width: 1, color: 0x7a4a00, alpha: 0.6 });
+
+    this._ballDrawn = { x: bx, y: by, holderKey };
+  }
+
+  // Which side of the token the carrier holds the ball on: the way they're
+  // moving horizontally, held through pauses (+1 right, -1 left).
+  _ballFacingSide(node) {
+    const f = this._ballFacing;
+    if (!f || f.node !== node) {
+      this._ballFacing = { node, lastX: node.x, side: f?.side ?? 1 };
+      return this._ballFacing.side;
+    }
+    const dx = node.x - f.lastX;
+    if (Math.abs(dx) > FEEL.ball.facingDeadzone) f.side = Math.sign(dx);
+    f.lastX = node.x;
+    return f.side;
+  }
+
+  // When the holder changes, blend from the last drawn spot to the new
+  // target over handoffMs (a snap under reduced motion).
+  _ballHandoff(holderKey, x, y, now, still) {
+    const last = this._ballDrawn;
+    if (last && last.holderKey !== holderKey && !still) {
+      this._ballBlend = { from: { x: last.x, y: last.y }, at: now };
+    }
+    const b = this._ballBlend;
+    if (!b) return { x, y };
+    const t = (now - b.at) / FEEL.ball.handoffMs;
+    if (t >= 1) {
+      this._ballBlend = null;
+      return { x, y };
+    }
+    const k = easeOutCubic(t);
+    return { x: lerp(b.from.x, x, k), y: lerp(b.from.y, y, k) };
+  }
+
+  // Ember trail, only while the ball is meaningfully airborne. On the floor
+  // the history drains a sample a frame so the tail fades instead of popping.
+  _drawBallTrail(trail, pos, z) {
+    const cfg = FEEL.ball;
+    const hist = this._ballTrail;
+    if (pos && z > cfg.trailMinZ) {
+      const lastP = hist[hist.length - 1];
+      if (lastP && Math.hypot(pos.x - lastP.x, pos.y - lastP.y) > cfg.trailJumpPx) hist.length = 0;
+      hist.push(pos);
+      if (hist.length > cfg.trailLength) hist.shift();
+    } else if (hist.length) {
+      hist.shift();
+    }
+    if (hist.length < 2) return;
+
+    const [r, gg, b] = cfg.trailColor;
+    const color = (r << 16) | (gg << 8) | b;
+    for (let i = 1; i < hist.length; i++) {
+      const f = i / (hist.length - 1); // 0 = oldest, 1 = newest
+      trail.moveTo(hist[i - 1].x, hist[i - 1].y).lineTo(hist[i].x, hist[i].y)
+        .stroke({ width: Math.max(1, cfg.trailWidth * f), color, alpha: 0.08 + 0.4 * f, cap: 'round' });
+    }
   }
 
   _drawRing(shotClock, carrierPos) {
