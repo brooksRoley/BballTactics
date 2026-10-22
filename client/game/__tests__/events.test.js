@@ -72,6 +72,24 @@ test('a miss: the launch is silent, the shudder lands with the ball', () => {
   assert.deepEqual(detectEvents(landed, rebound), []);
 });
 
+test('engine flight: a shot ending at the rim without points is the miss', () => {
+  const inAir = state({ ball: { x: 700, y: 195, z: 9, possessorId: -1, isPossessed: false, flight: 'shot' } });
+  const atRim = state({ ball: { x: 760, y: 189, z: 8, possessorId: -1, isPossessed: false, flight: 'none' } });
+  assert.deepEqual(detectEvents(inAir, atRim), [{ type: 'miss', hoop: RIMS.right }]);
+  // The carom coming down afterwards is not a second miss.
+  const down = state({ ball: { x: 740, y: 210, z: 0, possessorId: -1, isPossessed: false, flight: 'none' } });
+  assert.deepEqual(detectEvents(atRim, down), []);
+});
+
+test('engine flight: a made shot is a make only, and a caught pass is nothing', () => {
+  const inAir = state({ ball: { x: 700, y: 195, z: 9, possessorId: -1, isPossessed: false, flight: 'shot' } });
+  const scored = state({ homeScore: 2, lastScorerId: 1, ball: { x: 30, y: 189, z: 0, possessorId: -1, isPossessed: false, flight: 'pass' } });
+  assert.deepEqual(detectEvents(inAir, scored).map((e) => e.type), ['make']);
+  const passing = state({ ball: { x: 560, y: 150, z: 1.4, possessorId: -1, isPossessed: false, flight: 'pass' } });
+  const caught = state({ ball: { x: 500, y: 100, z: 0, possessorId: 2, isPossessed: true, flight: 'none' } });
+  assert.deepEqual(detectEvents(passing, caught), []);
+});
+
 test('a steal: possession flips to a defender with no score change', () => {
   const a = state();
   const b = state({ ball: { x: 620, y: 190, z: 0, possessorId: 11 } });

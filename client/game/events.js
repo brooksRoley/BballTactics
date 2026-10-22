@@ -42,11 +42,12 @@ const ballCenter = (ball) => ({ x: (ball.x ?? 0) + BALL_HALF, y: (ball.y ?? 0) +
 /**
  * Events that happened between `prev` and `next`:
  *   make  — a score went up. { points, team, hoop, at } (at = the scorer)
- *   miss  — a loose, airborne ball came down with no score change. The engine
- *           launches a miss as an arc toward the hoop, so the landing is when
- *           it reaches the rim area; a made engine shot never flies (it
- *           teleports to mid-court), and the backup ref's makes land on the
- *           same frame the score changes, so landing never misfires on a make.
+ *   miss  — a shot reached the rim with no score change. The engine reports
+ *           `ball.flight` ('shot' | 'pass' | 'none'): a shot flight ending with
+ *           no points is the miss, at the moment the ball hits the rim, and a
+ *           pass in the air is never one. For a state without `flight` (the
+ *           backup ref), a loose airborne ball coming down with no score
+ *           change is the miss; its makes land on the frame the score changes.
  *   steal — possession flipped straight to the other team with no score change.
  *           A pass (same team) or a rebound (from a loose ball) is not a steal.
  * Returns [] for the first frame (no prev) and for quiet frames.
@@ -73,9 +74,10 @@ export function detectEvents(prev, next) {
   const prevPoss = pb.possessorId ?? -1;
   const nextPoss = nb.possessorId ?? -1;
 
-  const wasFlying = prevPoss < 0 && (pb.z ?? 0) > AIRBORNE_Z;
-  const cameDown = (nb.z ?? 0) <= AIRBORNE_Z || nextPoss >= 0;
-  if (wasFlying && cameDown) {
+  const missed = pb.flight !== undefined
+    ? pb.flight === 'shot' && nb.flight !== 'shot'
+    : prevPoss < 0 && (pb.z ?? 0) > AIRBORNE_Z && ((nb.z ?? 0) <= AIRBORNE_Z || nextPoss >= 0);
+  if (missed) {
     const c = ballCenter(nb);
     events.push({ type: 'miss', hoop: c.x < 400 ? RIMS.left : RIMS.right });
     return events;
