@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { detectEvents } from '../events.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..', '..');
@@ -108,6 +109,45 @@ test('RemovePlayer + respawn rebuilds a clean round (per-round reset path)', () 
   const s = JSON.parse(eng.GetGameStateJSON());
   assert.strictEqual(s.players.length, 1);
   assert.strictEqual(s.players[0].name, 'Fresh Legs');
+});
+
+// Ball flight: shots and passes travel instead of teleporting. Points land
+// when a shot flight reaches the rim, so the score, the ball and the rim
+// effects arrive together, and events.js reads it frame by frame.
+test('shots and passes fly; points land on arrival; events match the score', () => {
+  const gm = new wasm.GameManager();
+  const five = [[63, 74, 51], [70, 70, 60], [55, 65, 70], [60, 60, 55], [50, 72, 45]];
+  five.forEach(([spd, sht, def], i) => {
+    gm.SpawnUnit(i + 1, `Home ${i}`, '', spd, sht, def);
+    gm.SetPlayerCoordinates(i + 1, (i % 3) + 1, (i % 4) + 1, (i % 3) + 1, (i % 4) + 1);
+  });
+  gm.SetAwayTeamJSON(JSON.stringify({
+    units: five.map(([spd, sht, def], i) => ({ id: 100 + i, name: `Away ${i}`, x: (i % 3) + 1, y: (i % 4) + 1, stats: { speed: spd, shooting: sht, defense: def } })),
+  }));
+  gm.StartRound();
+  let prev = JSON.parse(gm.GetGameStateJSON());
+  const seen = new Set();
+  let makePts = 0, misses = 0, shotsEnded = 0, scoredOffFlight = 0, scoreChanges = 0;
+  for (let t = 0; t < 60 * 60; t++) {
+    gm.TickSimulation(1 / 60);
+    const next = JSON.parse(gm.GetGameStateJSON());
+    seen.add(next.ball.flight);
+    const scored = next.homeScore + next.awayScore > prev.homeScore + prev.awayScore;
+    if (scored) { scoreChanges++; if (prev.ball.flight === 'shot') scoredOffFlight++; }
+    if (prev.ball.flight === 'shot' && next.ball.flight !== 'shot') shotsEnded++;
+    for (const e of detectEvents(prev, next)) {
+      if (e.type === 'make') makePts += e.points;
+      if (e.type === 'miss') misses++;
+    }
+    prev = next;
+  }
+  gm.delete();
+  assert.ok(seen.has('shot') && seen.has('pass'), `flights seen: ${[...seen]}`);
+  assert.ok(scoreChanges > 0, 'nobody scored in 60 s');
+  assert.strictEqual(scoredOffFlight, scoreChanges, 'a basket landed without a shot in flight');
+  assert.strictEqual(makePts, prev.homeScore + prev.awayScore);
+  assert.strictEqual(misses, shotsEnded - scoreChanges, 'every shot that ends without points is one miss');
+  console.log(`        (${shotsEnded} shots, ${scoreChanges} made, ${misses} missed; final ${prev.homeScore}-${prev.awayScore})`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed (${passed + failed} total)`);
