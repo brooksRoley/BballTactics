@@ -56,6 +56,8 @@
 <script>
 import { ref, onMounted, onUnmounted, inject, unref } from 'vue';
 import { createFallbackSim } from '../game/fallbackSim.js';
+import { detectEvents, isGameWinner, rimFor } from '../game/events.js';
+import { FEEL } from '../fx/feel.js';
 
 export default {
   props: {
@@ -84,6 +86,9 @@ export default {
     let lastTime = 0;
     let simDone = false;
     let fallback = null; // pure-JS backup ref, built only when the engine is missing
+    let prevSimState = null; // last applied state, for game-feel event detection
+    let lastMake = null;     // { team, tookLead, t } of the latest basket
+    let fxTailRAF = null;    // renders the last effects out after the horn
 
     // Scoring attribution tracking
     const playerPoints = {};
@@ -110,11 +115,9 @@ export default {
         const label = pts === 3 ? 'Three!' : 'Score!';
         const shortName = name.split(' ').pop();
         eventLog.push(`${shortName} hits a ${pts === 3 ? 'three-pointer' : 'bucket'} (+${pts})`);
-        spawnPopup(ball.value.x, ball.value.y - 20, `+${pts}`, 'score-home');
         statusText.value = `${shortName} — ${label}`;
       } else {
         eventLog.push(`Opponent scores (+${pts})`);
-        spawnPopup(ball.value.x, ball.value.y - 20, `+${pts}`, 'score-away');
         statusText.value = 'Opponent scores...';
       }
       setTimeout(() => { if (!simDone) statusText.value = ''; }, 1000);
@@ -326,10 +329,48 @@ export default {
       } else if (awayScore.value > prevAway) {
         attributeScore(awayScore.value - prevAway, false);
       }
+
+      // Game-feel events (make / miss / steal) for the renderer's effects
+      // layer. The "+N" floater rises from the scorer there. Cosmetic only.
+      const events = detectEvents(prevSimState, state);
+      prevSimState = state;
+      for (const e of events) {
+        if (e.type === 'make') {
+          const [mine, theirs] = e.team === 'home'
+            ? [homeScore.value, awayScore.value] : [awayScore.value, homeScore.value];
+          const [mineBefore, theirsBefore] = e.team === 'home' ? [prevHome, prevAway] : [prevAway, prevHome];
+          lastMake = { team: e.team, tookLead: mineBefore <= theirsBefore && mine > theirs, t: performance.now() / 1000 };
+        }
+        if (renderer) renderer.fx(e);
+      }
+    };
+
+    // The make that decided the round (the OT basket, or a go-ahead make at
+    // the horn) gets the full-weight shake on top of the make's own.
+    const markGameWinner = () => {
+      if (!renderer) return;
+      const won = isGameWinner(lastMake, {
+        overtime: overtime.value,
+        homeScore: homeScore.value,
+        awayScore: awayScore.value,
+        now: performance.now() / 1000,
+        window: FEEL.shake.gameWinnerWindow,
+      });
+      if (won) renderer.fx({ type: 'gameWinner', team: lastMake.team, hoop: rimFor(lastMake.team) });
+    };
+
+    // The sim loop stops at the final horn; keep rendering until the result
+    // screen takes over so the last effects play out instead of freezing.
+    const runFxTail = (until) => {
+      if (unmounted || performance.now() > until) return;
+      renderFrame();
+      fxTailRAF = requestAnimationFrame(() => runFxTail(until));
     };
 
     const finishSim = () => {
       simDone = true;
+      markGameWinner();
+      fxTailRAF = requestAnimationFrame(() => runFxTail(performance.now() + 1500));
       const outcome = homeScore.value > awayScore.value ? 'win' : 'loss';
       const ot = overtime.value ? ' in overtime' : '';
       statusText.value = outcome === 'win'
@@ -429,6 +470,7 @@ export default {
       unmounted = true;
       cancelAnimationFrame(animationFrameId);
       cancelAnimationFrame(prefightRAF);
+      cancelAnimationFrame(fxTailRAF);
       if (resizeObserver) resizeObserver.disconnect();
       if (renderer) { renderer.destroy(); renderer = null; }
     });

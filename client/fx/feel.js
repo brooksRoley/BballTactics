@@ -22,9 +22,13 @@ export const FEEL = {
     rippleColor: [255, 214, 90],
     netFlickDuration: 0.5,    // s of net-strand swing after a make
     netFlickAmp: 6,           // px of strand deflection at t=0
+    netFlickFreq: 26,         // rad/s strand swing speed
+    netStrands: 6,            // strands drawn round the rim
+    netLength: 9,             // px a strand hangs past the rim
     boardShudderDuration: 0.45, // s of backboard oscillation on a miss
     boardShudderAmp: 4,       // px initial backboard deflection
     boardShudderFreq: 22,     // rad/s oscillation speed
+    reducedFade: 0.3,         // s of the static fade that replaces motion under reduced-motion
   },
 
   // ── Screen shake (CourtCanvas) ─────────────────────────────────
@@ -35,6 +39,7 @@ export const FEEL = {
     maxOffset: 4,             // px at weight 1.0
     decay: 6.5,               // 1/s exponential decay of trauma
     freq: 31,                 // rad/s noise frequency
+    gameWinnerWindow: 1.5,    // s before the horn a go-ahead make still counts as the winner
   },
 
   // ── Acting-unit highlight pulse (CourtCanvas) ──────────────────
@@ -52,6 +57,9 @@ export const FEEL = {
     popScale: 1.45,           // overshoot scale at birth (eases to 1)
     fontPx: 20,               // base font size
     maxActive: 12,            // hard cap
+    popTime: 0.22,            // s for the birth overshoot to settle
+    homeColor: 0xef8a86,      // team tints (match CourtRenderer's light team colors)
+    awayColor: 0x9ddcee,
   },
 
   // ── Particles (both components) ────────────────────────────────
