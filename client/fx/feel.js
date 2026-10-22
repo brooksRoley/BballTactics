@@ -12,6 +12,21 @@ export const FEEL = {
     shadowMaxAlpha: 0.35,     // floor-shadow opacity when ball is on the deck
     shadowShrink: 0.028,      // how much the shadow tightens per unit of z
     liftPerZ: 3,              // px of visual lift per unit of ball z (matches sim)
+    shadowMinScale: 0.25,     // floor shadow never shrinks below this (high arcs)
+    trailJumpPx: 80,          // a sample this far from the last one is a teleport: reset trail
+    // In hand (CourtRenderer): the ball is drawn at the carrier's token, not the
+    // raw engine x/y, so it can never run ahead of the player holding it.
+    handOffsetX: 12,          // px to the carrier's facing side (token radius is 15)
+    handOffsetY: 5,           // px below token centre — held at the hip
+    facingDeadzone: 0.4,      // px/frame of horizontal motion before the hand switches sides
+    dribbleAmp: 6,            // px between hand and floor at the top of a bounce
+    dribbleHz: 2.4,           // bounces per second
+    dribbleShadowPulse: 0.35, // shadow alpha swing (fraction) across one bounce
+    handoffMs: 120,           // ease from the last drawn spot on a pass / steal / release
+    // Squash on contact: the ball comes down out of the air and hits the deck.
+    landZ: 0.5,               // z at or below this counts as on the floor
+    squashAmount: 0.3,        // peak stretch: x *= 1 + a, y *= 1 - a
+    squashMs: 170,            // ms to ease back to round
   },
 
   // ── Rim / net / backboard moments (CourtCanvas) ────────────────
@@ -115,6 +130,27 @@ export const easeOutBack = (t, s = 1.70158) => {
   const u = t - 1;
   return 1 + (s + 1) * u * u * u + s * u * u;
 };
+
+// ── Ball feel curves (pure; CourtRenderer draws with these) ───────
+// Height of a cosmetic dribble above the floor, in px, at time tMs.
+// |sin| gives a sharp floor contact and a slow top — the hand's dwell.
+export function dribbleHeight(tMs, cfg = FEEL.ball) {
+  return cfg.dribbleAmp * Math.abs(Math.sin((tMs / 1000) * cfg.dribbleHz * Math.PI));
+}
+
+// Squash-and-stretch scale `elapsedMs` after a floor hit: wide and flat at
+// contact, eased back to { sx: 1, sy: 1 } by cfg.squashMs.
+export function squashScale(elapsedMs, cfg = FEEL.ball) {
+  const t = Math.min(1, Math.max(0, elapsedMs / cfg.squashMs));
+  const k = cfg.squashAmount * (1 - easeOutCubic(t));
+  return { sx: 1 + k, sy: 1 - k };
+}
+
+// Floor shadow for a ball `z` sim-units up: shrinks and fades with height.
+export function ballShadow(z, cfg = FEEL.ball) {
+  const scale = Math.max(cfg.shadowMinScale, 1 - Math.max(0, z) * cfg.shadowShrink);
+  return { scale, alpha: cfg.shadowMaxAlpha * scale };
+}
 
 // ── 1D damped spring ──────────────────────────────────────────────
 // Semi-implicit Euler; stable for the stiffness range used here at 60fps.
