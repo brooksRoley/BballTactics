@@ -255,10 +255,11 @@ export class CourtRenderer {
         this._rendered.set(p.id, { x: cx, y: cy });
       }
 
-      // Smooth motion between engine ticks.
+      // Positions arrive already interpolated between sim steps
+      // (CourtCanvas syncLoop); draw them as-is.
       const r = this._rendered.get(p.id);
-      r.x = lerp(r.x, cx, 0.3);
-      r.y = lerp(r.y, cy, 0.3);
+      r.x = cx;
+      r.y = cy;
       node.x = r.x;
       node.y = r.y;
 

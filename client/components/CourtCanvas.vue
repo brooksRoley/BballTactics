@@ -54,8 +54,9 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, inject, unref } from 'vue';
+import { ref, shallowRef, onMounted, onUnmounted, inject, unref } from 'vue';
 import { createFallbackSim } from '../game/fallbackSim.js';
+import { createFixedStepper, interpolateState, SNAP_DIST } from '../game/interpolate.js';
 
 export default {
   props: {
@@ -70,9 +71,11 @@ export default {
   },
   emits: ['sim-complete', 'coverage-opened', 'coverage-selected', 'fight-started'],
   setup(props, { emit }) {
-    const livePlayers = ref([]);
-    const botPlayers = ref([]);
-    const ball = ref({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
+    // Sim state is replaced wholesale every frame and never read by the
+    // template, so shallow refs skip deep-proxying a fresh array each frame.
+    const livePlayers = shallowRef([]);
+    const botPlayers = shallowRef([]);
+    const ball = shallowRef({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
     const homeScore = ref(0);
     const awayScore = ref(0);
     const timeLeft = ref(12.0);
@@ -84,6 +87,7 @@ export default {
     let lastTime = 0;
     let simDone = false;
     let fallback = null; // pure-JS backup ref, built only when the engine is missing
+    let stepper = null;  // fixed-timestep driver, built on "Start Fight"
 
     // Scoring attribution tracking
     const playerPoints = {};
@@ -129,6 +133,9 @@ export default {
     const OT_DURATION = 6.0;
     const SIM_SPEED = 2.5;
     const SIM_SUBSTEP = 1 / 60;
+    // Substeps per frame cap: the 50 ms dt clamp needs at most 8 (0.125 s of
+    // sim); past that a stall's backlog is dropped, not replayed.
+    const MAX_STEPS_PER_FRAME = 8;
     const dpr = Math.ceil(window.devicePixelRatio || 1);
 
     // ── Cosmetic shot-clock pressure ring ─────────────────────────
@@ -224,14 +231,15 @@ export default {
 
     // ── Frame render: delegate to the Pixi CourtRenderer ──────────
     // All drawing now lives in client/rendering/CourtRenderer.js. This just
-    // packages the current sim state into plain data each frame; the WASM
-    // engine and sim loop are untouched.
-    const renderFrame = () => {
+    // packages sim state into plain data each frame. `view` is the
+    // interpolated state from the sim loop; positions in it are final, the
+    // renderer draws them as-is. Without one, the current sim state is drawn.
+    const renderFrame = (view = null) => {
       if (!renderer) return;
       renderer.render({
-        players: livePlayers.value,
-        bots: botPlayers.value,
-        ball: ball.value,
+        players: view ? view.players : livePlayers.value,
+        bots: view ? view.bots : botPlayers.value,
+        ball: (view && view.ball) || ball.value,
         phase: simPhase.value,
         coverage: buildCoverage(),
         shotClock: simPhase.value === 'live'
@@ -261,22 +269,12 @@ export default {
         }
       }
 
-      const engine = getEngine();
-      // Fixed substeps keep the sim frame-rate independent at SIM_SPEED
-      const steps = Math.max(1, Math.round((dt * SIM_SPEED) / SIM_SUBSTEP));
-      const stepDt = (dt * SIM_SPEED) / steps;
-      if (engine) {
-        for (let i = 0; i < steps; i++) engine.TickSimulation(stepDt);
-        try {
-          applySimState(JSON.parse(engine.GetGameStateJSON()));
-        } catch (e) { /* engine may not have state yet */ }
-      } else if (fallback) {
-        // Backup ref: pure-JS sim over the real ghost board with the round's
-        // tactics multipliers (see client/game/fallbackSim.js).
-        let state;
-        for (let i = 0; i < steps; i++) state = fallback.step(stepDt);
-        applySimState(state);
-      }
+      // Fixed timestep: sim time only ever advances in exact SIM_SUBSTEP
+      // slices (the frame just decides how many), so the same board plays
+      // the same at 60 Hz and 120 Hz. Rendering blends the last two slices.
+      const { steps, alpha } = stepper.advance(dt * SIM_SPEED);
+      if (steps && stepper.cur) applySimState(stepper.cur);
+      const view = interpolateState(stepper.prev, stepper.cur, alpha, SNAP_DIST);
 
       // ── Cosmetic shot-clock bookkeeping ────────────────────────
       // Infer possession boundaries from the ball-carrier's TEAM. When the
@@ -298,7 +296,7 @@ export default {
         if (shotClock.value <= 0) shotClock.value = SHOT_CLOCK_MAX;
       }
 
-      renderFrame();
+      renderFrame(view);
 
       // Sudden death: the first basket of overtime ends it
       if (overtime.value && homeScore.value !== awayScore.value) {
@@ -306,6 +304,21 @@ export default {
         return;
       }
       animationFrameId = requestAnimationFrame(syncLoop);
+    };
+
+    // Engine (WASM) or backup ref (pure JS over the real ghost board with the
+    // round's tactics multipliers, see client/game/fallbackSim.js).
+    const readSimState = () => {
+      const engine = getEngine();
+      if (engine) {
+        try { return JSON.parse(engine.GetGameStateJSON()); } catch (e) { return null; /* no state yet */ }
+      }
+      return fallback ? fallback.getState() : null;
+    };
+    const tickSim = (dt) => {
+      const engine = getEngine();
+      if (engine) engine.TickSimulation(dt);
+      else if (fallback) fallback.step(dt);
     };
 
     // The engine and the JS backup ref emit the same state shape, so one
@@ -368,6 +381,11 @@ export default {
       emit('fight-started');
       shotClock.value = SHOT_CLOCK_MAX;
       lastPossessionTeam = null;
+      stepper = createFixedStepper({
+        substep: SIM_SUBSTEP, maxSteps: MAX_STEPS_PER_FRAME,
+        tick: tickSim, read: readSimState,
+      });
+      stepper.reset(readSimState());
       lastTime = performance.now();
       animationFrameId = requestAnimationFrame(syncLoop);
     };
