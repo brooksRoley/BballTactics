@@ -22,6 +22,7 @@
 import { Application, Container, Graphics, Text, Sprite, Texture } from 'pixi.js';
 import { GlowFilter } from 'pixi-filters';
 import { FEEL, prefersReducedMotion, easeOutCubic, dribbleHeight, squashScale, ballShadow } from '../fx/feel.js';
+import { CourtFx } from './CourtFx.js';
 
 const COURT_W = 800;
 const COURT_H = 400;
@@ -160,6 +161,10 @@ export class CourtRenderer {
     this.ringGfx.filters = [this._ringGlow];
     this.fxLayer.addChild(this.ballTrailGfx, this.ballGfx, this.ringGfx);
 
+    // Game-feel effects (rim ripples, floaters, dust, shake) — see CourtFx.js.
+    this._fx = new CourtFx(this.fxLayer, this.world);
+    this._fxLast = performance.now();
+
     this._ready = true;
   }
 
@@ -270,9 +275,19 @@ export class CourtRenderer {
     }
   }
 
+  // Hand a game event ({ type: 'make' | 'miss' | 'steal' | 'gameWinner', ... })
+  // to the effects layer. Safe to call before ready / after destroy.
+  fx(event) {
+    if (this._ready && !this._destroyed && this._fx) this._fx.trigger(event);
+  }
+
   render(state) {
     if (!this._ready || this._destroyed) return;
     this._frame = (this._frame || 0) + 1;
+
+    const now = performance.now();
+    this._fx.update(Math.min((now - this._fxLast) / 1000, 0.05));
+    this._fxLast = now;
 
     const players = state.players || [];
     const bots = state.bots || [];
@@ -514,6 +529,7 @@ export class CourtRenderer {
   destroy() {
     this._destroyed = true;
     this._ready = false;
+    if (this._fx) { this._fx.destroy(); this._fx = null; }
     if (this.app && this.app.renderer) {
       try {
         const canvas = this.app.canvas;
