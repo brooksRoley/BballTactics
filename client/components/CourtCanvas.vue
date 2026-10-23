@@ -46,7 +46,7 @@
           <span class="cb-tag">{{ s.tagline }}</span>
         </button>
       </div>
-      <button class="coverage-start" @click="startFight">Start Fight</button>
+      <button class="coverage-start" data-sfx="none" @click="startFight">Start Fight</button>
     </div>
 
     <div v-else class="sim-status">{{ statusText }}</div>
@@ -58,6 +58,7 @@ import { ref, shallowRef, onMounted, onUnmounted, inject, unref } from 'vue';
 import { createFallbackSim } from '../game/fallbackSim.js';
 import { createFixedStepper, interpolateState, SNAP_DIST } from '../game/interpolate.js';
 import { detectEvents, isGameWinner, rimFor } from '../game/events.js';
+import { sfx } from '../audio/sfx.js';
 import { FEEL } from '../fx/feel.js';
 
 export default {
@@ -355,6 +356,7 @@ export default {
           lastMake = { team: e.team, tookLead: mineBefore <= theirsBefore && mine > theirs, t: performance.now() / 1000 };
         }
         if (renderer) renderer.fx(e);
+        sfx.forEvent(e);
       }
     };
 
@@ -369,7 +371,10 @@ export default {
         now: performance.now() / 1000,
         window: FEEL.shake.gameWinnerWindow,
       });
-      if (won) renderer.fx({ type: 'gameWinner', team: lastMake.team, hoop: rimFor(lastMake.team) });
+      if (won) {
+        renderer.fx({ type: 'gameWinner', team: lastMake.team, hoop: rimFor(lastMake.team) });
+        sfx.forEvent({ type: 'gameWinner' });
+      }
     };
 
     // The sim loop stops at the final horn; keep rendering until the result
@@ -382,6 +387,7 @@ export default {
 
     const finishSim = () => {
       simDone = true;
+      sfx.play('horn');
       markGameWinner();
       fxTailRAF = requestAnimationFrame(() => runFxTail(performance.now() + 1500));
       const outcome = homeScore.value > awayScore.value ? 'win' : 'loss';
@@ -419,6 +425,7 @@ export default {
       if (simPhase.value !== 'prefight') return;
       cancelAnimationFrame(prefightRAF);
       simPhase.value = 'live';
+      sfx.play('whistle');
       emit('fight-started');
       shotClock.value = SHOT_CLOCK_MAX;
       lastPossessionTeam = null;

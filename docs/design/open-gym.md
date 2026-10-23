@@ -1,6 +1,6 @@
 # Open Gym: the front door (spec, 2026-10-23)
 
-*Status: spec, ready to build. Companion to `fun-brief.md`, `build-review-2026-10-20.md`
+*Status: OG1 (Open Gym, How to Play, Controls tour) and OG2 (sound) built 2026-10-23 — `client/components/OpenGym.vue`, `HowToPlay.vue`, `ControlsTour.vue`, `client/audio/sfx.js`, words in `client/game/howToPlay.js`. OG3 (art pass) and OG4 (Shootaround) are next. Companion to `fun-brief.md`, `build-review-2026-10-20.md`
 and the tutorial design in `docs/superpowers/specs/`.*
 
 ## The problem

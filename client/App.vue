@@ -1,21 +1,33 @@
 <template>
-  <div class="app">
+  <div class="app" @pointerdown.capture="onAnyPointer" @click.capture="onAnyClick">
     <header class="top-bar">
       <h1>Hardwood Autochess</h1>
-      <div class="status-bar">
+      <div class="status-bar" data-tour="status">
+        <button
+          v-if="phase === 'planning' || phase === 'result'"
+          class="open-gym-btn"
+          @click="openGym"
+        >Open Gym</button>
         <button
           v-if="phase !== 'filmroom'"
           class="film-room-btn"
+          data-tour="filmroom"
           @click="openFilmRoom"
         >🎬 Film Room</button>
-        <template v-if="phase !== 'filmroom'">
+        <button
+          class="sound-btn"
+          :aria-pressed="!soundMuted"
+          :aria-label="soundMuted ? 'Turn sound on' : 'Turn sound off'"
+          @click="toggleSound"
+        >{{ soundMuted ? '🔇' : '🔊' }}</button>
+        <template v-if="phase !== 'filmroom' && phase !== 'gym'">
           <span class="round-badge">Round {{ Math.min(round, 10) }}/10</span>
           <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
           <span v-if="streakCount >= 2" class="streak-badge" :class="streakType">
             {{ streakCount }}{{ streakType === 'win' ? 'W' : 'L' }} streak
           </span>
           <SpringBar :value="health" />
-          <span class="gold-badge" :title="incomeTooltip">{{ gold }}G</span>
+          <span class="gold-badge" :class="{ bump: goldBump }" :title="incomeTooltip">{{ gold }}G</span>
         </template>
       </div>
     </header>
@@ -59,6 +71,20 @@
         <a href="#" @click.prevent="reloadPage">Reload</a> to try the real engine again.
       </p>
 
+      <!-- Open Gym: the front door. What the game is, why play, how it works. -->
+      <OpenGym
+        v-if="phase === 'gym'"
+        :in-run="inRun"
+        :muted="soundMuted"
+        :music-volume="musicVolume"
+        :show-replay="tutorial.isOnboarded && tutorial.isOnboarded()"
+        @run="onRunIt"
+        @controls="onControls"
+        @toggle-sound="toggleSound"
+        @music-volume="onMusicVolume"
+        @replay-tutorial="onReplayTutorial"
+      />
+
       <!-- Coach Miller's Film Room (daily tactics puzzles) -->
       <FilmRoom
         v-if="phase === 'filmroom'"
@@ -84,7 +110,7 @@
         </div>
 
         <!-- Tactics pickers -->
-        <div class="scheme-row">
+        <div class="scheme-row" data-tour="schemes">
           <label class="scheme-picker">
             <span class="scheme-label">Offense</span>
             <select v-model="myOffense">
@@ -117,7 +143,7 @@
           @locked-in="onLockedIn"
         />
 
-        <div class="shop-section">
+        <div class="shop-section" data-tour="shop">
           <div class="shop-header">
             <h3>Free Agents</h3>
             <span class="shop-odds" :title="'Odds of each cost tier appearing in a shop slot this round'">
@@ -126,7 +152,7 @@
                 <span v-if="w > 0" class="odds-entry" :class="`odds-${c}`">{{ c }}G {{ w }}%</span>
               </template>
             </span>
-            <button class="reroll-btn" :disabled="gold < REROLL_COST" @click="onReroll">
+            <button class="reroll-btn" data-sfx="none" :disabled="gold < REROLL_COST" @click="onReroll">
               Reroll ({{ REROLL_COST }}G)
             </button>
           </div>
@@ -195,7 +221,7 @@
                 </option>
               </select>
             </label>
-            <button class="tipoff-btn" @click="startBattle">Tip Off</button>
+            <button class="tipoff-btn" data-sfx="none" @click="startBattle">Tip Off</button>
           </div>
         </div>
       </div>
@@ -288,18 +314,23 @@
         :skill-tag="tutorial.skillTag"
         @skip="tutorial.skip"
       />
+
+      <ControlsTour :active="tourActive" @done="tourActive = false" />
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide, markRaw } from 'vue';
+import { ref, computed, onMounted, provide, markRaw, watch, nextTick } from 'vue';
 
 import CourtCanvas from './components/CourtCanvas.vue';
 import PlanningPhase from './components/PlanningPhase.vue';
 import FilmRoom from './components/FilmRoom.vue';
 import CoachOverlay from './components/CoachOverlay.vue';
 import SpringBar from './components/SpringBar.vue';
+import OpenGym from './components/OpenGym.vue';
+import ControlsTour from './components/ControlsTour.vue';
+import { sfx } from './audio/sfx.js';
 import { useShop } from './composables/useShop.js';
 import { useMatchmaking, API_BASE } from './composables/useMatchmaking.js';
 import { useTutorial } from './composables/useTutorial.js';
@@ -314,7 +345,7 @@ import { listSchemes, resolveMatchup, suggestCoverage, gradeRead, schemes } from
 const loading = ref(true);
 const engineFailed = ref(false);
 const loadStep = ref(0);
-const phase = ref('planning');
+const phase = ref('gym');          // Open Gym is the front door
 const phaseBeforeFilmRoom = ref('planning');
 const round = ref(1);
 const health = ref(100);
@@ -505,15 +536,19 @@ const showCombineToast = (unit) => {
 
 const onBuy = (slotIndex) => {
   const result = shopApi.buy(slotIndex);
+  sfx.play(!result ? 'broke' : result.star === 2 ? 'star' : 'buy');
   if (result) {
     tutorial.onPlayerBought(result, { goldLeft: gold.value, rosterCount: bench.value.length });
     if (result.star === 2) showCombineToast(result);
   }
 };
 
-const onReroll = () => { shopApi.reroll(round.value); };
+const onReroll = () => {
+  if (gold.value >= REROLL_COST) sfx.play('reroll');
+  shopApi.reroll(round.value);
+};
 
-const onSellPlayer = (player) => { shopApi.sell(player); };
+const onSellPlayer = (player) => { sfx.play('sell'); shopApi.sell(player); };
 
 const onBenchUpdate = (newBench) => {
   bench.value = newBench;
@@ -589,6 +624,7 @@ const localGhostBoard = () => {
 
 // ── round flow ──────────────────────────────────────────────────────────────
 const onLockedIn = async (lineup) => {
+  sfx.play('whistle');
   courtLineup.value = (lineup || []).map(u => ({ ...u }));
   courtMirror.value = courtLineup.value;
   roundStats.value = { playerScoring: [], events: [] };
@@ -639,6 +675,8 @@ const startBattle = () => {
 
   syncEngineForRound(homeMatchup.value.offenseMultiplier, awayMatchup.value.offenseMultiplier);
 
+  sfx.play('whistle');
+  sfx.play('crowd', { intensity: 0.35 });
   phase.value = 'tipoff';
   tipoffZoom.value = false;
   setTimeout(() => { tipoffZoom.value = true; }, 100);
@@ -748,6 +786,7 @@ const onSimComplete = async (result) => {
     runStatus.value = health.value <= 0 ? 'lost' : round.value >= MAX_ROUNDS ? 'won' : 'active';
   }
 
+  sfx.play(outcome === 'win' ? 'win' : 'loss');
   phase.value = 'result';
 };
 
@@ -797,8 +836,69 @@ onMounted(async () => {
   );
   ensureRun(); // fire-and-forget; lock-in retries if it hasn't landed yet
   loading.value = false;
-  // Start onboarding for first-time players (no-op if already onboarded).
-  tutorial.maybeStart();
+  // Onboarding starts when the player presses Run It in Open Gym.
+});
+
+// ── Open Gym, sound and feel ────────────────────────────────────────────────
+const soundMuted = ref(sfx.muted);
+const musicVolume = ref(sfx.musicVolume);
+const tourActive = ref(false);
+const inRun = computed(() => round.value > 1 || bench.value.length > 0 || courtMirror.value.length > 0);
+const MUSIC_PHASES = new Set(['gym', 'planning']);
+const syncMusic = () => {
+  if (!soundMuted.value && MUSIC_PHASES.has(phase.value)) sfx.music.start();
+  else sfx.music.stop();
+};
+watch(phase, syncMusic);
+
+// Browsers allow audio only after a gesture: the first press anywhere unlocks it.
+const onAnyPointer = () => { if (sfx.unlock()) syncMusic(); };
+// Every button and picker answers a click; ones with their own sound opt out.
+const onAnyClick = (e) => {
+  const el = e.target.closest && e.target.closest('button, select');
+  if (el && !el.disabled && el.dataset.sfx !== 'none') sfx.play('tap');
+};
+
+const toggleSound = () => {
+  sfx.unlock();
+  sfx.setMuted(!soundMuted.value);
+  soundMuted.value = sfx.muted;
+  syncMusic();
+};
+const onMusicVolume = (v) => {
+  sfx.setMusicVolume(v);
+  musicVolume.value = sfx.musicVolume;
+  syncMusic();
+};
+
+let tutorialOffered = false;
+const onRunIt = () => {
+  sfx.unlock();
+  sfx.play('whistle');
+  phase.value = 'planning';
+  if (!tutorialOffered) { tutorialOffered = true; tutorial.maybeStart(); }
+};
+const onControls = async () => {
+  phase.value = 'planning';
+  tutorialOffered = true;          // the tour teaches the screen; don't stack the coach on it
+  await nextTick();
+  tourActive.value = true;
+};
+const onReplayTutorial = () => {
+  tutorialOffered = true;
+  phase.value = 'planning';
+  tutorial.replay();
+};
+const openGym = () => { tourActive.value = false; phase.value = 'gym'; };
+
+const goldBump = ref(false);
+let goldBumpTimer = null;
+watch(gold, (now, before) => {
+  if (now === before) return;
+  goldBump.value = false;
+  clearTimeout(goldBumpTimer);
+  requestAnimationFrame(() => { goldBump.value = true; });
+  goldBumpTimer = setTimeout(() => { goldBump.value = false; }, 400);
 });
 </script>
 
@@ -845,6 +945,29 @@ body {
   transition: all 0.15s ease;
 }
 .film-room-btn:hover { background: #2a2a2a; border-color: #d9534f; }
+.open-gym-btn, .sound-btn {
+  background: #1e1e1e;
+  color: #f2b45f;
+  border: 1px solid #8b5a2b;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sound-btn { padding: 4px 9px; }
+.open-gym-btn:hover, .sound-btn:hover { background: #2a2a2a; }
+.gold-badge.bump { animation: gold-bump 0.4s ease-out; }
+@keyframes gold-bump { 30% { transform: scale(1.25); color: #fff3b0; } }
+
+/* Press feel: everything clickable gives a little under the finger. */
+.app button:not(:disabled) { transition: transform 0.08s ease; }
+.app button:not(:disabled):active { transform: scale(0.95); }
+.player-card.affordable:active { transform: translateY(-2px) scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  .gold-badge.bump { animation: none; }
+  .app button:not(:disabled):active, .player-card.affordable:active { transform: none; }
+}
 .round-badge {
   background: #333;
   padding: 4px 12px;
