@@ -2,7 +2,7 @@
   <div class="planning-phase">
 
     <!-- Half-court grid -->
-    <div class="court-wrapper">
+    <div class="court-wrapper" data-tour="court">
       <div class="court-scaler" ref="courtScaler" :style="{ height: (COURT_H * courtScale) + 'px' }">
       <div class="court"
            ref="courtEl"
@@ -52,7 +52,7 @@
     </div>
 
     <!-- Bench -->
-    <div class="bench-area" ref="benchEl">
+    <div class="bench-area" ref="benchEl" data-tour="bench">
       <div class="bench-label">Bench ({{ benchPlayers.length }})</div>
       <div class="bench-row">
         <div v-for="player in benchPlayers"
@@ -88,7 +88,7 @@
     </div>
 
     <!-- Lock in -->
-    <div class="lock-in-bar">
+    <div class="lock-in-bar" data-tour="lockin">
       <div class="lock-in-left">
         <span class="roster-count" :class="{ ready: onCourt.length >= Math.min(3, maxOnCourt) }">
           {{ onCourt.length }}/{{ maxOnCourt }} on court
@@ -99,6 +99,7 @@
       </div>
       <button
         class="lock-in-btn"
+        data-sfx="none"
         :disabled="onCourt.length < 1"
         @click="$emit('locked-in', onCourt)">
         Lock In &amp; Fight
@@ -109,6 +110,7 @@
 
 <script>
 import { ref, computed, inject, unref, onMounted, onUnmounted, reactive } from 'vue';
+import { sfx } from '../audio/sfx.js';
 import { FEEL, Spring, ParticlePool, spawnDust, drawParticles, prefersReducedMotion } from '../fx/feel.js';
 import { sellValue } from '../game/economy.js';
 import { getZoneEfficiency, zoneWarmth } from '../composables/useZoneEfficiency.js';
@@ -267,10 +269,12 @@ export default {
         if (eng) eng.SetPlayerCoordinates(player.id, cx, cy, cx, cy);
       }
       emit('update:court', onCourt.value);
+      sfx.play('place');
       return true;
     };
 
     const returnToBench = (player) => {
+      sfx.play('pickup');
       onCourt.value = onCourt.value.filter(p => p.id !== player.id);
       const { courtX, courtY, _from, ...benchPlayer } = player;
       emit('update:bench', [...props.bench, benchPlayer]);

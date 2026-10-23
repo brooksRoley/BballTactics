@@ -135,7 +135,7 @@ export function useTutorial() {
   // Attach methods onto the reactive state so consumers can use one object:
   // tutorial.active (reactive) and tutorial.replay() (method) both work.
   return Object.assign(state, {
-    maybeStart, replay, skip, complete,
+    maybeStart, replay, skip, complete, isOnboarded,
     onPlayerBought, onPlayerPlaced, onCoverageOpened, onCoverageSelected, onFightStarted,
   });
 }
