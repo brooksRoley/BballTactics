@@ -24,7 +24,7 @@ jobs:
   tests:
     uses: ./.github/workflows/ci.yml
     with:
-      e2e: false
+      skip_e2e: true
 
   deploy:
     needs: tests

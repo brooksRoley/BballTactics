@@ -8,10 +8,10 @@ on:
     branches-ignore: [main]
   workflow_call:
     inputs:
-      e2e:
-        description: Also play the touch-only phone game (pull requests always do)
+      skip_e2e:
+        description: Skip the touch-only phone game (pull requests always play it)
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: read
@@ -40,9 +40,9 @@ jobs:
   touch:
     name: Full Court on a phone (touch only)
     # Gates every pull request. Deploys skip it (deploy-pages.yml passes
-    # e2e: false): it already passed on the PR, and a slow runner shouldn't
-    # hold a release.
-    if: inputs.e2e != false
+    # skip_e2e: true): it already passed on the PR, and a slow runner shouldn't
+    # hold a release. On pull_request and push, inputs is empty, so !null is true.
+    if: ${{ !inputs.skip_e2e }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
