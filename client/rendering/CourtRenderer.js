@@ -23,6 +23,8 @@ import { Application, Container, Graphics, Text, Sprite, Texture } from 'pixi.js
 import { GlowFilter } from 'pixi-filters';
 import { FEEL, prefersReducedMotion, easeOutCubic, dribbleHeight, squashScale, ballShadow } from '../fx/feel.js';
 import { CourtFx } from './CourtFx.js';
+import { PlayerFigure } from './PlayerFigure.js';
+import { CourtGuides } from './CourtGuides.js';
 
 const COURT_W = 800;
 const COURT_H = 400;
@@ -146,10 +148,14 @@ export class CourtRenderer {
     this._buildCourt();
 
     this.coverageLayer = new Container();
+    this.guideLayer = new Container();   // floor-level legibility + ability looks
     this.shadowLayer = new Container();
     this.playerLayer = new Container();
+    this.playerLayer.sortableChildren = true; // figures overlap by depth (y)
     this.fxLayer = new Container();
-    this.world.addChild(this.coverageLayer, this.shadowLayer, this.playerLayer, this.fxLayer);
+    this.labelLayer = new Container();   // nameplates, above every figure
+    this.overLayer = new Container();    // above everything: arrows, flashes
+    this.world.addChild(this.coverageLayer, this.guideLayer, this.shadowLayer, this.playerLayer, this.labelLayer, this.fxLayer, this.overLayer);
 
     // Ball + its glow live in the fx layer, above the players. Filters are
     // created once and reused (never per-frame) to avoid leaking GPU resources.
@@ -164,6 +170,9 @@ export class CourtRenderer {
     // Game-feel effects (rim ripples, floaters, dust, shake) — see CourtFx.js.
     this._fx = new CourtFx(this.fxLayer, this.world);
     this._fxLast = performance.now();
+
+    // Your ring, move marker, line to your man, zones, aim, ability effects.
+    this._guides = new CourtGuides(this.guideLayer, this.overLayer);
 
     this._ready = true;
   }
@@ -216,46 +225,33 @@ export class CourtRenderer {
     this.world.addChild(vign);
   }
 
-  // Build (once) a standing "chip" token for a player id.
-  _makePlayerNode(team) {
-    const node = new Container();
-    const base = team === 'home' ? COLOR.home : COLOR.away;
-    const light = team === 'home' ? COLOR.homeLight : COLOR.awayLight;
-
-    // Ground shadow — a soft dark ellipse under the token, offset down.
-    const shadow = new Graphics();
-    shadow.ellipse(0, 15, 17, 7).fill({ color: 0x000000, alpha: 0.28 });
-    shadow.ellipse(0, 15, 12, 5).fill({ color: 0x000000, alpha: 0.22 });
-
-    // The chip body: a filled disc with a lighter top-lit cap for volume.
-    const disc = new Graphics();
-    disc.circle(0, 0, 15).fill({ color: base });
-    disc.circle(0, 0, 15).stroke({ width: 2, color: 0xffffff, alpha: 0.85 });
-    disc.ellipse(0, -4, 10, 7).fill({ color: light, alpha: 0.55 }); // top rim-light
-
-    const label = new Text({
-      text: '',
-      style: { fontFamily: 'Arial, sans-serif', fontSize: 9, fontWeight: '700', fill: 0xffffff, align: 'center' },
+  // Build (once) a procedural player figure for a player id.
+  _makePlayerNode(team, id) {
+    const home = team === 'home';
+    const fig = new PlayerFigure({
+      id,
+      color: home ? COLOR.home : COLOR.away,
+      light: home ? COLOR.homeLight : COLOR.awayLight,
+      trim: home ? 0xfff1ec : 0x0e2a3a,
+      labelLayer: this.labelLayer,
     });
-    label.anchor.set(0.5);
-    label.y = 0;
-
-    node.addChild(shadow, disc, label);
-    node._disc = disc;
-    node._label = label;
+    const node = fig.node;
+    node._fig = fig;
     node._team = team;
-    node._carrierGlow = new GlowFilter({ distance: 14, outerStrength: 2.6, color: COLOR.carrier, quality: 0.3 });
+    node._carrierGlow = new GlowFilter({ distance: 12, outerStrength: 2.4, color: COLOR.carrier, quality: 0.3 });
+    node._motion = { vx: 0, vy: 0, lastX: null, lastY: null };
     return node;
   }
 
-  _syncPlayers(list, team) {
+  _syncPlayers(list, team, possId, dt, now) {
+    const still = prefersReducedMotion();
     for (const p of list) {
       const cx = clamp(p.x + 15, 15, COURT_W - 15);
       const cy = clamp(p.y + 15, 15, COURT_H - 15);
 
       let node = this._playerNodes.get(p.id);
       if (!node) {
-        node = this._makePlayerNode(team);
+        node = this._makePlayerNode(team, p.id);
         this._playerNodes.set(p.id, node);
         this.playerLayer.addChild(node);
         this._rendered.set(p.id, { x: cx, y: cy });
@@ -268,17 +264,75 @@ export class CourtRenderer {
       r.y = cy;
       node.x = r.x;
       node.y = r.y;
+      node.zIndex = cy + (p.isHuman ? 0.5 : 0);
+      node.scale.set(this._figScale);
 
-      const short = p.name ? p.name.split(' ').pop().slice(0, 3) : String(p.id);
-      if (node._label.text !== short) node._label.text = short;
+      const fig = node._fig;
+      fig.setHuman(!!p.isHuman);
+      const short = p.isHuman ? 'YOU' : p.name ? p.name.split(' ').pop().slice(0, 3).toUpperCase() : String(p.id);
+      const isCarrier = p.id === possId;
+      fig.setLabel(short, !this._compact || p.isHuman || isCarrier);
+
+      const pose = this._poseFor(node, p, isCarrier, dt, now);
+      pose.still = still;
+      fig.update(pose, dt, now);
+      node._anim = p.anim || null;
       node._seen = this._frame;
     }
+  }
+
+  // Full Court frames carry `anim` (client/moba/anim.js). Hardwood frames
+  // don't, so its pose is inferred from how the token moved between frames.
+  _poseFor(node, p, isCarrier, dt, now) {
+    const mo = node._motion;
+    if (mo.lastX != null && dt > 0) {
+      const k = 1 - Math.exp(-10 * dt);
+      mo.vx += ((node.x - mo.lastX) / dt - mo.vx) * k;
+      mo.vy += ((node.y - mo.lastY) / dt - mo.vy) * k;
+    }
+    mo.lastX = node.x;
+    mo.lastY = node.y;
+
+    const a = p.anim;
+    if (a) {
+      return { facing: a.facing, speed: Math.hypot(a.vx, a.vy), action: a.action, t: a.t, kind: a.kind };
+    }
+    const speed = Math.hypot(mo.vx, mo.vy);
+    let facing;
+    if (speed > 20) facing = Math.atan2(mo.vy, mo.vx);
+    else if (this._ballAt && !isCarrier) facing = Math.atan2(this._ballAt.y - node.y, this._ballAt.x - node.x);
+    else facing = node._fig.facing ?? (node._team === 'home' ? 0 : Math.PI);
+    let action = isCarrier ? 'dribble' : speed > 20 ? 'run' : 'idle';
+    let t = 0;
+    if (node._celebrateAt != null) {
+      t = (now - node._celebrateAt) / 1100;
+      if (t < 1) action = 'celebrate';
+      else node._celebrateAt = null;
+    }
+    return { facing, speed, action, t };
+  }
+
+  // Figures grow a little on a small screen so a phone still reads them, and
+  // only you and the ball carrier keep a nameplate there.
+  _updateDisplayScale() {
+    if (this._frame % 30 !== 1 && this._figScale) return;
+    const w = (this.app.canvas && this.app.canvas.clientWidth) || this.width;
+    const ds = w / COURT_W;
+    this._figScale = clamp(1 + (0.75 - ds) * 1.4, 1, 1.42);
+    this._compact = ds < 0.6;
   }
 
   // Hand a game event ({ type: 'make' | 'miss' | 'steal' | 'gameWinner', ... })
   // to the effects layer. Safe to call before ready / after destroy.
   fx(event) {
-    if (this._ready && !this._destroyed && this._fx) this._fx.trigger(event);
+    if (!this._ready || this._destroyed || !this._fx) return;
+    this._fx.trigger(event);
+    // Hardwood's make events don't name the shooter: the last player to hold
+    // the ball celebrates. Full Court frames carry their own celebrate pose.
+    if (event && event.type === 'make') {
+      const node = this._playerNodes.get(event.playerId ?? this._lastHolderId);
+      if (node && !node._anim) node._celebrateAt = performance.now();
+    }
   }
 
   render(state) {
@@ -286,22 +340,26 @@ export class CourtRenderer {
     this._frame = (this._frame || 0) + 1;
 
     const now = performance.now();
-    this._fx.update(Math.min((now - this._fxLast) / 1000, 0.05));
+    const dt = Math.min((now - this._fxLast) / 1000, 0.05);
+    this._fx.update(dt);
     this._fxLast = now;
 
     const players = state.players || [];
     const bots = state.bots || [];
     const ball = state.ball || {};
     const possId = ball.possessorId;
+    if (possId != null && possId !== -1 && ball.isPossessed !== false) this._lastHolderId = possId;
+    this._ballAt = ball.x != null ? { x: ball.x + 6, y: ball.y + 6 } : null;
+    this._updateDisplayScale();
 
     // --- Players (home + away) ---
-    this._syncPlayers(bots, 'away');
-    this._syncPlayers(players, 'home');
+    this._syncPlayers(bots, 'away', possId, dt, now);
+    this._syncPlayers(players, 'home', possId, dt, now);
 
     // Prune nodes for players that vanished this frame.
     for (const [id, node] of this._playerNodes) {
       if (node._seen !== this._frame) {
-        node.destroy({ children: true });
+        node._fig.destroy();
         this._playerNodes.delete(id);
         this._rendered.delete(id);
       }
@@ -309,14 +367,27 @@ export class CourtRenderer {
 
     // Carrier glow + record carrier screen pos for the shot-clock ring.
     let carrierPos = null;
+    const actors = [];
     for (const [id, node] of this._playerNodes) {
       const isCarrier = id === possId;
-      const wantGlow = isCarrier ? [node._carrierGlow] : null;
-      if ((node._disc.filters && !isCarrier) || (isCarrier && !node._disc.filters)) {
-        node._disc.filters = wantGlow;
-      }
+      const torso = node._fig.torso;
+      if (isCarrier && !torso.filters) torso.filters = [node._carrierGlow];
+      else if (!isCarrier && torso.filters) torso.filters = null;
       if (isCarrier) carrierPos = { x: node.x, y: node.y };
+      actors.push({
+        id, x: node.x, y: node.y, team: node._team, anim: node._anim,
+        facing: node._fig.facing, human: node._fig.human, carrier: isCarrier,
+      });
     }
+
+    // --- Legibility layer + ability effects (Full Court sends `overlay`) ---
+    this._guides.update(dt, {
+      overlay: state.overlay || null,
+      cursor: state.cursor || null,
+      actors,
+      still: prefersReducedMotion(),
+      scale: this._figScale,
+    });
 
     // --- Coverage preview (prefight only) ---
     this._drawCoverage(state.coverage);
@@ -383,9 +454,10 @@ export class CourtRenderer {
     let bx, by, gx, gy, h; // ball centre, ground point, height above it (px)
     let radius = 6;
     if (holder) {
-      const side = this._ballFacingSide(holder);
-      gx = holder.x + side * cfg.handOffsetX;
-      gy = holder.y + cfg.handOffsetY;
+      // The ball lives in the figure's dribbling hand.
+      const hand = holder._fig.handWorld();
+      gx = hand.x;
+      gy = hand.y + 2;
       h = still ? cfg.dribbleAmp : dribbleHeight(now, cfg);
       this._ballTrail.length = 0; // never streak from the last shot to the hands
     } else {
@@ -393,7 +465,6 @@ export class CourtRenderer {
       gy = ball.y + 6;
       h = z * cfg.liftPerZ;
       radius = 6 * (1 + z * 0.04);
-      this._ballFacing = null;
     }
 
     // Floor hit: falling through landZ while loose starts a squash.
@@ -435,20 +506,6 @@ export class CourtRenderer {
     g.moveTo(bx - rx, cy).lineTo(bx + rx, cy).stroke({ width: 1, color: 0x7a4a00, alpha: 0.6 });
 
     this._ballDrawn = { x: bx, y: by, holderKey };
-  }
-
-  // Which side of the token the carrier holds the ball on: the way they're
-  // moving horizontally, held through pauses (+1 right, -1 left).
-  _ballFacingSide(node) {
-    const f = this._ballFacing;
-    if (!f || f.node !== node) {
-      this._ballFacing = { node, lastX: node.x, side: f?.side ?? 1 };
-      return this._ballFacing.side;
-    }
-    const dx = node.x - f.lastX;
-    if (Math.abs(dx) > FEEL.ball.facingDeadzone) f.side = Math.sign(dx);
-    f.lastX = node.x;
-    return f.side;
   }
 
   // When the holder changes, blend from the last drawn spot to the new
@@ -530,6 +587,7 @@ export class CourtRenderer {
     this._destroyed = true;
     this._ready = false;
     if (this._fx) { this._fx.destroy(); this._fx = null; }
+    if (this._guides) { this._guides.destroy(); this._guides = null; }
     if (this.app && this.app.renderer) {
       try {
         const canvas = this.app.canvas;
