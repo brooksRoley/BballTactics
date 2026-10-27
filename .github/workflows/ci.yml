@@ -7,6 +7,11 @@ on:
   push:
     branches-ignore: [main]
   workflow_call:
+    inputs:
+      e2e:
+        description: Also play the touch-only phone game (pull requests always do)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -34,6 +39,10 @@ jobs:
 
   touch:
     name: Full Court on a phone (touch only)
+    # Gates every pull request. Deploys skip it (deploy-pages.yml passes
+    # e2e: false): it already passed on the PR, and a slow runner shouldn't
+    # hold a release.
+    if: inputs.e2e != false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -61,7 +70,7 @@ jobs:
         run: |
           npx vite --port 5184 --strictPort > vite.log 2>&1 &
           for i in $(seq 1 60); do curl -sf http://localhost:5184/BballTactics/ > /dev/null && break; sleep 1; done
-          python e2e/full-court-touch.py --url http://localhost:5184/BballTactics/ --out e2e-shots
+          python e2e/full-court-touch.py --url http://localhost:5184/BballTactics/ --out e2e-shots --quarter 15
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -23,6 +23,8 @@ jobs:
   # they pass.
   tests:
     uses: ./.github/workflows/ci.yml
+    with:
+      e2e: false
 
   deploy:
     needs: tests

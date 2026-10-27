@@ -326,7 +326,10 @@ async function tipOff() {
   sfx.unlock();
   seed = (Date.now() & 0xffff) || 1;
   const teach = !hintsSeen(storage());
-  match = createMatch({ roster: roster.value, humanId: picked.value.id, seed, tutorial: teach });
+  // Dev builds only: end-to-end tests can shorten quarters (window.__fullCourtTest).
+  const testOpts = (import.meta.env.DEV && window.__fullCourtTest) || {};
+  const quarterLength = Number(testOpts.quarterLength) > 0 ? { quarterLength: Number(testOpts.quarterLength) } : {};
+  match = createMatch({ roster: roster.value, humanId: picked.value.id, seed, tutorial: teach, ...quarterLength });
   hints.value = teach ? startHints() : null;
   floaters.value = [];
   flash.value = '';

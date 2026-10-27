@@ -74,6 +74,8 @@ def main():
     ap.add_argument('--out', default='e2e-shots')
     ap.add_argument('--timeout', type=float, default=480, help='seconds to reach the final screen')
     ap.add_argument('--headed', action='store_true')
+    ap.add_argument('--quarter', type=float, default=0,
+                    help='quarter length in seconds (dev server only; 0 keeps the real 45 s). CI uses 15: runners without a GPU play slower than real time')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     rnd = random.Random(2026)
@@ -86,6 +88,8 @@ def main():
             viewport={'width': 390, 'height': 844}, device_scale_factor=2,
             is_mobile=True, has_touch=True,
         )
+        if args.quarter > 0:
+            ctx.add_init_script(f'window.__fullCourtTest = {{ quarterLength: {args.quarter} }}')
         page = ctx.new_page()
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.goto(args.url, wait_until='networkidle')
