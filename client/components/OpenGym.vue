@@ -50,6 +50,7 @@
         <button class="og-run" data-sfx="none" @click="$emit('run')">
           {{ inRun ? 'Back to the run' : 'Run It' }}
         </button>
+        <button class="og-btn og-full" @click="$emit('fullcourt')">Full Court <span class="og-new">new</span></button>
         <button class="og-btn" @click="howOpen = true">How to Play</button>
         <button class="og-btn" @click="$emit('controls')">Controls</button>
         <button
@@ -83,7 +84,7 @@ defineProps({
   musicVolume: { type: Number, default: 0.5 },
   showReplay: { type: Boolean, default: false },
 });
-defineEmits(['run', 'controls', 'toggle-sound', 'music-volume', 'replay-tutorial']);
+defineEmits(['run', 'controls', 'toggle-sound', 'music-volume', 'replay-tutorial', 'fullcourt']);
 
 const pitch = PITCH;
 const howOpen = ref(false);
@@ -159,6 +160,8 @@ const howOpen = ref(false);
   border: 1px solid rgba(233, 227, 214, 0.3);
 }
 .og-btn:hover { background: rgba(233, 227, 214, 0.16); }
+.og-full { border-color: #f2b45f; }
+.og-new { margin-left: 4px; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; background: #f2b45f; color: #101b2b; padding: 1px 5px; border-radius: 4px; vertical-align: 1px; }
 .og-btn:active { transform: scale(0.96); }
 .og-run:focus-visible, .og-btn:focus-visible, .og-link:focus-visible, .og-volume input:focus-visible {
   outline: 3px solid #f2b45f;

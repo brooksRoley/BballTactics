@@ -19,7 +19,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The same tests every pull request runs (ci.yml); nothing deploys unless
+  # they pass.
+  tests:
+    uses: ./.github/workflows/ci.yml
+    with:
+      skip_e2e: true
+
   deploy:
+    needs: tests
     runs-on: ubuntu-latest
     environment:
       name: github-pages

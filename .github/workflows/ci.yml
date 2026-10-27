@@ -1,0 +1,82 @@
+name: Tests
+
+# Every pull request and every branch push runs the tests. main is tested by
+# deploy-pages.yml, which calls this workflow and deploys only if it passes.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_call:
+    inputs:
+      skip_e2e:
+        description: Skip the touch-only phone game (pull requests always play it)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: npm test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # roster.test.js validates against shared-core/schema.
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Every client/**/__tests__/*.test.js, including the Full Court
+      # determinism, golden-replay and 300-game fuzz tests.
+      - run: npm test
+
+  touch:
+    name: Full Court on a phone (touch only)
+    # Gates every pull request. Deploys skip it (deploy-pages.yml passes
+    # skip_e2e: true): it already passed on the PR, and a slow runner shouldn't
+    # hold a release. On pull_request and push, inputs is empty, so !null is true.
+    if: ${{ !inputs.skip_e2e }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright (Python) and Chromium
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+
+      # No backend: roster and assets are static, and any /api call fails and
+      # falls back, which is what a phone on bad signal sees too.
+      - name: Play a whole game by touch
+        run: |
+          npx vite --port 5184 --strictPort > vite.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:5184/BballTactics/ > /dev/null && break; sleep 1; done
+          python e2e/full-court-touch.py --url http://localhost:5184/BballTactics/ --out e2e-shots --quarter 15
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-court-touch
+          path: |
+            e2e-shots/
+            vite.log
+          if-no-files-found: ignore
