@@ -31,7 +31,7 @@ import random
 import sys
 import time
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
 STATE_JS = """
 () => {
@@ -123,9 +123,20 @@ def main():
         def tap_button(slot):
             sel = '.fc-ab.shoot' if slot == 'shoot' else f'.fc-ab:has(kbd:text-is("{slot}"))'
             btn = page.locator(sel).first
-            if btn.is_enabled():
+            if not btn.is_enabled():
+                return
+            try:
                 btn.tap(timeout=2000)
-                taps[slot] += 1
+            except PlaywrightTimeout:
+                # The HUD reflows every frame (coach line, callouts), so the
+                # locator's stability check can time out on a button that is
+                # plainly there. Tap its current centre with a real touch.
+                box = btn.bounding_box()
+                if not box:
+                    return
+                page.touchscreen.tap(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+                taps['retapped'] = taps.get('retapped', 0) + 1
+            taps[slot] += 1
 
         dist = lambda a, b: math.hypot(a['x'] - b['x'], a['y'] - b['y'])
         start = time.time()
