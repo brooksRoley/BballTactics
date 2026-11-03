@@ -347,6 +347,7 @@ import {
   shopOdds, teamSizeCap, goldIncome, makeUnit, rollShop,
 } from './game/economy.js';
 import { computeSynergies } from './game/synergies.js';
+import { createRunTracker, sendGameEvent } from './game/telemetry.js';
 import { listSchemes, resolveMatchup, suggestCoverage, gradeRead, schemes } from './game/tactics.js';
 
 // ── core state ──────────────────────────────────────────────────────────────
@@ -378,6 +379,8 @@ const runId = ref(null);
 const runStatus = ref('active'); // 'active' | 'won' | 'lost'
 const offlineGhost = ref(false);
 const { startRun, submitAndFetchOpponent, resolveMatch } = useMatchmaking();
+// The site's shared game_start / game_end events (client/game/telemetry.js).
+const runTracker = createRunTracker((event, metadata) => sendGameEvent(event, metadata, { apiBase: API_BASE }));
 
 // ── shop / economy ──────────────────────────────────────────────────────────
 const shopApi = useShop(rosterRef, courtMirror);
@@ -638,6 +641,7 @@ const onLockedIn = async (lineup) => {
   roundStats.value = { playerScoring: [], events: [] };
   phase.value = 'searching';
   bumpMastery([myOffense.value, myCoverage.value], 'used');
+  runTracker.start({ mode: 'autochess' });
 
   await ensureRun();
 
@@ -793,6 +797,15 @@ const onSimComplete = async (result) => {
     if (outcome === 'loss') health.value = Math.max(0, health.value - 20);
     runStatus.value = health.value <= 0 ? 'lost' : round.value >= MAX_ROUNDS ? 'won' : 'active';
   }
+  if (runStatus.value !== 'active') {
+    runTracker.end({
+      mode: 'autochess',
+      result: runStatus.value === 'won' ? 'win' : 'loss',
+      round: round.value,
+      wins: wins.value,
+      losses: losses.value,
+    });
+  }
 
   sfx.play(outcome === 'win' ? 'win' : 'loss');
   phase.value = 'result';
@@ -819,6 +832,7 @@ const resetGame = () => {
   courtMirror.value = [];
   runStatus.value = 'active';
   runId.value = null;
+  runTracker.reset();
   runEpoch.value++;          // remounts PlanningPhase → clears its court state
   shopApi.reset();
   shopApi.roll(1);
