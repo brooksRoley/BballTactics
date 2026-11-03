@@ -11,15 +11,6 @@
            class="court-canvas"
            :style="{ width: COURT_W + 'px', height: COURT_H + 'px', transform: `scale(${courtScale})`, transformOrigin: 'top left' }">
       </div>
-
-      <!-- Floating event popups -->
-      <div v-for="popup in activePopups"
-           :key="popup.id"
-           class="event-popup"
-           :class="popup.type"
-           :style="{ left: (popup.x * courtScale) + 'px', top: (popup.y * courtScale) + 'px' }">
-        {{ popup.text }}
-      </div>
     </div>
 
     <!-- Pre-fight defensive coverage picker (preview only) -->
@@ -84,8 +75,6 @@ export default {
     const timeLeft = ref(12.0);
     const overtime = ref(false);
     const statusText = ref('Tip-off!');
-    const activePopups = ref([]);
-    let popupCounter = 0;
     let animationFrameId = null;
     let lastTime = 0;
     let simDone = false;
@@ -98,14 +87,6 @@ export default {
     // Scoring attribution tracking
     const playerPoints = {};
     const eventLog = [];
-
-    const spawnPopup = (x, y, text, type = 'score-home') => {
-      const id = ++popupCounter;
-      activePopups.value = [...activePopups.value, { id, x, y, text, type }];
-      setTimeout(() => {
-        activePopups.value = activePopups.value.filter(p => p.id !== id);
-      }, 1200);
-    };
 
     // The engine reports who made the basket; by the time we see the score
     // the ball already belongs to the inbounding team, so possession lies.
@@ -501,7 +482,7 @@ export default {
     });
 
     return {
-      homeScore, awayScore, timeLeft, overtime, statusText, activePopups,
+      homeScore, awayScore, timeLeft, overtime, statusText,
       courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr,
       simPhase, selectedSchemeId, COVERAGE_SCHEMES, selectScheme, startFight,
     };
@@ -550,33 +531,6 @@ export default {
   font-size: 1rem;
   color: #ffd700;
   font-weight: bold;
-}
-
-/* ── Floating event popups ──────────────────────────────────────── */
-.event-popup {
-  position: absolute;
-  pointer-events: none;
-  font-weight: 900;
-  font-size: 1.3rem;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-  animation: popup-float 1.2s ease-out forwards;
-  z-index: 20;
-}
-.event-popup.score-home { color: #d9534f; }
-.event-popup.score-away { color: #5bc0de; }
-
-@keyframes popup-float {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(0.8);
-  }
-  20% {
-    transform: translateY(-8px) scale(1.2);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
 }
 
 /* ── Pre-fight coverage picker ───────────────────────────────────── */
