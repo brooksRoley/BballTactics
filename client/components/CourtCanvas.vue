@@ -388,6 +388,7 @@ export default {
           outcome,
           homeScore: homeScore.value,
           awayScore: awayScore.value,
+          overtime: overtime.value,
           playerScoring,
           events: eventLog,
         });

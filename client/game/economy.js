@@ -73,6 +73,35 @@ export function streakBonus(streak) {
   return 0;
 }
 
+/** Run HP: every run starts here; 0 eliminates. */
+export const START_HP = 100;
+/** A loss costs between these, by final margin (fun-brief rec 6). */
+export const MIN_LOSS_DAMAGE = 8;
+export const MAX_LOSS_DAMAGE = 20;
+const DAMAGE_PER_POINT = 2;
+
+/**
+ * HP lost on a defeat, scaled by how badly you lost (fun-brief rec 6):
+ *   8 + 2 x (margin - 1), capped at 20.
+ * Lose by 1 -> 8, by 2 -> 10, by 4 -> 14, by 7 or more -> 20. A close loss
+ * stays hopeful; a blowout still hurts like the old flat 20.
+ *
+ * Overtime is sudden death (first basket wins), so an OT loss always costs
+ * the minimum, whatever the final basket's value. A margin of 0 (still tied
+ * after OT, which counts as a loss) or below also costs the minimum. A
+ * missing or non-numeric margin falls back to the maximum, the old flat rule.
+ *
+ * @param {number} margin points you lost by (their score - yours)
+ * @param {{overtime?: boolean}} [opts]
+ * @returns {number} HP to deduct, MIN_LOSS_DAMAGE..MAX_LOSS_DAMAGE
+ */
+export function hpLoss(margin, { overtime = false } = {}) {
+  if (overtime) return MIN_LOSS_DAMAGE;
+  if (typeof margin !== 'number' || !Number.isFinite(margin)) return MAX_LOSS_DAMAGE;
+  const m = Math.max(1, Math.round(margin));
+  return Math.min(MAX_LOSS_DAMAGE, MIN_LOSS_DAMAGE + DAMAGE_PER_POINT * (m - 1));
+}
+
 /** Interest: +1 gold per 10 banked, capped. */
 export function interestOn(banked) {
   return Math.min(Math.floor(Math.max(0, banked) / 10), INTEREST_CAP);

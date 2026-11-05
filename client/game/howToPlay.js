@@ -6,12 +6,12 @@
  */
 import {
   SHOP_SIZE, BENCH_CAP, REROLL_COST, BASE_INCOME, INTEREST_CAP, STARTING_GOLD, MAX_ROUNDS, STAR_MULTIPLIER,
-  teamSizeCap, interestOn, streakBonus,
+  teamSizeCap, interestOn, streakBonus, START_HP, MIN_LOSS_DAMAGE, MAX_LOSS_DAMAGE,
 } from './economy.js';
 import schemes from './schemes.json' with { type: 'json' };
 
-export const START_HP = 100;
-export const LOSS_DAMAGE = 20;
+// HP numbers live in economy.js next to hpLoss(); re-exported for the cards.
+export { START_HP, MIN_LOSS_DAMAGE, MAX_LOSS_DAMAGE };
 
 /** The pitch: why a first-time player should stay. */
 export const PITCH = {
@@ -53,7 +53,7 @@ export function howToPlayCards() {
       id: 'front-office',
       art: 'hp',
       title: 'You run the front office',
-      body: `You draft the players and call the plan; your team plays the game itself. ${MAX_ROUNDS} rounds, ${START_HP} HP. Lose a round and you lose ${LOSS_DAMAGE} HP. Reach 0 and the run is over.`,
+      body: `You draft the players and call the plan; your team plays the game itself. ${MAX_ROUNDS} rounds, ${START_HP} HP. Lose a round and you lose ${MIN_LOSS_DAMAGE}–${MAX_LOSS_DAMAGE} HP: a close loss stings, a blowout hurts. Reach 0 and the run is over.`,
     },
     {
       id: 'shop',

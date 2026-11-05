@@ -8,9 +8,9 @@
       <svg class="htp-art" viewBox="0 0 300 110" aria-hidden="true">
         <g v-if="card.art === 'hp'">
           <rect x="20" y="40" width="260" height="22" rx="11" fill="#22252c" stroke="#3a4352" />
-          <rect x="22" y="42" :width="256 * 0.8" height="18" rx="9" fill="#5cb85c" />
-          <rect :x="22 + 256 * 0.8" y="42" :width="256 * 0.2" height="18" rx="9" fill="#d9534f" class="htp-pulse" />
-          <text x="150" y="90" text-anchor="middle" class="htp-svg-text">a loss costs {{ LOSS_DAMAGE }} of {{ START_HP }}</text>
+          <rect x="22" y="42" :width="256 * (1 - MAX_LOSS_DAMAGE / START_HP)" height="18" rx="9" fill="#5cb85c" />
+          <rect :x="22 + 256 * (1 - MAX_LOSS_DAMAGE / START_HP)" y="42" :width="256 * MAX_LOSS_DAMAGE / START_HP" height="18" rx="9" fill="#d9534f" class="htp-pulse" />
+          <text x="150" y="90" text-anchor="middle" class="htp-svg-text">a loss costs {{ MIN_LOSS_DAMAGE }}–{{ MAX_LOSS_DAMAGE }} of {{ START_HP }}, by margin</text>
         </g>
         <g v-else-if="card.art === 'shop'">
           <g v-for="i in SHOP_SIZE" :key="i" :transform="`translate(${(i - 1) * 56 + 14} 20)`">
@@ -66,7 +66,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { howToPlayCards, START_HP, LOSS_DAMAGE } from '../game/howToPlay.js';
+import { howToPlayCards, START_HP, MIN_LOSS_DAMAGE, MAX_LOSS_DAMAGE } from '../game/howToPlay.js';
 import { SHOP_SIZE, BASE_INCOME } from '../game/economy.js';
 import { sfx } from '../audio/sfx.js';
 

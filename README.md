@@ -90,7 +90,7 @@ BballTactics/
 ### Vue Frontend (Vite + Vue 3)
 - **App.vue**: Phase state machine (tutorial → planning → sim → result → next round). Loads roster from backend `/api/roster` with static file fallback. Passes `courtLineup` from PlanningPhase to CourtCanvas.
 - **Economy system**: Weighted shop randomization by cost tier and round number (early rounds favor cheap units, late rounds unlock expensive ones). Gold income scales with round. Reroll shop for 1G. Sell players from bench for partial refund (floor of cost/2).
-- **Win/loss tracking**: Explicit W/L record displayed in status bar and result screen. HP system (100 HP, -20 per loss). Season ends at round 10 or 0 HP.
+- **Win/loss tracking**: Explicit W/L record displayed in status bar and result screen. HP system (100 HP; a loss costs 8–20 HP by margin, `hpLoss` in client/game/economy.js). Season ends at round 10 or 0 HP.
 - **PlanningPhase.vue**: Drag-and-drop grid with tap-to-place mobile support. Players dragged to court call `SpawnPlayer` + `SetPlayerCoordinates`; dragging back calls `RemovePlayer`. Sell button on bench players. Emits lineup data on lock-in.
 - **CourtCanvas.vue**: rAF-driven sim loop. Reads engine state via `GetGameStateJSON()` when available. JS fallback mode: target-based movement using player speed stats when engine isn't loaded. Player dots show abbreviated names. Scoring probability scales with players near the basket. Bot opponents move with target-seeking behavior.
 - **TutorialPhase1.vue**: Coach Miller guided onboarding.
@@ -189,7 +189,7 @@ python3 -c "from scraper import NBADatasetProcessor; p = NBADatasetProcessor(); 
 
 - [x] **Shop randomization**: Weighted random pool of 5 players per round. Early rounds (1-3) favor cost 1-2 units; mid rounds (4-6) open cost 3-4; late rounds (7-10) unlock cost 5 at meaningful rates.
 - [x] **Gold/salary system**: Gold display in status bar. Buy players from shop, sell from bench for floor(cost/2) refund. Reroll shop for 1G. Income scales with round (base 5 + interest up to 5).
-- [x] **Multi-round flow**: Full game loop — planning → sim → result → next round. W/L record tracked and displayed. HP-based elimination (100 HP, -20 per loss). Season ends at round 10 or 0 HP.
+- [x] **Multi-round flow**: Full game loop — planning → sim → result → next round. W/L record tracked and displayed. HP-based elimination (100 HP; 8–20 HP per loss by margin). Season ends at round 10 or 0 HP.
 - [x] **Roster endpoint**: `GET /api/roster` serves `engine_roster.json` from the backend. Frontend tries API first, falls back to static file for gh-pages.
 
 ### Phase 9: Deploy & Infrastructure (Complete)

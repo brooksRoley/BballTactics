@@ -405,6 +405,11 @@ export function gradeRead(playerChoice, opponentBoard) {
     score,
     lesson: parts.join(' '),
     concepts: [...new Set([myOff.id, myCov.id, theirOff.id, theirCov.id])],
+    // The two halves of the read, for the result card's one-line summary
+    // (client/game/roundSummary.js): >0 favoured you, <0 favoured them.
+    offEdge: round(offEdge),
+    defEdge: round(defEdge),
+    names: { myOffense: myOff.name, myCoverage: myCov.name, theirOffense: theirOff.name, theirCoverage: theirCov.name },
   };
 }
 
