@@ -243,3 +243,9 @@ tqdm>=4.66.0
 - [ ] **Lockdown synergy**: `lockdownCount` is tracked in SynergyEngine but no buff is created. Design the defensive synergy tier.
 - [ ] **Live data source**: Replace mock data in `scraper.py` with a real NBA stats API (nba_api package or balldontlie v2).
 - [ ] **True ghost simulation**: Load the opponent's `board_data` from the DB into the C++ engine as the actual away team instead of spawning bot opponents.
+
+## License
+
+[Functional Source License 1.1, MIT Future License](LICENSE.md) (FSL-1.1-MIT): free to use, change and share for any purpose except a competing commercial product, and each release becomes MIT two years after it is published.
+
+NBA player names, team names and statistics in this repository come from their original sources (stats.nba.com, ESPN, balldontlie) and stay under those sources' terms. This license does not cover them, and no NBA or team logos, marks or player likenesses are licensed here.
