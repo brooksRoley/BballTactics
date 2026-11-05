@@ -58,7 +58,9 @@ export default {
     // The coverage called on the scouting report (schemes.json id). Its effect
     // on the sim is already in awayMultiplier; here it is only displayed.
     coverage: { type: String, default: 'drop' },
-    roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
+    roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) },
+    // Shootaround replays skip the coverage panel and tip off at once
+    autoStart: { type: Boolean, default: false }
   },
   emits: ['sim-complete', 'fight-started'],
   setup(props, { emit }) {
@@ -433,6 +435,7 @@ export default {
         // Show the coverage panel first; the sim loop starts on "Start Fight".
         renderFrame();
         prefightRAF = requestAnimationFrame(prefightLoop);
+        if (props.autoStart) startFight();
       } catch (e) {
         console.error('CourtRenderer failed to load', e);
       }
