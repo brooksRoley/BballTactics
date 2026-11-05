@@ -1,44 +1,23 @@
 # Hardwood Launcher — project plan
 
-Written 2026-10-21. A two-week, time-boxed project that makes one application
-stronger: Riot Games, **Senior Software Engineer, Riot Client – Publishing
-Platform** (web-tech variant, Greenhouse id 8222064, posted 2026-10-08).
+Written 2026-10-21. A two-week, time-boxed project: a small desktop launcher
+for Hardwood Autochess, in Electron + React + TypeScript, that installs,
+patches and launches the game, and loads the C++ engine as a native Node addon.
 
 ## Why this project
 
-The posting, in its own words:
-
-- Required: 6+ years; "expertise in web technologies (React.js, Node.js) with
-  application level complexity"; experience in C++; complex code bases.
-- Desired: desktop applications, Electron, build pipelines.
-- The job: "Develop and maintain desktop application features focusing on web
-  tech, with the ability to integrate with and contribute C++ components."
-  The Riot Client is where players play, discover and install Riot games.
-
-What Brooks already has: ten years of web work and Node services; a C++17
-engine (`shared-core`) compiled to WASM through CMake/Emscripten, also bound to
-Python and Swift; real game literacy.
-
-The gaps a reviewer will see: production React is 2017–19 (Grove was Vue),
-the C++ is personal-project C++, and there is no Electron or desktop work.
-
-**One project closes all three:** a small desktop launcher for Hardwood
-Autochess, in Electron + React + TypeScript, that installs, patches and
-launches the game, and loads the C++ engine as a native Node addon. It is the
-role's job in miniature, built on a game he already made.
+A web game ends at the browser tab. A launcher is the layer most game players
+meet first: install, patch, play. It exercises desktop work (Electron's process
+model and security), a real update pipeline (content-addressed chunks,
+resumable downloads, atomic swaps, rollback) and the native/web boundary (the
+same C++ core as a Node addon instead of WebAssembly).
 
 ## Ground rules
 
-- **Apply first, build second.** The application goes in this week with the
-  repo link and M0–M1 done. The project is for the referral note, the screen
-  and the follow-up, not a reason to wait. Postings close.
 - **Time box: two weeks.** M2 is the core. If behind, cut M3's benchmark, then
   M4's Windows artifact — never the patcher.
-- **No Riot names, logos or assets anywhere.** It is "Hardwood Launcher", a
-  personal project modeled on the kind of work the role describes. The README
-  says so. Never imply knowledge of Riot's internals.
-- **Job sends come first.** This is the only feature work allowed before the
-  week's sends are done (see the job-search tool's "build vs. send" rule).
+- **Original work only.** It is "Hardwood Launcher", a personal project. No
+  other company's names, logos or assets.
 
 ## Architecture
 
@@ -65,7 +44,7 @@ already a submodule here. One repo shows the game, its engine and its client.
 Electron security baseline from day one: `contextIsolation: true`,
 `sandbox: true`, `nodeIntegration: false`, a strict CSP, a typed preload API
 (no raw `ipcRenderer` in the renderer), and every IPC payload validated in
-main. This is a common interview topic and cheap to get right early.
+main. It is cheap to get right early and expensive to retrofit.
 
 ## Milestones
 
@@ -84,7 +63,7 @@ Each one leaves something demoable, so stopping early still yields a story.
 - Keyboard navigation, visible focus, reduced-motion support: the accessibility
   bar from brooksroley.com, applied to a game client.
 - **Done when:** a fresh machine can install and play Hardwood from the
-  launcher. **Apply to Riot at this point** with the repo link.
+  launcher.
 
 ### M2 — Patcher (days 4–7) — the core — done 2026-10-21
 
@@ -129,25 +108,12 @@ downloads 16 KB of 1.07 MB.
 - README top: GIF, download links, one paragraph, an architecture diagram.
 - A post on brooksroley.com: "A small game launcher: chunked patching, a
   native C++ engine and Electron's security model." Linked from Projects.
-- Three storybank entries for the interview coach:
+- Write-ups of the three hardest parts:
   1. Designing the patcher (content addressing, atomic swap, rollback).
   2. The native/web boundary (N-API vs. WASM, threads, what the benchmark showed).
   3. Electron's security model and the IPC surface.
-- Resume bullet (only once shipped), in `src/lib/resume.ts`, `resume.json` and the PDF.
-
-## Using it in the search
-
-| When | Move |
-|---|---|
-| M1 done | Apply to the Riot Client role; the letter names the repo. |
-| M1 done | Referral search: former Grove / Zipongo colleagues now at Riot; IGDA OC mixer. One short note with the repo link. |
-| M2–M3 done | Follow-up note to the recruiter or referrer with the GIF and one numbers line from the benchmark. |
-| Screen booked | Rehearse the three stories with `agent.py mock`; drill React (hooks, reducers, rendering) since production React is the oldest skill. |
 
 ## Open questions
 
-- Riot's in-office expectation for this team. West LA is ~60 miles each way;
-  ask the recruiter on the first call, before investing further.
-- Which Riot role was applied to before, and when. Don't repeat it.
 - Electron version and cmake-js pairing: pin both in M0, since native addons
   are tied to Electron's ABI.
