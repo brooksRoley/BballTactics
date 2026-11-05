@@ -4,12 +4,12 @@
       <h1>Hardwood Autochess</h1>
       <div class="status-bar" data-tour="status">
         <button
-          v-if="phase === 'planning' || phase === 'result' || phase === 'fullcourt'"
+          v-if="phase === 'planning' || phase === 'result' || phase === 'fullcourt' || phase === 'shootaround'"
           class="open-gym-btn"
           @click="openGym"
         >Open Gym</button>
         <button
-          v-if="phase !== 'filmroom' && phase !== 'fullcourt'"
+          v-if="phase !== 'filmroom' && phase !== 'fullcourt' && phase !== 'shootaround'"
           class="film-room-btn"
           data-tour="filmroom"
           @click="openFilmRoom"
@@ -20,7 +20,7 @@
           :aria-label="soundMuted ? 'Turn sound on' : 'Turn sound off'"
           @click="toggleSound"
         >{{ soundMuted ? '🔇' : '🔊' }}</button>
-        <template v-if="phase !== 'filmroom' && phase !== 'gym' && phase !== 'fullcourt'">
+        <template v-if="phase !== 'filmroom' && phase !== 'gym' && phase !== 'fullcourt' && phase !== 'shootaround'">
           <span class="round-badge">Round {{ Math.min(round, 10) }}/10</span>
           <span class="record-badge">{{ wins }}W - {{ losses }}L</span>
           <span v-if="streakCount >= 2" class="streak-badge" :class="streakType">
@@ -84,6 +84,13 @@
         @music-volume="onMusicVolume"
         @replay-tutorial="onReplayTutorial"
         @fullcourt="phase = 'fullcourt'"
+        @shootaround="phase = 'shootaround'"
+      />
+
+      <!-- Shootaround: a no-stakes court, no HP and no gold (docs/design/open-gym.md, OG4) -->
+      <Shootaround
+        v-if="phase === 'shootaround'"
+        @exit="openGym"
       />
 
       <!-- Full Court: the same players, live, one of them yours (docs/design/full-court.md) -->
@@ -350,6 +357,7 @@ import CoachOverlay from './components/CoachOverlay.vue';
 import SpringBar from './components/SpringBar.vue';
 import OpenGym from './components/OpenGym.vue';
 import FullCourt from './components/FullCourt.vue';
+import Shootaround from './components/Shootaround.vue';
 import ControlsTour from './components/ControlsTour.vue';
 import { sfx } from './audio/sfx.js';
 import { useShop } from './composables/useShop.js';

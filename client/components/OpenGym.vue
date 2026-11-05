@@ -51,6 +51,7 @@
           {{ inRun ? 'Back to the run' : 'Run It' }}
         </button>
         <button class="og-btn og-full" @click="$emit('fullcourt')">Full Court <span class="og-new">new</span></button>
+        <button class="og-btn" @click="$emit('shootaround')">Shootaround</button>
         <button class="og-btn" @click="howOpen = true">How to Play</button>
         <button class="og-btn" @click="$emit('controls')">Controls</button>
         <button
@@ -84,7 +85,7 @@ defineProps({
   musicVolume: { type: Number, default: 0.5 },
   showReplay: { type: Boolean, default: false },
 });
-defineEmits(['run', 'controls', 'toggle-sound', 'music-volume', 'replay-tutorial', 'fullcourt']);
+defineEmits(['run', 'controls', 'toggle-sound', 'music-volume', 'replay-tutorial', 'fullcourt', 'shootaround']);
 
 const pitch = PITCH;
 const howOpen = ref(false);
