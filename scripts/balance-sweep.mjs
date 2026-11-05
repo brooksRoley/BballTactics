@@ -1,12 +1,14 @@
 // Balance sweep: run many fights through the real WASM engine in Node and
 // report win rates, scoring, and two motion measures.
 //
-//   node scripts/balance-sweep.mjs [engineDir=public] [sims=300]
+//   node scripts/balance-sweep.mjs [engineDir=public] [sims=300] [regSecs] [otSecs]
 //
 // A fight is set up the way App.vue's syncEngineForRound does it (SpawnUnit for
 // home, SetAwayTeamJSON for the ghost board, StartRound) and ticked the way
-// CourtCanvas does it: fixed 1/60 s steps, 30 s of sim time (12 s on screen at
-// 2.5x), then sudden-death overtime up to 15 s; a tie after OT is a home loss.
+// CourtCanvas does it: fixed 1/60 s steps through regulation, then
+// sudden-death overtime; a tie after OT is a home loss. Regulation and OT
+// default to the game's clock (client/game/roundClock.js, in sim seconds);
+// pass regSecs / otSecs to try another round length before changing it.
 //
 // Matchups:
 //   top vs bottom   the five most expensive players vs the five cheapest:
@@ -24,12 +26,15 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
+import { REGULATION_SIM_SECONDS, OT_SIM_SECONDS } from '../client/game/roundClock.js';
 
 const engineDir = resolve(process.argv[2] ?? 'public');
 const SIMS = Number(process.argv[3] ?? 300);
 const DT = 1 / 60;
-const REGULATION_TICKS = 30 * 60;
-const OT_TICKS = 15 * 60;
+const REG_SECS = Number(process.argv[4] ?? REGULATION_SIM_SECONDS);
+const OT_SECS = Number(process.argv[5] ?? OT_SIM_SECONDS);
+const REGULATION_TICKS = Math.round(REG_SECS * 60);
+const OT_TICKS = Math.round(OT_SECS * 60);
 const BUNCH_PX = 20;
 const TELEPORT_PX = 30;
 
@@ -97,6 +102,7 @@ function sweep(label, pick) {
     matchup: label,
     homeWin: `${((100 * results.filter((r) => r.home > r.away).length) / n).toFixed(0)}%`,
     avgScore: `${avg((r) => r.home).toFixed(1)}–${avg((r) => r.away).toFixed(1)}`,
+    points: avg((r) => r.home + r.away).toFixed(1),
     scoreless: `${((100 * results.filter((r) => r.home + r.away === 0).length) / n).toFixed(0)}%`,
     bunching: avg((r) => r.bunchPerSec).toFixed(2),
     teleportsPerSec: avg((r) => r.teleportsPerSec).toFixed(3),
@@ -111,7 +117,7 @@ const top = byCost.slice(0, 5);
 const bottom = byCost.slice(-5);
 const randomFive = () => [...roster].sort(() => Math.random() - 0.5).slice(0, 5);
 
-console.log(`engine: ${engineDir} · ${SIMS} sims per matchup`);
+console.log(`engine: ${engineDir} · ${SIMS} sims per matchup · ${REG_SECS} s regulation + ${OT_SECS} s OT (sim time)`);
 console.table([
   sweep('top vs bottom', () => [top, bottom]),
   sweep('random mirror', () => { const five = randomFive(); return [five, five]; }),

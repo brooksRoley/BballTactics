@@ -13,30 +13,22 @@
       </div>
     </div>
 
-    <!-- Pre-fight defensive coverage picker (preview only) -->
+    <!-- Pre-fight: the coverage called on the scouting report, shown on the floor -->
     <div v-if="simPhase === 'prefight'" class="coverage-panel">
       <div class="coverage-head">
         <span class="coverage-coach">COACH MILLER</span>
-        <span class="coverage-preview-tag">PREVIEW</span>
+        <span class="coverage-preview-tag">OUR CALL</span>
       </div>
+      <p class="coverage-call">
+        <strong class="cc-name">{{ call.name }}</strong>
+        <span class="cc-tag">{{ call.tagline }}</span>
+      </p>
       <p class="coverage-blurb">
-        Call our coverage before tip. The glow on <strong>their</strong> end shows where we funnel them —
+        Against their offense it {{ call.effectText }}.
+        The glow on <strong>their</strong> end shows the shots it allows and takes away:
         <span class="warm-key">warm = we send them here</span>,
         <span class="cool-key">cool = we take it away</span>.
-        <em>This is a preview only — the ref doesn't enforce it yet.</em>
       </p>
-      <div class="coverage-options">
-        <button
-          v-for="s in COVERAGE_SCHEMES"
-          :key="s.id"
-          class="coverage-btn"
-          :class="{ active: selectedSchemeId === s.id }"
-          @click="selectScheme(s.id)"
-        >
-          <span class="cb-name">{{ s.name }}</span>
-          <span class="cb-tag">{{ s.tagline }}</span>
-        </button>
-      </div>
       <button class="coverage-start" data-sfx="none" @click="startFight">Start Fight</button>
     </div>
 
@@ -45,12 +37,14 @@
 </template>
 
 <script>
-import { ref, shallowRef, onMounted, onUnmounted, inject, unref } from 'vue';
+import { ref, shallowRef, computed, onMounted, onUnmounted, inject, unref } from 'vue';
 import { createFallbackSim } from '../game/fallbackSim.js';
 import { createFixedStepper, interpolateState, SNAP_DIST } from '../game/interpolate.js';
 import { detectEvents, isGameWinner, rimFor } from '../game/events.js';
 import { sfx } from '../audio/sfx.js';
 import { FEEL } from '../fx/feel.js';
+import { ROUND_SECONDS, OT_SECONDS, SIM_SPEED } from '../game/roundClock.js';
+import { coverageCall } from '../game/coveragePreview.js';
 
 export default {
   props: {
@@ -61,9 +55,12 @@ export default {
     opponentUnits: { type: Array, default: () => [] },
     homeMultiplier: { type: Number, default: 1 },
     awayMultiplier: { type: Number, default: 1 },
+    // The coverage called on the scouting report (schemes.json id). Its effect
+    // on the sim is already in awayMultiplier; here it is only displayed.
+    coverage: { type: String, default: 'drop' },
     roundStats: { type: Object, default: () => ({ playerScoring: [], events: [] }) }
   },
-  emits: ['sim-complete', 'coverage-opened', 'coverage-selected', 'fight-started'],
+  emits: ['sim-complete', 'fight-started'],
   setup(props, { emit }) {
     // Sim state is replaced wholesale every frame and never read by the
     // template, so shallow refs skip deep-proxying a fresh array each frame.
@@ -72,7 +69,7 @@ export default {
     const ball = shallowRef({ x: 400, y: 200, z: 0, possessorId: -1, isPossessed: false });
     const homeScore = ref(0);
     const awayScore = ref(0);
-    const timeLeft = ref(12.0);
+    const timeLeft = ref(ROUND_SECONDS);
     const overtime = ref(false);
     const statusText = ref('Tip-off!');
     let animationFrameId = null;
@@ -111,12 +108,11 @@ export default {
 
     const COURT_W = 800;
     const COURT_H = 400;
-    // A round is 12s on screen but 30s of basketball (the engine runs at
-    // SIM_SPEED), enough for ~5 possessions a side. A tie at the horn goes to
-    // sudden-death overtime: next basket wins.
-    const SIM_DURATION = 12.0;
-    const OT_DURATION = 6.0;
-    const SIM_SPEED = 2.5;
+    // Round length lives in client/game/roundClock.js (shared with the
+    // balance sweep): ROUND_SECONDS on screen at SIM_SPEED. A tie at the horn
+    // goes to sudden-death overtime: next basket wins.
+    const SIM_DURATION = ROUND_SECONDS;
+    const OT_DURATION = OT_SECONDS;
     const SIM_SUBSTEP = 1 / 60;
     // Substeps per frame cap: the 50 ms dt clamp needs at most 8 (0.125 s of
     // sim); past that a stall's backlog is dropped, not replayed.
@@ -130,32 +126,14 @@ export default {
     const shotClock = ref(SHOT_CLOCK_MAX);
     let lastPossessionTeam = null;
 
-    // ── Pre-fight coverage picker (preview only) ──────────────────
-    // simPhase gates the existing sim loop behind a "Start Fight" button
-    // so the player can preview a defensive scheme first. This is a
-    // presentational layer — the WASM engine is not told about it.
+    // ── Pre-fight coverage display ────────────────────────────────
+    // simPhase gates the sim loop behind "Start Fight". The panel shows the
+    // coverage called on the scouting report and its real effect (the
+    // opponent multiplier the sim already uses); the glow pictures it.
     const simPhase = ref('prefight'); // 'prefight' | 'live'
-    const selectedSchemeId = ref('drop');
-    let flashT0 = 0;               // timestamp of the last preview flash
+    const call = computed(() => coverageCall(props.coverage, props.awayMultiplier));
+    let flashT0 = 0;               // timestamp the glow started fading in
     let prefightRAF = null;
-
-    // Effect value per opponent shot zone, in [-1, 1].
-    // Positive = attempts ELEVATED / funnelled here (warm, brighter).
-    // Negative = attempts SUPPRESSED / taken away (cool, dimmer).
-    // Read from the DEFENSE's point of view: pushing an opponent toward
-    // the low-value mid-range still reads "warm" because we WANT them there.
-    const COVERAGE_SCHEMES = [
-      { id: 'drop',   name: 'Drop',   tagline: 'Wall off the rim, live with mid-range.',
-        effects: { rim: -0.85, mid:  0.85, cornerTop: -0.20, cornerBottom: -0.20, wing:  0.10 } },
-      { id: 'switch', name: 'Switch', tagline: 'Switch 1–5, no blown coverages.',
-        effects: { rim: -0.45, mid:  0.35, cornerTop: -0.55, cornerBottom: -0.55, wing: -0.35 } },
-      { id: 'blitz',  name: 'Blitz',  tagline: 'Trap the ball, dare the pass.',
-        effects: { rim:  0.60, mid: -0.45, cornerTop:  0.50, cornerBottom:  0.50, wing: -0.85 } },
-      { id: 'ice',    name: 'ICE',    tagline: 'Force baseline, kill the corner three.',
-        effects: { rim: -0.15, mid:  0.60, cornerTop: -0.90, cornerBottom: -0.90, wing:  0.25 } },
-      { id: 'zone',   name: 'Zone',   tagline: 'Pack the paint, contest the arc late.',
-        effects: { rim: -0.70, mid: -0.40, cornerTop:  0.70, cornerBottom:  0.70, wing:  0.65 } },
-    ];
 
     // Opponent shot zones, positioned around THEIR basket (the left hoop —
     // the away team attacks left; see the fallback sim's target of x≈30).
@@ -166,14 +144,6 @@ export default {
       { key: 'cornerBottom', label: 'C3',  cx: 72,  cy: 344, rx: 46, ry: 34 },
       { key: 'wing',         label: '3',   cx: 192, cy: 200, rx: 34, ry: 82 },
     ];
-
-    const selectedScheme = () => COVERAGE_SCHEMES.find(s => s.id === selectedSchemeId.value) || null;
-
-    const selectScheme = (id) => {
-      selectedSchemeId.value = id;
-      flashT0 = performance.now(); // re-trigger the preview flash
-      emit('coverage-selected', id);
-    };
 
     const courtScaler = ref(null);
     const courtCanvas = ref(null);
@@ -189,15 +159,13 @@ export default {
 
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-    // ── Coverage preview state (cosmetic) ─────────────────────────
-    // Builds the per-zone draw data for the currently selected scheme and
-    // hands it to the Pixi renderer. Warm = attempts elevated/funnelled here,
-    // cool = attempts suppressed/taken away. The flash envelope spikes on
-    // select, then settles to a steady glow so the active scheme stays legible.
+    // ── Coverage glow (cosmetic) ──────────────────────────────────
+    // Builds the per-zone draw data for the called coverage and hands it to
+    // the Pixi renderer. Warm = attempts funnelled here, cool = taken away.
+    // The flash envelope spikes on mount, then settles to a steady glow.
     const buildCoverage = () => {
       if (simPhase.value !== 'prefight') return null;
-      const scheme = selectedScheme();
-      if (!scheme) return null;
+      const scheme = call.value;
 
       const elapsed = (performance.now() - flashT0) / 1000;
       let alpha;
@@ -395,8 +363,8 @@ export default {
       }, 1500);
     };
 
-    // Idle render loop while the coverage picker is up, so the preview
-    // flash animates without running the simulation.
+    // Idle render loop while the coverage panel is up, so the glow
+    // animates without running the simulation.
     const prefightLoop = () => {
       if (simPhase.value !== 'prefight') return;
       renderFrame();
@@ -421,8 +389,6 @@ export default {
     };
 
     onMounted(async () => {
-      // The prefight coverage picker is visible from mount — cue the coach.
-      emit('coverage-opened');
       if (getEngine()) {
         // Show the opening formation the engine built in StartRound
         try { applySimState(JSON.parse(getEngine().GetGameStateJSON())); } catch (e) { /* no state yet */ }
@@ -464,7 +430,7 @@ export default {
         });
         await renderer.ready;
         if (unmounted) { renderer.destroy(); renderer = null; return; }
-        // Show the coverage picker first; the sim loop starts on "Start Fight".
+        // Show the coverage panel first; the sim loop starts on "Start Fight".
         renderFrame();
         prefightRAF = requestAnimationFrame(prefightLoop);
       } catch (e) {
@@ -485,7 +451,7 @@ export default {
     return {
       homeScore, awayScore, timeLeft, overtime, statusText,
       courtScaler, courtCanvas, courtScale, COURT_W, COURT_H, dpr,
-      simPhase, selectedSchemeId, COVERAGE_SCHEMES, selectScheme, startFight,
+      simPhase, call, startFight,
     };
   }
 };
@@ -534,7 +500,7 @@ export default {
   font-weight: bold;
 }
 
-/* ── Pre-fight coverage picker ───────────────────────────────────── */
+/* ── Pre-fight coverage panel ────────────────────────────────────── */
 .coverage-panel {
   width: 100%;
   max-width: 800px;
@@ -573,45 +539,25 @@ export default {
   color: #cfcfcf;
 }
 .coverage-blurb strong { color: #fff; }
-.coverage-blurb em { color: #8a8a8a; font-size: 0.76rem; }
 .warm-key { color: #ff9a52; font-weight: bold; }
 .cool-key { color: #5f8cdc; font-weight: bold; }
 
-.coverage-options {
+.coverage-call {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 6px;
 }
-.coverage-btn {
-  flex: 1 1 130px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  text-align: left;
-  padding: 8px 10px;
-  background: #171717;
-  border: 2px solid #383838;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-.coverage-btn:hover { transform: translateY(-2px); border-color: #6b6b6b; }
-.coverage-btn.active {
-  border-color: #f4a300;
-  background: #241d10;
-  box-shadow: 0 0 14px rgba(244, 163, 0, 0.35);
-}
-.cb-name {
+.cc-name {
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 1rem;
   color: #ffd700;
   letter-spacing: 0.04em;
 }
-.cb-tag {
-  font-size: 0.72rem;
+.cc-tag {
+  font-size: 0.78rem;
   color: #9a9a9a;
-  line-height: 1.3;
 }
 
 .coverage-start {
@@ -630,8 +576,4 @@ export default {
   transition: background 0.15s ease;
 }
 .coverage-start:hover { background: #c9302c; }
-
-@media (max-width: 600px) {
-  .coverage-btn { flex: 1 1 100%; }
-}
 </style>

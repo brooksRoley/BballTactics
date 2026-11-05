@@ -16,6 +16,8 @@
  * Exports:
  *   resolveMatchup(myOffense, theirCoverage, myUnits, theirUnits)
  *     -> { offenseMultiplier, base, notes[] }
+ *   roundMatchups({ myOffense, myCoverage, theirOffense, theirCoverage, myUnits, theirUnits })
+ *     -> { home, away } — both sides of one round, the multipliers the sim uses
  *   suggestCoverage(opponentUnits) -> ranked [{ coverage, name, score, reasoning }]
  *   gradeRead(playerChoice, opponentBoard) -> { grade, score, lesson, concepts[] }
  *   listSchemes(), getScheme(id), schemes (raw data)
@@ -253,6 +255,20 @@ export function resolveMatchup(myOffense, theirCoverage, myUnits = [], theirUnit
   const offenseMultiplier = round(clamp(raw, FINAL_CLAMP.min, FINAL_CLAMP.max));
 
   return { offenseMultiplier, base, notes };
+}
+
+/**
+ * Both sides of one round's matchup — what App.vue's startBattle feeds the
+ * sim. home.offenseMultiplier scales my shooting (my offense into their
+ * coverage); away.offenseMultiplier scales theirs (their offense into MY
+ * coverage). myCoverage is the one call the player makes on the scouting
+ * report, so this is where that call reaches the simulation.
+ */
+export function roundMatchups({ myOffense, myCoverage, theirOffense, theirCoverage, myUnits = [], theirUnits = [] }) {
+  return {
+    home: resolveMatchup(myOffense, theirCoverage, myUnits, theirUnits),
+    away: resolveMatchup(theirOffense, myCoverage, theirUnits, myUnits),
+  };
 }
 
 /**

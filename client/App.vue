@@ -126,17 +126,9 @@
               </option>
             </select>
           </label>
-          <label class="scheme-picker">
-            <span class="scheme-label">Coverage</span>
-            <select v-model="myCoverage">
-              <option v-for="c in schemeList.coverages" :key="c.id" :value="c.id" :title="c.translation">
-                {{ c.name }}
-              </option>
-            </select>
-          </label>
         </div>
         <p class="scheme-translation">{{ selectedOffenseInfo.translation }}</p>
-        <p class="scheme-translation coverage">{{ selectedCoverageInfo.translation }}</p>
+        <p class="scheme-translation coverage">Coverage: you call it on the scouting report, once you've seen their five.</p>
 
         <PlanningPhase
           ref="planningRef"
@@ -197,7 +189,7 @@
         </div>
       </div>
 
-      <!-- Opponent scouting: revise your coverage before tip-off -->
+      <!-- Opponent scouting: the round's one coverage call, made with their five in view -->
       <div v-if="phase === 'scout'" class="scout-screen">
         <div class="scout-card">
           <div class="sr-badge">SCOUTING REPORT</div>
@@ -219,10 +211,11 @@
             </div>
           </div>
 
+          <p class="scheme-translation coverage">{{ selectedCoverageInfo.translation }}</p>
           <div class="scheme-row scout-picker">
             <label class="scheme-picker">
               <span class="scheme-label">Your coverage call</span>
-              <select v-model="myCoverage">
+              <select v-model="myCoverage" @change="tutorial.onCoverageSelected">
                 <option v-for="c in schemeList.coverages" :key="c.id" :value="c.id" :title="c.translation">
                   {{ c.name }}
                 </option>
@@ -254,9 +247,8 @@
         :opponent-units="theirUnits"
         :home-multiplier="homeMatchup ? homeMatchup.offenseMultiplier : 1"
         :away-multiplier="awayMatchup ? awayMatchup.offenseMultiplier : 1"
+        :coverage="myCoverage"
         :round-stats="roundStats"
-        @coverage-opened="tutorial.onCoverageOpened"
-        @coverage-selected="tutorial.onCoverageSelected"
         @fight-started="tutorial.onFightStarted"
         @sim-complete="onSimComplete"
       />
@@ -336,7 +328,7 @@
 
       <!-- Front Office 101 — adaptive onboarding coach (rides the real screens) -->
       <CoachOverlay
-        :active="tutorial.active && (phase === 'planning' || phase === 'sim')"
+        :active="tutorial.active && (phase === 'planning' || phase === 'scout' || phase === 'sim')"
         :act="tutorial.act"
         :message="tutorial.message"
         :skill-tag="tutorial.skillTag"
@@ -371,7 +363,7 @@ import {
 import { roundSummary } from './game/roundSummary.js';
 import { computeSynergies } from './game/synergies.js';
 import { createRunTracker, sendGameEvent } from './game/telemetry.js';
-import { listSchemes, resolveMatchup, suggestCoverage, gradeRead, schemes } from './game/tactics.js';
+import { listSchemes, roundMatchups, suggestCoverage, gradeRead, schemes } from './game/tactics.js';
 
 // ── core state ──────────────────────────────────────────────────────────────
 const loading = ref(true);
@@ -449,7 +441,7 @@ const STRATEGY_TIPS = [
   'Your lineup carries over each round — you do not rebuild from scratch.',
   'Stack teammates from the same NBA franchise for a shooting synergy.',
   'Your team size cap grows with the round: 3 players early, 5 by round 5.',
-  'After scouting the ghost, you can still change your coverage call.',
+  'You call your coverage on the scouting report, after you see their five.',
 ];
 const currentTip = ref(STRATEGY_TIPS[Math.floor(Math.random() * STRATEGY_TIPS.length)]);
 
@@ -705,12 +697,19 @@ const onLockedIn = async (lineup) => {
   coverageSuggestions.value = suggestCoverage(theirUnits.value).slice(0, 3);
 
   phase.value = 'scout';
+  tutorial.onCoverageOpened();
 };
 
 const startBattle = () => {
-  // Resolve the tactical matchup from both points of view
-  homeMatchup.value = resolveMatchup(myOffense.value, theirCoverage.value, courtLineup.value, theirUnits.value);
-  awayMatchup.value = resolveMatchup(theirOffense.value, myCoverage.value, theirUnits.value, courtLineup.value);
+  // Resolve the tactical matchup from both points of view. myCoverage is the
+  // call from the scouting report; it sets the ghost's shooting multiplier.
+  const { home, away } = roundMatchups({
+    myOffense: myOffense.value, myCoverage: myCoverage.value,
+    theirOffense: theirOffense.value, theirCoverage: theirCoverage.value,
+    myUnits: courtLineup.value, theirUnits: theirUnits.value,
+  });
+  homeMatchup.value = home;
+  awayMatchup.value = away;
 
   syncEngineForRound(homeMatchup.value.offenseMultiplier, awayMatchup.value.offenseMultiplier);
 
