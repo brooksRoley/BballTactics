@@ -18,6 +18,10 @@ import {
   starUpStats,
   findTriple,
   planCombine,
+  hpLoss,
+  START_HP,
+  MIN_LOSS_DAMAGE,
+  MAX_LOSS_DAMAGE,
 } from '../economy.js';
 
 let passed = 0;
@@ -178,6 +182,50 @@ test('planCombine ignores 2-star copies when hunting triples', () => {
   const twoStar = makeStarUp(makeUnit(ROSTER[1]));
   const bench = [twoStar, makeUnit(ROSTER[1]), makeUnit(ROSTER[1])];
   assert.equal(planCombine(bench, []), null);
+});
+
+// ── HP loss by margin (fun-brief rec 6) ──────────────────────────────────
+
+test('hpLoss: a 1-point loss costs the minimum, 8', () => {
+  assert.equal(MIN_LOSS_DAMAGE, 8);
+  assert.equal(hpLoss(1), 8);
+});
+
+test('hpLoss: +2 HP per extra point of margin (lose by 2 -> 10, by 4 -> 14, by 6 -> 18)', () => {
+  assert.equal(hpLoss(2), 10);
+  assert.equal(hpLoss(4), 14);
+  assert.equal(hpLoss(6), 18);
+});
+
+test('hpLoss: a blowout caps at 20 (by 7, by 10, by 99)', () => {
+  assert.equal(MAX_LOSS_DAMAGE, 20);
+  assert.equal(hpLoss(7), 20);
+  assert.equal(hpLoss(10), 20);
+  assert.equal(hpLoss(99), 20);
+});
+
+test('hpLoss: never decreases as the margin grows', () => {
+  for (let m = 1; m < 30; m++) assert.ok(hpLoss(m + 1) >= hpLoss(m), `margin ${m}`);
+});
+
+test('hpLoss: overtime (sudden death) costs the minimum whatever the margin', () => {
+  assert.equal(hpLoss(2, { overtime: true }), 8);
+  assert.equal(hpLoss(3, { overtime: true }), 8);
+});
+
+test('hpLoss: a tie (still level after OT counts as a loss) or a negative margin costs the minimum', () => {
+  assert.equal(hpLoss(0), 8);
+  assert.equal(hpLoss(-3), 8);
+});
+
+test('hpLoss: an unknown margin falls back to the old flat 20', () => {
+  assert.equal(hpLoss(undefined), 20);
+  assert.equal(hpLoss(NaN), 20);
+});
+
+test('hpLoss: five blowouts still eliminate a full-HP run; five 1-point losses do not', () => {
+  assert.equal(START_HP - 5 * hpLoss(15), 0);
+  assert.ok(START_HP - 5 * hpLoss(1) > 0);
 });
 
 console.log(`\neconomy.test.js: ${passed} tests passed`);

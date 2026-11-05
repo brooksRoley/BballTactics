@@ -264,22 +264,51 @@
       <!-- Result -->
       <div v-if="phase === 'result'" class="result-screen">
         <div class="result-card" :class="lastResult">
+          <!-- Outcome first: result, score, HP, then one sentence of why. -->
           <h2>{{ lastResult === 'win' ? 'Victory' : 'Defeat' }}</h2>
-          <div class="result-score">{{ lastScore.home }} - {{ lastScore.away }}</div>
-          <p v-if="lastResult === 'loss'" class="result-damage">-20 HP</p>
+          <div class="result-score">
+            {{ lastScore.home }} - {{ lastScore.away }}<span v-if="lastOvertime" class="result-ot">OT</span>
+          </div>
+          <p v-if="lastResult === 'loss'" class="result-damage">
+            -{{ lastDamage }} HP <span class="result-hp-left">· {{ health }} left</span>
+          </p>
           <p v-else class="result-safe">No damage taken</p>
+          <p v-if="lastSummary" class="result-why">{{ lastSummary }}</p>
 
-          <!-- Tactical read grade -->
-          <div v-if="lastGrade" class="grade-panel">
-            <span class="grade-chip" :class="'grade-' + lastGrade.grade">{{ lastGrade.grade }}</span>
-            <p class="grade-lesson">{{ lastGrade.lesson }}</p>
-          </div>
+          <!-- The read is a secondary note, not the headline. -->
+          <p v-if="lastGrade" class="read-line">
+            Scheme read: <span class="read-letter" :class="'grade-' + lastGrade.grade">{{ lastGrade.grade }}</span>
+          </p>
 
-          <!-- Film Room -->
-          <div v-if="filmRoom.length" class="key-moments film-room">
-            <h3 class="log-title">Film Room</h3>
-            <div class="moment" v-for="(note, i) in filmRoom" :key="'fr-' + i">{{ note }}</div>
-          </div>
+          <!-- Long lesson + Film Room + key moments: one tap away, collapsed on phones. -->
+          <details
+            v-if="lastGrade || filmRoom.length || (roundStats.events && roundStats.events.length)"
+            class="result-details"
+            :open="resultDetailsOpen"
+            @toggle="resultDetailsOpen = $event.target.open"
+          >
+            <summary>Why? Scheme read and Film Room</summary>
+
+            <!-- Tactical read grade -->
+            <div v-if="lastGrade" class="grade-panel">
+              <span class="grade-chip" :class="'grade-' + lastGrade.grade" :aria-label="'Scheme read ' + lastGrade.grade">{{ lastGrade.grade }}</span>
+              <p class="grade-lesson">{{ lastGrade.lesson }}</p>
+            </div>
+
+            <!-- Film Room -->
+            <div v-if="filmRoom.length" class="key-moments film-room">
+              <h3 class="log-title">Film Room</h3>
+              <div class="moment" v-for="(note, i) in filmRoom" :key="'fr-' + i">{{ note }}</div>
+            </div>
+
+            <!-- Key moments -->
+            <div v-if="roundStats.events && roundStats.events.length" class="key-moments">
+              <h3 class="log-title">Key Moments</h3>
+              <div class="moment" v-for="(ev, i) in roundStats.events.slice(-5)" :key="i">
+                {{ ev }}
+              </div>
+            </div>
+          </details>
 
           <!-- Per-player breakdown -->
           <div v-if="roundStats.playerScoring && roundStats.playerScoring.length" class="combat-log">
@@ -292,14 +321,6 @@
                   <div class="log-bar-fill" :style="{ width: (ps.points / (maxPlayerPts || 1) * 100) + '%' }"></div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Key moments -->
-          <div v-if="roundStats.events && roundStats.events.length" class="key-moments">
-            <h3 class="log-title">Key Moments</h3>
-            <div class="moment" v-for="(ev, i) in roundStats.events.slice(-5)" :key="i">
-              {{ ev }}
             </div>
           </div>
 
@@ -345,7 +366,9 @@ import { useTutorial } from './composables/useTutorial.js';
 import {
   REROLL_COST, BENCH_CAP, MAX_ROUNDS, STAT_CAP,
   shopOdds, teamSizeCap, goldIncome, makeUnit, rollShop,
+  hpLoss, MIN_LOSS_DAMAGE, MAX_LOSS_DAMAGE,
 } from './game/economy.js';
+import { roundSummary } from './game/roundSummary.js';
 import { computeSynergies } from './game/synergies.js';
 import { createRunTracker, sendGameEvent } from './game/telemetry.js';
 import { listSchemes, resolveMatchup, suggestCoverage, gradeRead, schemes } from './game/tactics.js';
@@ -371,6 +394,10 @@ const tipoffZoom = ref(false);
 const roundStats = ref({ playerScoring: [], events: [] });
 const lastResult = ref('');
 const lastScore = ref({ home: 0, away: 0 });
+const lastOvertime = ref(false);
+const lastDamage = ref(0);      // HP actually taken this round (server's number when online)
+const lastSummary = ref('');    // one sentence of why (client/game/roundSummary.js)
+const resultDetailsOpen = ref(false);
 const runEpoch = ref(0);        // bumped on reset to remount PlanningPhase
 const rosterRef = ref([]);
 
@@ -418,7 +445,7 @@ const STRATEGY_TIPS = [
   'Three copies of the same player merge into a ★★ unit with 1.8x stats.',
   'Banked gold earns interest: +1 per 10 saved, up to +5 a round.',
   'Win or loss streaks pay bonus gold — commit to a direction.',
-  'Losing a round costs 20 HP. You start at 100 and are eliminated at 0.',
+  `A loss costs ${MIN_LOSS_DAMAGE}–${MAX_LOSS_DAMAGE} HP by margin: lose by 1 and it is ${hpLoss(1)}, get blown out and it is ${MAX_LOSS_DAMAGE}. You start at 100; 0 is elimination.`,
   'Your lineup carries over each round — you do not rebuild from scratch.',
   'Stack teammates from the same NBA franchise for a shooting synergy.',
   'Your team size cap grows with the round: 3 players early, 5 by round 5.',
@@ -757,6 +784,7 @@ const onSimComplete = async (result) => {
     home: typeof result === 'object' ? result.homeScore : 0,
     away: typeof result === 'object' ? result.awayScore : 0,
   };
+  lastOvertime.value = typeof result === 'object' && !!result.overtime;
   if (typeof result === 'object') {
     roundStats.value = {
       playerScoring: result.playerScoring || [],
@@ -788,15 +816,34 @@ const onSimComplete = async (result) => {
     ...(awayMatchup.value ? awayMatchup.value.notes.map(n => `Their side — ${n}`) : []),
   ];
 
-  // Server owns HP and run status; fall back to local bookkeeping offline
-  const res = runId.value ? await resolveMatch(runId.value, round.value, outcome) : null;
+  lastSummary.value = roundSummary({
+    outcome,
+    homeScore: lastScore.value.home,
+    awayScore: lastScore.value.away,
+    overtime: lastOvertime.value,
+    read: lastGrade.value,
+    playerScoring: roundStats.value.playerScoring,
+  });
+  // The long read opens by default on wide screens, stays one tap away on phones.
+  resultDetailsOpen.value = typeof window !== 'undefined' && !!window.matchMedia
+    && window.matchMedia('(min-width: 700px)').matches;
+
+  // Loss damage scales with the margin (economy.js hpLoss: 8 for a 1-point or
+  // OT loss, up to 20 for a blowout). Server owns HP and run status; fall back
+  // to local bookkeeping offline. The card shows the HP actually taken.
+  const margin = typeof result === 'object' ? lastScore.value.away - lastScore.value.home : undefined;
+  const hpBefore = health.value;
+  const res = runId.value
+    ? await resolveMatch(runId.value, round.value, outcome, { margin, overtime: lastOvertime.value })
+    : null;
   if (res && typeof res.health === 'number') {
     health.value = Math.max(0, res.health);
     runStatus.value = res.status;
   } else {
-    if (outcome === 'loss') health.value = Math.max(0, health.value - 20);
+    if (outcome === 'loss') health.value = Math.max(0, health.value - hpLoss(margin, { overtime: lastOvertime.value }));
     runStatus.value = health.value <= 0 ? 'lost' : round.value >= MAX_ROUNDS ? 'won' : 'active';
   }
+  lastDamage.value = Math.max(0, hpBefore - health.value);
   if (runStatus.value !== 'active') {
     runTracker.end({
       mode: 'autochess',
@@ -827,6 +874,9 @@ const resetGame = () => {
   streakCount.value = 0;
   lastResult.value = '';
   lastGrade.value = null;
+  lastSummary.value = '';
+  lastDamage.value = 0;
+  lastOvertime.value = false;
   filmRoom.value = [];
   courtLineup.value = [];
   courtMirror.value = [];
@@ -1364,6 +1414,35 @@ body {
 .grade-C { background: rgba(240, 165, 0, 0.15); color: #f0b93e; border: 2px solid #d99a2b; }
 .grade-D { background: rgba(217, 83, 79, 0.15); color: #e05a4e; border: 2px solid #c0392b; }
 .grade-lesson { margin: 0; font-size: 0.78rem; color: #bbb; line-height: 1.45; }
+.result-ot {
+  font-size: 0.9rem;
+  margin-left: 8px;
+  vertical-align: middle;
+  color: #f0a500;
+  letter-spacing: 0.05em;
+}
+.result-hp-left { color: #999; font-weight: normal; }
+.result-why { margin: 10px 0 4px; font-size: 0.95rem; color: #ddd; line-height: 1.4; }
+.read-line { margin: 6px 0 0; font-size: 0.8rem; color: #888; }
+.read-letter {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: bold;
+  text-align: center;
+}
+.result-details { margin: 12px 0 4px; text-align: left; }
+.result-details > summary {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: #5bc0de;
+  font-size: 0.85rem;
+  list-style-position: inside;
+}
+.result-details > summary:hover { background: rgba(91, 192, 222, 0.08); }
+.result-details > summary:focus-visible { outline: 2px solid #5bc0de; outline-offset: 2px; }
 
 .combat-log {
   text-align: left;

@@ -63,6 +63,23 @@ class SubmitBoardRequest(BaseModel):
 class ResolveMatchRequest(BaseModel):
     run_id: str
     result: str # 'win' or 'loss'
+    margin: int | None = None  # their score - yours; None keeps the flat max
+    overtime: bool = False
+
+
+MIN_LOSS_DAMAGE = 8
+MAX_LOSS_DAMAGE = 20
+
+
+def hp_loss(margin, overtime=False):
+    """Mirror of hpLoss() in client/game/economy.js: 8 + 2 x (margin - 1),
+    capped at 20. OT (sudden death), ties and margins below 1 cost 8; an
+    unknown margin costs the old flat 20."""
+    if overtime:
+        return MIN_LOSS_DAMAGE
+    if margin is None:
+        return MAX_LOSS_DAMAGE
+    return min(MAX_LOSS_DAMAGE, MIN_LOSS_DAMAGE + 2 * (max(1, margin) - 1))
 
 @app.post("/api/run/start")
 async def start_run(req: StartRunRequest, db: AsyncSession = Depends(get_db)):
@@ -123,9 +140,9 @@ async def resolve_match(req: ResolveMatchRequest, db: AsyncSession = Depends(get
     new_round = run.current_round + 1
     status = 'active'
     
-    # Apply damage on loss (e.g., flat 20 damage per loss for simplicity)
+    # Apply damage on loss, scaled by the margin (hp_loss above)
     if req.result == 'loss':
-        new_health -= 20
+        new_health -= hp_loss(req.margin, req.overtime)
         
     if new_health <= 0:
         status = 'lost'

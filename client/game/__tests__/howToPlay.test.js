@@ -10,7 +10,7 @@ import {
   SHOP_SIZE, BENCH_CAP, REROLL_COST, BASE_INCOME, INTEREST_CAP, STARTING_GOLD, MAX_ROUNDS, STAR_MULTIPLIER, teamSizeCap,
 } from '../economy.js';
 import schemes from '../schemes.json' with { type: 'json' };
-import { howToPlayCards, CONTROLS_TOUR, PITCH, START_HP, LOSS_DAMAGE } from '../howToPlay.js';
+import { howToPlayCards, CONTROLS_TOUR, PITCH, START_HP, MIN_LOSS_DAMAGE, MAX_LOSS_DAMAGE } from '../howToPlay.js';
 
 const cards = howToPlayCards();
 const text = (id) => cards.find((c) => c.id === id).body;
@@ -19,7 +19,7 @@ assert.equal(cards.length, 6, 'six cards, one idea each');
 assert.equal(new Set(cards.map((c) => c.id)).size, 6);
 
 assert.match(text('front-office'), new RegExp(`${MAX_ROUNDS} rounds, ${START_HP} HP`));
-assert.match(text('front-office'), new RegExp(`lose ${LOSS_DAMAGE} HP`));
+assert.match(text('front-office'), new RegExp(`lose ${MIN_LOSS_DAMAGE}–${MAX_LOSS_DAMAGE} HP`));
 assert.match(text('shop'), new RegExp(`^${SHOP_SIZE} free agents`));
 assert.match(text('shop'), new RegExp(`Reroll for ${REROLL_COST} gold`));
 assert.match(text('shop'), new RegExp(`holds ${BENCH_CAP}`));

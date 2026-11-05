@@ -65,17 +65,22 @@ export function useMatchmaking() {
   };
 
   /**
-   * Report the sim result. Server owns HP (-20 per loss) and run status.
+   * Report the sim result. Server owns HP and run status.
    * round_number binds the resolve to the run's current round server-side,
    * so a stale or repeated report is rejected (409) instead of re-applied.
+   * margin + overtime let the server scale loss damage with hpLoss()
+   * (client/game/economy.js); a server that ignores them applies its own rule,
+   * and the client shows whatever HP the server actually took.
    * @returns {{health, current_round, status}|null}
    */
-  const resolveMatch = async (runId, roundNumber, matchResult) => {
+  const resolveMatch = async (runId, roundNumber, matchResult, { margin, overtime = false } = {}) => {
     try {
       return await postJSON("/api/bball/match/resolve", {
         run_id: runId,
         round_number: roundNumber,
         result: matchResult,
+        ...(Number.isFinite(margin) ? { margin } : {}),
+        overtime: !!overtime,
       });
     } catch (err) {
       console.warn("Matchmaking: resolve failed —", err.message);
