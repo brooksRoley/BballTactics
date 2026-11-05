@@ -64,14 +64,29 @@
              }]"
              @pointerdown="onPointerDown($event, player, 'bench')"
              @click="onTapBench(player)">
-          <span class="bp-name"><span v-if="player.star === 2" class="star-badge">★★</span>{{ player.name }}</span>
-          <span class="bp-stats">
-            SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }} / DEF {{ player.stats.defense }}
+          <!-- Primary target: the whole body selects / drags. It is the
+               focusable control for keyboard users (Enter / Space selects). -->
+          <span class="bp-body"
+                role="button"
+                tabindex="0"
+                :aria-pressed="!!(selectedPlayer && selectedPlayer.id === player.id)"
+                :aria-label="`Select ${player.name} to place on the court`"
+                @keydown.enter.prevent="onTapBench(player)"
+                @keydown.space.prevent="onTapBench(player)">
+            <span class="bp-name"><span v-if="player.star === 2" class="star-badge">★★</span>{{ player.name }}</span>
+            <span class="bp-stats">
+              SPD {{ player.stats.speed }} / SHT {{ player.stats.shooting }} / DEF {{ player.stats.defense }}
+            </span>
           </span>
-          <button class="sell-btn"
-                  @click.stop="$emit('sell-player', player)"
-                  :title="'Sell for ' + sellValue(player) + 'G'">
-            Sell ({{ sellValue(player) }}G)
+          <!-- Sell sits at the card's edge and needs two presses within
+               SELL_CONFIRM_MS (first press: "Sell? NG"). -->
+          <button type="button"
+                  class="sell-btn"
+                  :class="{ armed: sellArmedId === player.id }"
+                  :aria-label="sellText(player).aria"
+                  :title="sellText(player).aria"
+                  @click.stop="onSellPress(player)">
+            {{ sellText(player).text }}
           </button>
         </div>
         <div v-if="benchPlayers.length === 0" class="bench-empty">
@@ -114,6 +129,7 @@ import { sfx } from '../audio/sfx.js';
 import { FEEL, Spring, ParticlePool, spawnDust, drawParticles, prefersReducedMotion } from '../fx/feel.js';
 import { sellValue } from '../game/economy.js';
 import { getZoneEfficiency, zoneWarmth } from '../composables/useZoneEfficiency.js';
+import { SELL_CONFIRM_MS, pressSell, sellLabel } from '../game/sellConfirm.js';
 
 export default {
   props: {
@@ -496,9 +512,41 @@ export default {
       drag = null;
     };
 
+    // --- Two-step sell (see game/sellConfirm.js) ---
+    // sellState is the pure state; sellArmedId mirrors it for the template and
+    // a timer reverts the label when the confirm window runs out.
+    let sellState = null;
+    let sellTimer = null;
+    const sellArmedId = ref(null);
+
+    const disarmSell = () => {
+      sellState = null;
+      sellArmedId.value = null;
+      clearTimeout(sellTimer);
+      sellTimer = null;
+    };
+
+    const sellText = (player) =>
+      sellLabel(sellArmedId.value === player.id, sellValue(player), player.name);
+
+    const onSellPress = (player) => {
+      const r = pressSell(sellState, player.id, performance.now());
+      clearTimeout(sellTimer);
+      if (r.sell) {
+        disarmSell();
+        if (selectedPlayer.value && selectedPlayer.value.id === player.id) selectedPlayer.value = null;
+        emit('sell-player', player);
+        return;
+      }
+      sellState = r.state;
+      sellArmedId.value = player.id;
+      sellTimer = setTimeout(disarmSell, SELL_CONFIRM_MS);
+    };
+
     // --- Tap-to-place (mobile support) ---
     const onTapBench = (player) => {
       if (dragJustEnded()) return;
+      disarmSell();   // touching a card means "use this player", not "sell"
       if (selectedPlayer.value && selectedPlayer.value._from === 'court') {
         // A court player is selected — tapping bench returns them
         returnToBench(selectedPlayer.value);
@@ -550,6 +598,7 @@ export default {
       if (resizeObserver) resizeObserver.disconnect();
       if (dragLoopId) cancelAnimationFrame(dragLoopId);
       clearTimeout(landTimer);
+      clearTimeout(sellTimer);
       removeWindowListeners();
     });
 
@@ -558,6 +607,7 @@ export default {
       removeUnits, placeUnit,
       cellStyle, playerStyle, breatheStyle, shortName,
       onPointerDown, onTapBench, onTapCell, onTapCourtPlayer,
+      sellArmedId, sellText, onSellPress,
       selectedPlayer, shakeCellId, courtScaler, courtScale,
       courtEl, benchEl, fxCanvas, landedId,
       dragAvatar, dragAvatarStyle,
@@ -759,8 +809,10 @@ export default {
 
 .bench-player {
   display: flex;
-  flex-direction: column;
-  padding: 6px 10px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
   background: #222;
   border: 2px solid #444;
   border-radius: 4px;
@@ -771,20 +823,43 @@ export default {
   -webkit-user-select: none;
 }
 .bench-player:hover { transform: translateY(-2px); }
+.bp-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 3px;
+  outline: none;
+}
+.bp-body:focus-visible { box-shadow: 0 0 0 2px #5bc0de; }
 .bp-name { font-size: 0.85rem; font-weight: bold; }
 .bp-stats { font-size: 0.65rem; color: #777; }
 .bench-empty { color: #555; font-style: italic; font-size: 0.85rem; padding: 8px; }
+/* Sell lives at the card's right edge, away from its centre, and takes two
+   presses (see game/sellConfirm.js). */
 .sell-btn {
-  margin-top: 4px;
-  padding: 2px 8px;
+  flex: 0 0 auto;
+  align-self: center;
+  min-width: 52px;
+  min-height: 32px;
+  padding: 2px 6px;
   font-size: 0.65rem;
-  background: #5a2b2b;
-  color: #ffa07a;
-  border: 1px solid #8b4513;
+  background: transparent;
+  color: #c98b6e;
+  border: 1px solid #5a3a2a;
   border-radius: 3px;
   cursor: pointer;
+  white-space: nowrap;
 }
-.sell-btn:hover { background: #7a3b3b; }
+.sell-btn:hover { background: #3a2222; }
+.sell-btn:focus-visible { outline: 2px solid #5bc0de; outline-offset: 1px; }
+.sell-btn.armed {
+  background: #8b2e2e;
+  color: #fff;
+  border-color: #e06666;
+  font-weight: bold;
+}
 
 /* Lock-in bar */
 .lock-in-bar {
@@ -842,10 +917,46 @@ export default {
 }
 
 @media (max-width: 520px) {
-  .bench-player { padding: 8px 12px; }
   .bp-name { font-size: 0.9rem; }
   .bp-stats { font-size: 0.7rem; }
   .lock-in-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
   .lock-in-btn { width: 100%; padding: 12px; font-size: 1.1rem; }
+}
+
+/* Phone: the bench is a sticky strip pinned to the bottom of the viewport
+   while the court is on screen, so placing a player is tap card → tap cell
+   with no scrolling. Cards sit in one horizontally scrolling row; the cards
+   allow horizontal panning (pan-x) so the strip scrolls sideways, while a
+   vertical drag up onto the court still drags the player. */
+@media (max-width: 640px) {
+  .bench-area {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    margin: 0 -2px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    min-height: 0;
+    background: rgba(20, 20, 20, 0.96);
+    border-color: #3a3a3a;
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.55);
+  }
+  .bench-label { margin-bottom: 4px; font-size: 0.75rem; }
+  .bench-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+  .bench-player {
+    flex: 0 0 auto;
+    max-width: 78vw;
+    padding: 6px 6px 6px 10px;
+    touch-action: pan-x;
+  }
+  .bench-player:hover { transform: none; }
+  .bp-name { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bp-stats { font-size: 0.65rem; white-space: nowrap; }
+  .bench-empty { padding: 4px 8px; }
 }
 </style>
