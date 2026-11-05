@@ -69,7 +69,7 @@ The Pixi court adds wood texture, unit shadows and a shot-clock ring, which is r
 
 ## Art direction analysis
 
-**Current identity:** a dark slate UI around a warm, textured Pixi hardwood court, TFT-style cost-tier colors on premium draft cards, Bootstrap-danger red (#d9534f) as the primary action color, and system fonts. The court and cards now carry a look; the chrome around them doesn't.
+**Current identity:** a dark slate UI around a warm, textured Pixi hardwood court, genre-standard (autobattler) cost-tier colors on premium draft cards, Bootstrap-danger red (#d9534f) as the primary action color, and system fonts. The court and cards now carry a look; the chrome around them doesn't.
 
 | Area | Observation | Direction |
 |---|---|---|

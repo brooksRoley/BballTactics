@@ -1,6 +1,6 @@
 # MVP Build Log — Hardwood Autochess core loop
 
-Date: 2026-07-09/10 · Agent session (M0 dev-env revival + M1 TFT core loop + sibling integrations)
+Date: 2026-07-09/10 · Agent session (M0 dev-env revival + M1 autobattler core loop + sibling integrations)
 
 ## How to run it
 
@@ -58,7 +58,7 @@ spawned three hardcoded bots (README Phase-10 "known limitation"). Added:
   SpawnUnit), which also sidesteps a pre-existing engine bug where StartRound's
   synergy buffs would compound onto persistent entities across rounds.
 
-### M1 — TFT core loop (client)
+### M1 — Autobattler core loop (client)
 New pure-logic modules (unit-tested, no Vue):
 - `client/game/economy.js` — shop odds table per round (published in the UI),
   cost-weighted 5-slot shop rolls **with duplicates**, income = 5 base + 1

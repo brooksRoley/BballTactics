@@ -15,7 +15,7 @@ export const STAT_CAP = 99; // mirrors PlayerEntity::ClampStats in shared-core
 
 /**
  * Cost-tier appearance weights per round. Higher rounds shift odds
- * toward expensive units, TFT-style.
+ * toward expensive units, as in other autobattlers.
  */
 export function shopOdds(round) {
   if (round <= 2) return { 1: 50, 2: 30, 3: 15, 4: 5, 5: 0 };

@@ -1,11 +1,11 @@
 # Full Court — design note
 
 *2026-10-26. A second mode for BballTactics: control one player, live, in a 5v5 full-court game.
-Hardwood Autochess is this game's TFT; Full Court is its League.*
+Hardwood Autochess is this game's autobattler; Full Court is the real-time game its pieces come from.*
 
 ## The idea
 
-Riot built Teamfight Tactics out of League of Legends: the same champions, moved from a real-time
+Riot built its autobattler out of League of Legends: the same champions, moved from a real-time
 5v5 where you pilot one of them into an auto-battler where you arrange them. We built ours in the
 opposite order. Hardwood Autochess already exists, with NBA players as pieces on a 5×5 board. Full
 Court is the game those pieces came from: you pick one player, right-click to move, and use four
