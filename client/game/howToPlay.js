@@ -83,7 +83,7 @@ export function howToPlayCards() {
       id: 'call',
       art: 'schemes',
       title: 'Call the game',
-      body: `Pick an offense (${schemes.offenses.map((o) => o.name).join(', ')}) and a coverage (${schemes.coverages.map((c) => c.name).join(', ')}). Scout the other team, adjust, then tip off.`,
+      body: `Pick an offense (${schemes.offenses.map((o) => o.name).join(', ')}) before you lock in. Then scout the other team and call one coverage against them (${schemes.coverages.map((c) => c.name).join(', ')}) before tip-off.`,
     },
   ];
 }
@@ -94,10 +94,10 @@ export function howToPlayCards() {
  */
 export const CONTROLS_TOUR = [
   { target: 'status', title: 'Your run', text: 'Round, record, HP and gold. Next round’s income is listed under the shop.' },
-  { target: 'schemes', title: 'Your calls', text: 'Offense and coverage. The line under each says what it does in plain words.' },
+  { target: 'schemes', title: 'Your calls', text: 'Your offense. The line under it says what it does in plain words. Coverage comes later, once you have seen their five.' },
   { target: 'court', title: 'The court', text: 'Tap or drag players here. Placement is where they start the fight.' },
   { target: 'bench', title: 'The bench', text: `Bought players wait here (up to ${BENCH_CAP}). The × sells one back for its full cost.` },
   { target: 'shop', title: 'Free agents', text: `Tap a card to buy. Reroll costs ${REROLL_COST} gold. The odds line shows which costs can appear this round.` },
-  { target: 'lockin', title: 'Lock In & Fight', text: 'When the court looks right, lock in. You’ll see the other team before tip-off and can change your coverage.' },
+  { target: 'lockin', title: 'Lock In & Fight', text: 'When the court looks right, lock in. You’ll see the other team and call your coverage before tip-off.' },
   { target: 'filmroom', title: 'Film Room', text: 'Coach Miller’s daily tactics puzzles. Practice reads without risking HP.' },
 ];

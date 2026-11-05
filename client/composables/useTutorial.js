@@ -3,7 +3,7 @@
 // "Front Office 101" — an adaptive, guide-don't-gate onboarding coach.
 //
 // This is a pure presentation-layer state machine. It knows nothing about the
-// WASM engine; the real screens (draft shop, court placement, prefight coverage)
+// WASM engine; the real screens (draft shop, court placement, scouting report)
 // call its event hooks, and it responds with a Coach Miller line + a real-world
 // "skill tag" that frames each mechanic as a transferable skill:
 //
