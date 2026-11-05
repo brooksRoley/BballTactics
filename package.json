@@ -2,6 +2,7 @@
   "name": "bball-tactics",
   "private": true,
   "version": "0.1.0",
+  "license": "FSL-1.1-MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
